@@ -7,11 +7,11 @@ SET FEEDBACK OFF
 SET ECHO OFF
 SET HEADING OFF
 SET VERIFY OFF
+SET TERM OFF
 
 -- Attiva il salvataggio su file
-SPOOL database_metadata.json
+SPOOL database_metadata_full_users.json
 
--- Esegui la query (versione corretta per l'export)
 WITH db_info AS (
     SELECT 
         d.name AS db_name,
@@ -41,7 +41,7 @@ rac_info AS (
 ),
 init_params AS (
     SELECT 
-        JSON_OBJECTAGG(name VALUE value) AS params_json
+        JSON_OBJECTAGG(name VALUE value RETURNING CLOB) AS params_json
     FROM v$parameter
     WHERE name IN (
         'db_block_size', 'compatible', 'sga_target', 'sga_max_size',
@@ -71,7 +71,7 @@ tablespaces_info AS (
                 'autoextend' VALUE MAX(df.autoextensible),
                 'status' VALUE ts.status,
                 'contents' VALUE ts.contents
-            )
+            ) RETURNING CLOB
         ) AS tablespaces_json
     FROM dba_tablespaces ts
     LEFT JOIN dba_data_files df ON ts.tablespace_name = df.tablespace_name
@@ -89,7 +89,7 @@ tablespaces_info AS (
                 'autoextend' VALUE MAX(tf.autoextensible),
                 'status' VALUE ts.status,
                 'contents' VALUE ts.contents
-            )
+            ) RETURNING CLOB
         ) AS tablespaces_json
     FROM dba_tablespaces ts
     JOIN dba_temp_files tf ON ts.tablespace_name = tf.tablespace_name
@@ -123,6 +123,30 @@ security_info AS (
         SUM(CASE WHEN account_status LIKE '%LOCKED%' THEN 1 ELSE 0 END) AS locked_users
     FROM dba_users
 ),
+user_tables AS (
+    SELECT 
+        owner,
+        JSON_ARRAYAGG(table_name ORDER BY table_name RETURNING CLOB) AS tables_array
+    FROM dba_tables
+    GROUP BY owner
+),
+schema_details AS (
+    SELECT 
+        JSON_ARRAYAGG(
+            JSON_OBJECT(
+                'username' VALUE u.username,
+                'tables'   VALUE t.tables_array
+            ) ORDER BY u.username
+        RETURNING CLOB) AS schemas_json
+    FROM dba_users u
+    LEFT JOIN user_tables t ON u.username = t.owner
+    -- *** MODIFICA QUI: Rimosso oracle_maintained = 'N' ***
+    -- Usiamo una lista esplicita di esclusione per gli utenti puramente tecnici
+    WHERE u.username NOT IN (
+        'SYS', 'SYSTEM', 'OUTLN', 'DBSNMP', 'APPQOSSYS', 'GSMADMIN_INTERNAL', 
+        'XDB', 'WMSYS', 'OJVMSYS', 'CTXSYS', 'ORDSYS', 'MDSYS', 'OLAPSYS'
+    ) 
+),
 asm_info AS (
     SELECT 
         JSON_ARRAYAGG(
@@ -132,7 +156,7 @@ asm_info AS (
                 'free_gb' VALUE ROUND(free_mb/1024, 2),
                 'used_gb' VALUE ROUND((total_mb - free_mb)/1024, 2),
                 'redundancy' VALUE type
-            )
+            ) RETURNING CLOB
         ) AS asm_diskgroups_json
     FROM v$asm_diskgroup
 ),
@@ -144,7 +168,7 @@ services_info AS (
                 'network_name' VALUE network_name,
                 'goal' VALUE goal,
                 'clb_goal' VALUE clb_goal
-            )
+            ) RETURNING CLOB
         ) AS services_json
     FROM v$active_services
     WHERE name NOT LIKE 'SYS%'
@@ -214,9 +238,10 @@ SELECT
                 'members_per_group' VALUE rl.members_per_group,
                 'size_mb' VALUE rl.size_mb
             ),
-            'tablespaces' VALUE (SELECT JSON_ARRAYAGG(t.tablespaces_json) FROM tablespaces_info t) FORMAT JSON,
+            'tablespaces' VALUE (SELECT JSON_ARRAYAGG(t.tablespaces_json RETURNING CLOB) FROM tablespaces_info t) FORMAT JSON,
             'asm_diskgroups' VALUE a.asm_diskgroups_json FORMAT JSON
         ),
+        'schemas' VALUE (SELECT schemas_json FROM schema_details) FORMAT JSON,
         'security' VALUE JSON_OBJECT(
             'users_total' VALUE s.total_users,
             'users_active' VALUE s.active_users,
@@ -236,7 +261,9 @@ CROSS JOIN security_info s
 CROSS JOIN asm_info a
 CROSS JOIN services_info sv
 CROSS JOIN edition_info e
-CROSS JOIN audit_info au;
+CROSS JOIN audit_info au
+CROSS JOIN (SELECT 1 FROM DUAL) dummy;
 
 -- Chiudi e salva
 SPOOL OFF
+SET TERM ON
