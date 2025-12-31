@@ -1,0 +1,46 @@
+{
+  "_id": "dbgec2", 
+
+  // --- 1. LOCALIZZAZIONE ---
+  "location": {
+    "country": "Italy",
+    "city": "Milan",
+    "datacenter": "pero"
+  },
+
+  // --- 2. IDENTITÀ & HARDWARE ---
+  "info": {
+    "hostname": "mew1.gpa.local",
+    "ip_address": "15.324.14.60",
+    "os_version": "Red Hat Enterprise Linux 8.9",
+    "cpu_cores": 8,
+    "ram_gb": 32,
+    "disk_total_gb": 100
+  },
+
+  // --- 3. RETE ---
+  "network": {
+    "open_ports": [22, 1521, 5432, 8080],
+    "status": "UP"
+  },
+
+  // --- 4. COSA RAGGIUNGE? (Topologia) ---
+  "reachability": {
+    // Macchine fisiche dietro questo GW
+    "accessible_hosts": [
+      "ldbrbnzp03.gpaprod.local",
+      "ldbrbnzp04.gpaprod.local",
+      "pg_host_01.local"
+    ],
+
+    // Database serviti (Nome univoco)
+    "accessible_dbs": [
+      "NZSEP",
+      "NZPEP",
+      "DWH_PROD"
+    ],
+    
+    "total_hosts_count": 3,
+    "total_dbs_count": 3
+  }
+}

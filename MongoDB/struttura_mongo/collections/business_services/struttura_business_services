@@ -1,0 +1,41 @@
+{
+  "_id": "ObjectId('60d5ecb8b4873b3c3c6f1a21')",
+
+  // --- 1. INFO SERVIZIO ---
+  "service_info": {
+    "name": "Gestione Carte di Credito",
+    "service_now_id": "SN_APP_00912",
+    "status": "ACTIVE"
+  },
+
+  // --- 2. CONTATTI E RESPONSABILITÀ ---
+  "contacts": {
+    // BAO: Solo Nome e Mail 
+    "bao": {
+      "name": "Mario Rossi",
+      "email": "mario.rossi@nexi.it"
+    },
+    
+    // Contatti Operativi
+    "dl_team": "dl_carte_ops@nexi.it",
+    "reperibilita_number": "+39 335 9988776" 
+  },
+
+  // --- 3. MAPPATURA TECNICA (Schemi/Utenze su DB) ---
+  "technical_mapping": [
+    {
+      "db_unique_name": "NZSEP", // Link alla collection databases
+      "schemas": [
+        // Lista delle utenze di questo servizio su questo DB
+        { "schema_name": "CRD_OWNER", "type": "OWNER" },
+        { "schema_name": "CRD_APP_USER", "type": "USER" }
+      ]
+    },
+    {
+      "db_unique_name": "DWH_PROD",
+      "schemas": [
+        { "schema_name": "CRD_READ_ONLY", "type": "READER" }
+      ]
+    }
+  ]
+}

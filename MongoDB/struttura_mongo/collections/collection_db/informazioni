@@ -1,0 +1,87 @@
+la forza di usare un database "NoSQL" come MongoDB invece di una tabella rigida.
+
+Oracle usa ASM (Automatic Storage Management), quindi parliamo di DiskGroups (DATA, RECO).
+
+Postgres, MySQL, MongoDB scrivono direttamente sul File System del sistema operativo, quindi monitoriamo i Mount Points (es. /var/lib/pgsql, /data).
+
+Ecco come gestiamo questa differenza all'interno della stessa collection inventory_databases. Il campo storage cambia forma in base al type del database.
+
+
+
+1. Caso ORACLE (Struttura con DiskGroups)
+
+"storage": {
+    "total_size_gb": 2048,
+    "fra_used_pct": 15, // Specifica Oracle (Flash Recovery Area)
+    
+    // ORACLE USA I DISKGROUPS
+    "diskgroups": [
+      { 
+        "name": "DATA", 
+        "redundancy": "EXTERNAL", // Specifica ASM
+        "total_mb": 1048576, 
+        "free_mb": 250000, 
+        "used_pct": 76 
+      },
+      { 
+        "name": "RECO", 
+        "total_mb": 512000, 
+        "free_mb": 400000, 
+        "used_pct": 21 
+      }
+    ],
+    
+    // ORACLE HA I TABLESPACES
+    "tablespaces": [
+      { "name": "SYSTEM", "used_pct": 88 },
+      { "name": "USERS", "used_pct": 42 }
+    ]
+  }
+
+2. Caso POSTGRES / MYSQL (Struttura con Filesystem)
+
+"storage": {
+    "total_size_gb": 500,
+    // Niente FRA, magari monitoriamo i WAL (Write Ahead Logs)
+    "wal_keep_segments": 120, 
+    
+    // POSTGRES USA I FILESYSTEM (MOUNT POINTS)
+    "filesystems": [
+      { 
+        "mount_point": "/var/lib/postgresql/data", 
+        "device": "/dev/mapper/pg_data",
+        "total_gb": 400, 
+        "free_gb": 80, 
+        "used_pct": 80 
+      },
+      { 
+        "mount_point": "/pg_wal", 
+        "device": "/dev/mapper/pg_wal",
+        "total_gb": 100, 
+        "free_gb": 90, 
+        "used_pct": 10 
+      }
+    ],
+
+    // POSTGRES HA DATABASE/SCHEMA SIZE INVECE DI TABLESPACES (o tablespace logici)
+    "database_sizes": [
+      { "name": "postgres", "size_mb": 50 },
+      { "name": "app_db_prod", "size_mb": 340000 }
+    ]
+  }
+
+
+
+  Il  sistema di allarmi (dashboard) dovrà fare una query "intelligente" che controlla entrambi i casi con un operatore OR ($or).
+
+  Esempio Query Allarme Spazio Disco: "Dammi tutti i DB dove i Diskgroup (Oracle) O i Filesystem (Postgres) sono pieni al 90%"
+
+  db.inventory_databases.find({
+  "$or": [
+    // Caso 1: Oracle Diskgroup pieno
+    { "monitoring.storage.diskgroups.used_pct": { "$gt": 90 } },
+    
+    // Caso 2: Postgres Filesystem pieno
+    { "monitoring.storage.filesystems.used_pct": { "$gt": 90 } }
+  ]
+})

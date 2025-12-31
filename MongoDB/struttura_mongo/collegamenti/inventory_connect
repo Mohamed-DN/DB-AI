@@ -1,0 +1,35 @@
+// 1. CHIAVE PRIMARIA LOGICA (Obbligatoria)
+// Garantisce che non ci siano due DB con lo stesso nome univoco nel CMDB.
+db.inventory_databases.createIndex(
+  { "identity.db_unique_name": 1 }, 
+  { unique: true, name: "idx_unique_dbname" }
+);
+
+// 2. RICERCA PER HOST (Multikey Index su Array)
+// Fondamentale: permette di trovare il DB cercando UNO QUALSIASI dei suoi nodi/IP.
+// Se cerchi "host_ip": "10.10.10.1", trovi subito il documento del DB.
+db.inventory_databases.createIndex(
+  { "nodes.hostname": 1, "nodes.host_ip": 1 },
+  { name: "idx_nodes_lookup" }
+);
+
+// 3. LINK AL GATEWAY (Per join veloci)
+// Serve per dire: "Dammi tutti i DB serviti da dbgec2"
+db.inventory_databases.createIndex(
+  { "identity.gateway_ref": 1 },
+  { name: "idx_gateway_ref" }
+);
+
+// 4. RICERCA PDB (Multikey Index su Array)
+// Permette di rispondere a: "Su quale container gira il PDB_SALES?"
+db.inventory_databases.createIndex(
+  { "configuration.oracle_specific.pdbs.name": 1 },
+  { name: "idx_pdb_lookup" }
+);
+
+// 5. INDICE DI MONITORAGGIO & ALLARMI
+// Per dashboard veloci: filtra per tecnologia e stato.
+db.inventory_databases.createIndex(
+  { "identity.engine": 1, "identity.environment": 1, "storage.last_check": 1 },
+  { name: "idx_monitoring_dashboard" }
+);

@@ -1,0 +1,15 @@
+// 1. CHIAVE PRIMARIA (Il nome del Gateway)
+// (Nota: _id è indicizzato di default, ma se usi un campo custom:)
+// db.gateways.createIndex({ "_id": 1 }); // Già automatico
+
+// 2. RICERCA PER IP PUBBLICO/PRIVATO
+db.gateways.createIndex(
+  { "info.ip_address": 1 },
+  { name: "idx_gw_ip" }
+);
+
+// 3. GEOLOCALIZZAZIONE (Per report)
+db.gateways.createIndex(
+  { "location.country": 1, "location.datacenter": 1 },
+  { name: "idx_gw_location" }
+);

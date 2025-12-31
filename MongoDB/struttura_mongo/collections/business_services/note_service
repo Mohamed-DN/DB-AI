@@ -1,0 +1,6 @@
+Cosa abbiamo ottenuto con questa struttura:
+Immediatezza per le emergenze: Se c'è un problema notte tempo, l'operatore legge contacts.reperibilita_number e chiama. Non deve cercare codici altrove.
+
+Chiarezza Business: Il campo bao è pulito. Se serve un'escalation formale, sai chi è la persona e la sua mail.
+
+Link DB-Servizio: Il technical_mapping rimane il punto di forza: collega un database fisico (NZSEP) alle utenze logiche (CRD_OWNER).

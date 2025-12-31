@@ -1,0 +1,20 @@
+// 1. LINK AL DATABASE (Multikey Index - CRITICO)
+// Questo è l'indice "Salva-Vita". Quando cade un DB, usi questo per trovare il BAO.
+// Cerca dentro l'array 'technical_mapping'.
+db.business_services.createIndex(
+  { "technical_mapping.db_unique_name": 1 },
+  { name: "idx_tech_mapping_db" }
+);
+
+// 2. RICERCA UTENZA/SCHEMA
+// "Di chi è l'utenza CRD_OWNER?"
+db.business_services.createIndex(
+  { "technical_mapping.schemas.schema_name": 1 },
+  { name: "idx_schema_owner" }
+);
+
+// 3. RICERCA PER ID SERVICE NOW
+db.business_services.createIndex(
+  { "service_info.service_now_id": 1 },
+  { unique: true, name: "idx_snow_id" }
+);
