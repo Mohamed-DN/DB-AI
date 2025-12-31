@@ -1,0 +1,45 @@
+
+
+🎯 Obiettivo
+Creare un sistema che:
+
+Estrae AWR in XML dalla directory (e.g. awr_dump_xml/*),
+Converte ogni XML in JSON normalizzato,
+Salva/aggiorna i documenti in MongoDB,
+Fornisce comandi/API per consultarli.
+🔧 Proposta tecnica (breve)
+Scelte consigliate
+Linguaggio: Python (semplice, ottima libreria XML/JSON, pymongo).
+Parsing: xmltodict o lxml → converti in dict JSON normalizzato.
+DB: pymongo con upsert basato su chiave unica (es. db+pdb+snap_start+snap_end o filename).
+Indici: db, pdb, snap_start, snap_end, timestamp (per query veloci).
+Schema suggerito (es.)
+Collection: awr_reports
+Documento:
+db: "CDB_ROOT" / "PDB1"
+pdb: nome pdb (if applicable)
+snap_start: int
+snap_end: int
+timestamp: ISODate
+metadata: { file_name, collected_at }
+awr_json: { ...big nested JSON... }
+(opz) raw_xml: stored as string (se desiderato)
+Indice e upsert
+Unique index su (db, pdb, snap_start, snap_end)
+Upsert query: replace_one(filter, doc, upsert=True)
+✅ Esempio minimale (Python)
+(installare: pip install xmltodict pymongo)
+
+💡 Raccomandazioni operative
+Prima di ingest, analizzo 3-5 XML di esempio per definire mappatura precisa (campi snapshot, nomi nodi AWR, ecc.).
+Gestione errori: log e spostamento file falliti in failed/.
+Test: includere file con struttura variabile e grandi dimensioni.
+Scalabilità: per grandi volumi usare batch upserts e multiprocessing.
+🔜 Prossimi passi (posso procedere)
+Analizzo alcuni XML di esempio per definire la mappatura (attualmente ho visto solo la struttura delle cartelle).
+Creo uno script di conversione + ingest con test base e README.
+Vuoi che:
+
+A: proceda ad analizzare file AWR XML in awr_dump_xml/ (indicami path se diverso), oppure
+B: parta subito creando lo scheletro dello script e dei test in Python?
+Fammi sapere la preferenza e se preferisci Node/TypeScript invece di Python.

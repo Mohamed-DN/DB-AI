@@ -1,0 +1,116 @@
+import oracledb
+import os
+import datetime
+
+# --- CONFIGURAZIONE ---
+DB_USER = "system"
+DB_PASS = "password"
+DAYS_BACK = 3  # Quanti giorni di storico vuoi scaricare?
+
+# Lista dei target: Metti qui il CDB e tutti i PDB che vuoi scaricare
+TARGETS = [
+    {"name": "CDB_ROOT", "dsn": "ol7-19-rac1.localdomain:1521/CDBRAC"}, # Il Padre
+    {"name": "PDB1",     "dsn": "ol7-19-rac1.localdomain:1521/PDB1"},   # Figlio 1
+    {"name": "PDB_HR",   "dsn": "ol7-19-rac1.localdomain:1521/PDB_HR"}  # Figlio 2
+]
+
+OUTPUT_DIR = "awr_dump_xml"
+
+# --- SQL PER TROVARE GLI SNAPSHOT ---
+SQL_LIST_SNAPS = """
+    SELECT snap_id, 
+           TO_CHAR(end_interval_time, 'YYYYMMDD_HH24MI') as snap_time
+    FROM dba_hist_snapshot
+    WHERE begin_interval_time > SYSDATE - :days
+    AND instance_number = (SELECT instance_number FROM v$instance)
+    ORDER BY snap_id DESC
+"""
+
+# --- SQL PER GENERARE IL REPORT XML ---
+SQL_GENERATE_XML = """
+    SELECT output
+    FROM TABLE(DBMS_WORKLOAD_REPOSITORY.AWR_REPORT_XML(
+        (SELECT dbid FROM v$database),
+        (SELECT instance_number FROM v$instance),
+        :bid, -- Begin Snap
+        :eid  -- End Snap
+    ))
+"""
+
+def get_snapshot_list(conn, days):
+    """Recupera la lista degli ID snapshot disponibili"""
+    cursor = conn.cursor()
+    cursor.execute(SQL_LIST_SNAPS, days=days)
+    # Restituisce una lista di tuple: (145, '20231229_1400')
+    return cursor.fetchall()
+
+def download_awr_xml(conn, begin_id, end_id, filename):
+    """Scarica il singolo report XML tra due snapshot"""
+    cursor = conn.cursor()
+    try:
+        cursor.execute(SQL_GENERATE_XML, bid=begin_id, eid=end_id)
+        
+        full_xml = ""
+        for row in cursor:
+            chunk = row[0].read() if hasattr(row[0], 'read') else row[0]
+            if chunk:
+                full_xml += chunk
+        
+        # Salvataggio su file
+        with open(filename, "w", encoding="utf-8") as f:
+            f.write(full_xml)
+        return True
+    except Exception as e:
+        print(f"      ❌ Errore generazione XML {begin_id}-{end_id}: {e}")
+        return False
+
+def process_target(target):
+    print(f"\n📡 Connessione a {target['name']}...")
+    try:
+        conn = oracledb.connect(user=DB_USER, password=DB_PASS, dsn=target['dsn'])
+        
+        # 1. Trova gli snapshot disponibili
+        snaps = get_snapshot_list(conn, DAYS_BACK)
+        if len(snaps) < 2:
+            print("   ⚠️  Meno di 2 snapshot trovati. Impossibile generare report.")
+            conn.close()
+            return
+
+        print(f"   📅 Trovati {len(snaps)} snapshot negli ultimi {DAYS_BACK} giorni.")
+
+        # Crea cartella specifica per questo DB
+        db_folder = os.path.join(OUTPUT_DIR, target['name'])
+        os.makedirs(db_folder, exist_ok=True)
+
+        # 2. Ciclo per generare i report (Coppie: Oggi vs Ieri)
+        # Iteriamo dalla lista. snaps[i] è il più recente (End), snaps[i+1] è il precedente (Begin)
+        count = 0
+        for i in range(len(snaps) - 1):
+            end_snap = snaps[i]      # Es. ID 102 (ore 15:00)
+            begin_snap = snaps[i+1]  # Es. ID 101 (ore 14:00)
+            
+            # Nome file esplicativo: PDB1_20231229_1500_snap101-102.xml
+            fname = f"{target['name']}_{end_snap[1]}_snap{begin_snap[0]}-{end_snap[0]}.xml"
+            full_path = os.path.join(db_folder, fname)
+
+            if os.path.exists(full_path):
+                print(f"      ⏭️  {fname} esiste già. Salto.")
+                continue
+
+            print(f"      📥 Scarico intervallo {begin_snap[0]} -> {end_snap[0]}...")
+            if download_awr_xml(conn, begin_snap[0], end_snap[0], full_path):
+                count += 1
+
+        print(f"   ✅ Finito {target['name']}: {count} nuovi file XML scaricati.")
+        conn.close()
+
+    except Exception as e:
+        print(f"   ❌ Errore critico su {target['name']}: {e}")
+
+if __name__ == "__main__":
+    if not os.path.exists(OUTPUT_DIR):
+        os.makedirs(OUTPUT_DIR)
+    
+    print(f"--- START AWR HISTORY DUMP (Ultimi {DAYS_BACK} gg) ---")
+    for t in TARGETS:
+        process_target(t)

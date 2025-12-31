@@ -1,0 +1,29 @@
+
+Prerequisiti
+Connettersi come SYSDBA (o utente con permessi su DBMS_WORKLOAD_REPOSITORY).
+Avere accesso a SQL*Plus (o SQLcl).
+Conoscere DBID, instance number e gli snap_id di inizio/fine.
+1) Trovare DBID, instance e snapshot
+Esegui:
+
+2) Generare AWR in XML (metodo consigliato)
+In SQL*Plus:
+
+Il CLOB stampato nello spool sarà il file XML AWR.
+Se la funzione AWR_REPORT_XML non è presente, usa AWR_REPORT_HTML o lo script awrrpt.sql.
+3) Alternativa: script interattivo Oracle
+Da SQL*Plus:
+
+Segui le richieste (snap start/end, tipo OUTPUT HTML/TEXT). Lo script non sempre esporta XML direttamente.
+
+Note su PDB / CDB (multitenant)
+Per estrarre AWR di una PDB, connettiti alla PDB o ALTER SESSION SET CONTAINER = PDB1; prima di eseguire le query/funzioni AWR.
+Per AWR del CDB, resta in CDB$ROOT.
+Buone pratiche
+Usa SPOOL per salvare direttamente il risultato in file.
+Imposta SET LONG e LONGCHUNKSIZE per gestire CLOB grandi.
+Conserva metadati (file name, db, snap ids) nel nome del file per facilità.
+Vuoi che:
+
+Creo uno script (Python/PowerShell) automatico che prende dbid/instance/snap e salva XML in awr_dump_xml/? ✅
+Oppure preferisci che prima analizzi alcuni XML esistenti per definire la mappatura verso JSON?
