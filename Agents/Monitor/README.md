@@ -1,18 +1,18 @@
-# SADA-MONITOR Agent
+# 📡 Monitor Agent
 
-The **Monitor** agent syncs alerts from Checkmk to the CMDB.
+Agente per la sincronizzazione degli alert da Checkmk al CMDB.
 
-## Functions
+## 📋 Funzionalità
 
-1. **API Polling**: Queries Checkmk REST API for service states.
-2. **CMDB Linking**: Matches alerts to `db_unique_name` in `inventory_databases`.
-3. **Persistence**: Writes/updates `monitoring_alerts` collection.
+1. **Polling API**: Interroga l'API REST di Checkmk per gli stati dei servizi
+2. **Link CMDB**: Collega gli alert al `db_unique_name` in `inventory_databases`
+3. **Persistenza**: Scrive/aggiorna la collezione `monitoring_alerts`
 
-## Frequency
-- **Every 1 minute** for critical alerts.
-- **Every 5 minutes** for warning/ok states.
+## ⏱️ Frequenza
+- **Ogni 1 minuto** per alert critici
+- **Ogni 5 minuti** per stati warning/ok
 
-## Configuration
+## ⚙️ Configurazione
 
 ```yaml
 # config/checkmk.yaml
@@ -29,10 +29,10 @@ filters:
     - "Tablespace*"
 ```
 
-## Key Endpoints Used
+## 🔗 Endpoint Utilizzati
 
-| Endpoint                          | Purpose             |
-| --------------------------------- | ------------------- |
-| `GET /domain-types/host/...`      | List managed hosts  |
-| `GET /domain-types/service/...`   | Get service states  |
-| `GET .../show_service_metrics`    | Get metrics data    |
+| Endpoint | Scopo |
+|----------|-------|
+| `GET /domain-types/host/...` | Lista host gestiti |
+| `GET /domain-types/service/...` | Stati servizi |
+| `GET .../show_service_metrics` | Dati metriche |

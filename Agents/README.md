@@ -1,25 +1,37 @@
-# SADA: Semantic Auto-Discovery Architecture
+# 🕵️ Agenti SADA
 
-AI agents for enterprise database management.
+Agenti AI per la gestione automatizzata dei database enterprise.
 
-## Agents
+## 📋 Lista Agenti
 
-| Agent | Schedule | Purpose |
-|-------|----------|---------|
-| **Scout** | 5 min | Discover new databases |
-| **Collector** | Daily | Deep extraction (config, storage) |
-| **Monitor** | 1 min | Sync Checkmk alerts |
-| **DailyAudit** | Daily 02:00 | Full compliance check |
-| **CriticalAlert** | Real-time | Critical error detection |
+| Agente | Schedule | Descrizione |
+|--------|----------|-------------|
+| **Scout** | 5 min | Scoperta nuovi database via process scanning |
+| **Collector** | Giornaliero | Estrazione profonda (configurazione, storage, metriche) |
+| **Monitor** | 1 min | Sincronizzazione alert Checkmk |
+| **DailyAudit** | Giornaliero 02:00 | Controllo conformità completo |
+| **CriticalAlert** | Real-time | Rilevamento errori critici |
 
-## Structure
+## 🏗️ Struttura
 
 ```
 Agents/
-├── Scout/          # Discovery
-├── Collector/      # Deep extraction
-├── Monitor/        # Checkmk sync
-├── DailyAudit/     # Daily compliance
-├── CriticalAlert/  # Real-time alerts
-└── main.py         # Orchestrator
+├── Scout/          # Scoperta
+├── Collector/      # Estrazione profonda
+├── Monitor/        # Sync Checkmk
+├── DailyAudit/     # Audit giornaliero
+├── CriticalAlert/  # Alert critici
+└── main.py         # Orchestratore
+```
+
+## 🚀 Utilizzo
+
+```bash
+# Collector - raccolta dati da host specifici
+cd Collector
+python main.py --targets host1.local host2.local --gateway dbgec2
+
+# DailyAudit - esegui audit manuale
+cd DailyAudit
+python main.py --run-now
 ```

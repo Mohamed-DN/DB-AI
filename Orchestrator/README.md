@@ -1,29 +1,49 @@
-# Orchestrator Layer (Layer 3)
+# 🧠 Orchestrator
 
-The brain of the DBA AI system. Coordinates all AI processing and decision-making.
+Cervello del sistema DBA AI. Coordina l'elaborazione AI e le decisioni.
 
-## Components
+## 📋 Componenti
 
-| Directory | Purpose |
-|-----------|---------|
-| `rag/` | Retrieval Augmented Generation pipeline |
-| `llm/` | Local LLM integration (Ollama) |
-| `vector_db/` | Qdrant configuration for embeddings |
-| `modules/` | AI behavior modules |
+| Directory | Descrizione |
+|-----------|-------------|
+| `rag/` | Pipeline Retrieval Augmented Generation |
+| `llm/` | Integrazione LLM locale (Ollama) |
+| `vector_db/` | Configurazione Qdrant per embedding |
+| `modules/` | Moduli comportamentali AI |
 
-## AI Modules
+## 🤖 Moduli AI
 
 ### THE ARCHITECTURE
-System design and topology understanding. Knows how databases relate to each other.
+Comprensione della topologia e delle relazioni tra sistemi.
+- Conosce le topologie RAC, Data Guard, GoldenGate
+- Mappa dipendenze tra database
+- Fornisce contesto architetturale
 
 ### THE WATCHER
-Proactive monitoring. Predicts problems before they occur using patterns and ML.
+Monitoring proattivo. Predice problemi prima che accadano.
+- Analizza trend nelle metriche
+- Predice problemi di capacità
+- Correla alert tra sistemi
 
 ### THE TUNING
-Performance optimization. Suggests and applies tuning configurations.
+Ottimizzazione delle performance.
+- Analizza report AWR/ASH
+- Suggerisce modifiche parametri
+- Identifica query lente
 
-## Data Sources
+## 📊 Moduli Business
 
-- **MongoDB**: CMDB, documents, prompts
-- **Qdrant**: Vector embeddings for semantic search
-- **Checkmk**: Real-time monitoring alerts
+### performance/
+- SQL Tuning
+- Rilevamento cambio piano
+- Analisi bind variables
+
+### capacity/
+- Gestione storage
+- Policy di retention
+- Baseline prestazioni
+
+### best_practices/
+- Verifica partitioning
+- Analisi indicizzazione
+- Validazione ambienti

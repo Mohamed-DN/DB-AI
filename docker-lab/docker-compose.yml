@@ -1,0 +1,194 @@
+# =============================================================================
+# NEXI DBA AI - AMBIENTE DI LABORATORIO
+# =============================================================================
+# Questo docker-compose crea un ambiente completo per testare il sistema DBA AI
+# Include: LLM (Ollama), MongoDB, Redis, 2 Gateway SSH, 4 Database PostgreSQL
+# =============================================================================
+
+version: '3.8'
+
+networks:
+  nexi-lab:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.20.0.0/16
+
+services:
+  # ===========================================================================
+  # ORCHESTRATOR - Servizi centrali
+  # ===========================================================================
+
+  # MongoDB - CMDB Database
+  mongodb:
+    image: mongo:7
+    container_name: nexi-mongodb
+    hostname: mongodb.nexi.lab
+    ports:
+      - "27017:27017"
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: admin
+      MONGO_INITDB_ROOT_PASSWORD: nexi2024
+      MONGO_INITDB_DATABASE: nexi_cmdb
+    volumes:
+      - mongodb_data:/data/db
+    networks:
+      nexi-lab:
+        ipv4_address: 172.20.0.10
+    restart: unless-stopped
+
+  # Redis - Message Queue
+  redis:
+    image: redis:7-alpine
+    container_name: nexi-redis
+    hostname: redis.nexi.lab
+    ports:
+      - "6379:6379"
+    networks:
+      nexi-lab:
+        ipv4_address: 172.20.0.11
+    restart: unless-stopped
+
+  # Ollama - Local LLM
+  ollama:
+    image: ollama/ollama:latest
+    container_name: nexi-ollama
+    hostname: ollama.nexi.lab
+    ports:
+      - "11434:11434"
+    volumes:
+      - ollama_data:/root/.ollama
+    networks:
+      nexi-lab:
+        ipv4_address: 172.20.0.12
+    restart: unless-stopped
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: all
+              capabilities: [ gpu ]
+
+  # Qdrant - Vector Database
+  qdrant:
+    image: qdrant/qdrant:latest
+    container_name: nexi-qdrant
+    hostname: qdrant.nexi.lab
+    ports:
+      - "6333:6333"
+    volumes:
+      - qdrant_data:/qdrant/storage
+    networks:
+      nexi-lab:
+        ipv4_address: 172.20.0.13
+    restart: unless-stopped
+
+  # ===========================================================================
+  # GATEWAY 1 - Milano (Datacenter Primario)
+  # ===========================================================================
+
+  gateway-milano:
+    build: ./gateway-ssh
+    container_name: nexi-gw-milano
+    hostname: gw-milano.nexi.lab
+    ports:
+      - "2221:22"
+    networks:
+      nexi-lab:
+        ipv4_address: 172.20.1.1
+    depends_on:
+      - pg-milano-prod
+      - pg-milano-dev
+    restart: unless-stopped
+
+  # PostgreSQL Milano - PROD
+  pg-milano-prod:
+    image: postgres:15
+    container_name: nexi-pg-milano-prod
+    hostname: pg-milano-prod.nexi.lab
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: nexi2024
+      POSTGRES_DB: payments_prod
+    volumes:
+      - pg_milano_prod_data:/var/lib/postgresql/data
+    networks:
+      nexi-lab:
+        ipv4_address: 172.20.1.10
+    restart: unless-stopped
+
+  # PostgreSQL Milano - DEV
+  pg-milano-dev:
+    image: postgres:15
+    container_name: nexi-pg-milano-dev
+    hostname: pg-milano-dev.nexi.lab
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: nexi2024
+      POSTGRES_DB: payments_dev
+    volumes:
+      - pg_milano_dev_data:/var/lib/postgresql/data
+    networks:
+      nexi-lab:
+        ipv4_address: 172.20.1.11
+    restart: unless-stopped
+
+  # ===========================================================================
+  # GATEWAY 2 - Bratislava (Datacenter Secondario)
+  # ===========================================================================
+
+  gateway-bratislava:
+    build: ./gateway-ssh
+    container_name: nexi-gw-bratislava
+    hostname: gw-bratislava.nexi.lab
+    ports:
+      - "2222:22"
+    networks:
+      nexi-lab:
+        ipv4_address: 172.20.2.1
+    depends_on:
+      - pg-bratislava-prod
+      - pg-bratislava-dev
+    restart: unless-stopped
+
+  # PostgreSQL Bratislava - PROD
+  pg-bratislava-prod:
+    image: postgres:15
+    container_name: nexi-pg-bratislava-prod
+    hostname: pg-bratislava-prod.nexi.lab
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: nexi2024
+      POSTGRES_DB: cards_prod
+    volumes:
+      - pg_bratislava_prod_data:/var/lib/postgresql/data
+    networks:
+      nexi-lab:
+        ipv4_address: 172.20.2.10
+    restart: unless-stopped
+
+  # PostgreSQL Bratislava - DEV
+  pg-bratislava-dev:
+    image: postgres:15
+    container_name: nexi-pg-bratislava-dev
+    hostname: pg-bratislava-dev.nexi.lab
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: nexi2024
+      POSTGRES_DB: cards_dev
+    volumes:
+      - pg_bratislava_dev_data:/var/lib/postgresql/data
+    networks:
+      nexi-lab:
+        ipv4_address: 172.20.2.11
+    restart: unless-stopped
+
+volumes:
+  mongodb_data:
+  ollama_data:
+  qdrant_data:
+  pg_milano_prod_data:
+  pg_milano_dev_data:
+  pg_bratislava_prod_data:
+  pg_bratislava_dev_data:

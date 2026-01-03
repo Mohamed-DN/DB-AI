@@ -1,8 +1,16 @@
-# Nexi DBA AI Assistant
+# 🤖 Nexi DBA AI Assistant
 
-AI-powered DBA support for 2000+ enterprise databases.
+Sistema AI per la gestione di oltre 2000 database enterprise (Oracle, Postgres, MySQL, Cassandra).
 
-## 🏗️ Architecture
+## 🎯 Obiettivi del Progetto
+
+| Fase | Obiettivo | Stato |
+|------|-----------|-------|
+| 1 | **Alerting Proattivo**: Prevedere problemi prima che accadano | 🔄 In Corso |
+| 2 | **Supporto e Automazione**: Suggerimenti runbook, automazione task | 📋 Pianificato |
+| 3 | **Operazioni Autonome**: Self-healing, capacity planning | 📋 Futuro |
+
+## 🏗️ Architettura
 
 ```
 ┌─────────────────────────────────────────────────────────────────┐
@@ -13,32 +21,72 @@ AI-powered DBA support for 2000+ enterprise databases.
 │ Redis Queues (cmd_in / result_out)                              │
 ├─────────────────────────────────────────────────────────────────┤
 │ ORCHESTRATOR                                                     │
-│ ├── AI Modules: Architecture | Watcher | Tuning                 │
-│ ├── Business Modules: Performance | Capacity | Best Practices   │
+│ ├── Moduli AI: Architecture | Watcher | Tuning                  │
+│ ├── Moduli Business: Performance | Capacity | Best Practices    │
 │ └── RAG + LLM (Ollama) + Qdrant                                 │
 ├─────────────────────────────────────────────────────────────────┤
-│ MONGODB CMDB (9 Collections)                                     │
+│ MONGODB CMDB (9 Collezioni)                                      │
 │ inventory_databases | business_services | gateways |            │
 │ discovery_queue | agent_runs | rag_knowledge_base |             │
 │ monitoring_alerts | baselines | compliance_reports              │
 └─────────────────────────────────────────────────────────────────┘
 ```
 
-## � Manager Requirements Mapping
+## 📁 Struttura del Progetto
 
-| Requirement | Component |
-|-------------|-----------|
-| CENSIMENTO (Census) | `inventory_databases` + `business_services` |
+| Directory | Descrizione |
+|-----------|-------------|
+| `Agents/` | 5 agenti SADA (Scout, Collector, Monitor, DailyAudit, CriticalAlert) |
+| `Gateway/` | Routing Redis |
+| `Orchestrator/` | Moduli AI + Business |
+| `MongoDB/` | Schemi CMDB (9 collezioni) |
+| `Clients/` | Dashboard React |
+| `docker-lab/` | Ambiente di test Docker |
+
+## 🚀 Avvio Rapido
+
+### 1. Avviare l'ambiente di test
+```bash
+cd docker-lab
+docker-compose up -d
+```
+
+### 2. Installare dipendenze Python
+```bash
+cd MongoDB
+pip install -r requirements.txt
+```
+
+### 3. Inizializzare il database
+```bash
+cd MongoDB/scripts
+python create_indexes.py
+python seed_sample_data.py
+```
+
+### 4. Eseguire il Collector (test)
+```bash
+cd Agents/Collector
+python main.py --targets pg-milano-prod.nexi.lab --gateway gw-milano
+```
+
+## 📋 Requisiti del Manager
+
+| Requisito | Componente |
+|-----------|------------|
+| CENSIMENTO | `inventory_databases` + `business_services` |
 | PERFORMANCE | `Orchestrator/modules/performance` |
 | CAPACITY | `Orchestrator/modules/capacity` + `baselines` |
 | BEST PRACTICES | `Orchestrator/modules/best_practices` |
-| Daily Audit | `Agents/DailyAudit` → `compliance_reports` |
-| Critical Alerts | `Agents/CriticalAlert` + Checkmk |
+| Audit Giornaliero | `Agents/DailyAudit` → `compliance_reports` |
+| Alert Critici | `Agents/CriticalAlert` + Checkmk |
 
-## � Project Structure
+## 🔗 Integrazioni
 
-- **Agents/**: 5 agents (Scout, Collector, Monitor, DailyAudit, CriticalAlert)
-- **Gateway/**: Redis routing
-- **Orchestrator/**: AI + Business modules
-- **MongoDB/**: CMDB schemas (9 collections)
-- **Clients/**: Dashboard
+| Sistema | Scopo |
+|---------|-------|
+| Checkmk | Dati di monitoring |
+| Redis | Message queuing |
+| MongoDB | Storage CMDB |
+| Qdrant | Ricerca vettoriale |
+| Ollama | LLM locale |

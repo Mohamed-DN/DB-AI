@@ -1,22 +1,23 @@
-# CriticalAlert Agent
+# 🚨 CriticalAlert Agent
 
-Real-time agent that monitors for critical errors and triggers immediate alerts.
+Agente real-time che monitora errori critici e attiva alert immediati.
 
-## Schedule
-- **Frequency**: Continuous (polling every 30 seconds)
-- **Source**: Checkmk + direct DB checks
+## ⏱️ Schedule
+- **Frequenza**: Continuo (polling ogni 30 secondi)
+- **Sorgente**: Checkmk + controlli diretti DB
 
-## Critical Conditions Monitored
+## 🔴 Condizioni Critiche Monitorate
 
-| Condition | Severity | Action |
-|-----------|----------|--------|
+| Condizione | Severità | Azione |
+|------------|----------|--------|
 | Database DOWN | CRITICAL | Email BAO + DL |
 | Tablespace > 95% | CRITICAL | Email BAO |
-| Data Guard LAG > 1 hour | HIGH | Email DL |
-| Backup failed | HIGH | Email DL |
-| Blocking session > 30 min | MEDIUM | Log + Alert |
+| Data Guard LAG > 1 ora | HIGH | Email DL |
+| Backup fallito | HIGH | Email DL |
+| Sessione bloccante > 30 min | MEDIUM | Log + Alert |
 
-## Integration
-- Reads from `monitoring_alerts` (Checkmk sync)
-- Queries CMDB for contact info
-- Sends emails via SMTP
+## 🔗 Integrazione
+
+- Legge da `monitoring_alerts` (sync Checkmk)
+- Interroga CMDB per info contatti
+- Invia email via SMTP

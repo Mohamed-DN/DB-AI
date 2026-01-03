@@ -1,32 +1,33 @@
-# DailyAudit Agent
+# 📋 DailyAudit Agent
 
-Runs once per day to perform a comprehensive compliance check across all databases.
+Esegue un controllo di conformità completo su tutti i database una volta al giorno.
 
-## Schedule
-- **Frequency**: Daily at 02:00 AM
-- **Duration**: ~2-4 hours depending on DB count
+## ⏱️ Schedule
+- **Frequenza**: Giornaliero alle 02:00
+- **Durata**: ~2-4 ore a seconda del numero di DB
 
-## Checks Performed
+## ✅ Controlli Eseguiti
 
-### CENSIMENTO (Census)
-- BAO/DL/Reperibilità completeness
-- SNOW group assignment
-- Gateway accessibility
+### CENSIMENTO
+- Completezza BAO/DL/Reperibilità
+- Assegnazione gruppo SNOW
+- Accessibilità gateway
 
 ### PERFORMANCE
-- SQL plan changes in last 24h
-- Restore point existence > X hours
-- Connection pool sizing
+- Cambio piano SQL nelle ultime 24h
+- Esistenza restore point > X ore
+- Dimensionamento connection pool
 
 ### CAPACITY
-- Tablespace usage vs threshold
-- Diskgroup usage vs max
-- Data retention compliance
+- Utilizzo tablespace vs soglia
+- Utilizzo diskgroup vs massimo
+- Conformità data retention
 
 ### BEST PRACTICES
-- Non-partitioned tables > 50GB
-- Missing incremental stats on large tables
-- Dedicated TEMP/Resource Manager usage
+- Tabelle non partizionate > 50GB
+- Stats incrementali mancanti su tabelle grandi
+- Utilizzo TEMP dedicata / Resource Manager
 
-## Output
-Writes results to `compliance_reports` collection.
+## 📤 Output
+
+I risultati vengono scritti nella collezione `compliance_reports`.
