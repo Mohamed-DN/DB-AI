@@ -123,6 +123,8 @@ services:
     image: postgres:15
     container_name: nexi-pg-milano-dev
     hostname: pg-milano-dev.nexi.lab
+    ports:
+      - "5433:5432"
     environment:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: nexi2024
@@ -173,6 +175,8 @@ services:
     image: postgres:15
     container_name: nexi-pg-bratislava-dev
     hostname: pg-bratislava-dev.nexi.lab
+    ports:
+      - "5434:5432"
     environment:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: nexi2024
