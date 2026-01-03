@@ -1,0 +1,142 @@
+✅ Connected to MongoDB
+🚀 Starting CriticalAlert Agent (checking every 5s)
+📧 Alerts will be sent to: mohamed.d.n.2002@gmail.com
+
+============================================================
+🔍 CriticalAlert Agent Check - 2026-01-03 17:02:54
+============================================================
+✅ All databases OK
+
+============================================================
+🔍 CriticalAlert Agent Check - 2026-01-03 17:02:59
+============================================================
+
+🚨 Found 2 alert(s)!
+  [CRITICAL] PG-Milano-DEV: DATABASE_DOWN
+    ❌ Failed to save to MongoDB: Authentication failed., full error: {'ok': 0.0, 'errmsg': 'Authentication failed.', 'code': 18, 'codeName': 'AuthenticationFailed'}
+  [CRITICAL] PG-Bratislava-DEV: DATABASE_DOWN
+    ❌ Failed to save to MongoDB: Authentication failed., full error: {'ok': 0.0, 'errmsg': 'Authentication failed.', 'code': 18, 'codeName': 'AuthenticationFailed'}
+
+============================================================
+🔍 CriticalAlert Agent Check - 2026-01-03 17:03:09
+============================================================
+
+🚨 Found 2 alert(s)!
+  [CRITICAL] PG-Milano-DEV: DATABASE_DOWN
+    ❌ Failed to save to MongoDB: Authentication failed., full error: {'ok': 0.0, 'errmsg': 'Authentication failed.', 'code': 18, 'codeName': 'AuthenticationFailed'}
+  [CRITICAL] PG-Bratislava-DEV: DATABASE_DOWN
+    ❌ Failed to save to MongoDB: Authentication failed., full error: {'ok': 0.0, 'errmsg': 'Authentication failed.', 'code': 18, 'codeName': 'AuthenticationFailed'}
+
+============================================================
+🔍 CriticalAlert Agent Check - 2026-01-03 17:03:29
+============================================================
+
+🚨 Found 2 alert(s)!
+  [CRITICAL] PG-Milano-DEV: DATABASE_DOWN
+    ❌ Failed to save to MongoDB: Authentication failed., full error: {'ok': 0.0, 'errmsg': 'Authentication failed.', 'code': 18, 'codeName': 'AuthenticationFailed'}
+  [CRITICAL] PG-Bratislava-DEV: DATABASE_DOWN
+    ❌ Failed to save to MongoDB: Authentication failed., full error: {'ok': 0.0, 'errmsg': 'Authentication failed.', 'code': 18, 'codeName': 'AuthenticationFailed'}
+
+============================================================
+🔍 CriticalAlert Agent Check - 2026-01-03 17:03:49
+============================================================
+
+🚨 Found 2 alert(s)!
+  [CRITICAL] PG-Milano-DEV: DATABASE_DOWN
+    ❌ Failed to save to MongoDB: Authentication failed., full error: {'ok': 0.0, 'errmsg': 'Authentication failed.', 'code': 18, 'codeName': 'AuthenticationFailed'}
+  [CRITICAL] PG-Bratislava-DEV: DATABASE_DOWN
+    ❌ Failed to save to MongoDB: Authentication failed., full error: {'ok': 0.0, 'errmsg': 'Authentication failed.', 'code': 18, 'codeName': 'AuthenticationFailed'}
+
+============================================================
+🔍 CriticalAlert Agent Check - 2026-01-03 17:04:09
+============================================================
+
+🚨 Found 2 alert(s)!
+  [CRITICAL] PG-Milano-DEV: DATABASE_DOWN
+    ❌ Failed to save to MongoDB: Authentication failed., full error: {'ok': 0.0, 'errmsg': 'Authentication failed.', 'code': 18, 'codeName': 'AuthenticationFailed'}
+  [CRITICAL] PG-Bratislava-DEV: DATABASE_DOWN
+    ❌ Failed to save to MongoDB: Authentication failed., full error: {'ok': 0.0, 'errmsg': 'Authentication failed.', 'code': 18, 'codeName': 'AuthenticationFailed'}
+
+============================================================
+🔍 CriticalAlert Agent Check - 2026-01-03 17:04:29
+============================================================
+✅ All databases OK
+
+============================================================
+🔍 CriticalAlert Agent Check - 2026-01-03 17:04:34
+============================================================
+✅ All databases OK
+
+============================================================
+🔍 CriticalAlert Agent Check - 2026-01-03 17:04:39
+============================================================
+✅ All databases OK
+
+============================================================
+🔍 CriticalAlert Agent Check - 2026-01-03 17:04:45
+============================================================
+
+🚨 Found 1 alert(s)!
+  [CRITICAL] PG-Bratislava-DEV: DATABASE_DOWN
+    ❌ Failed to save to MongoDB: Authentication failed., full error: {'ok': 0.0, 'errmsg': 'Authentication failed.', 'code': 18, 'codeName': 'AuthenticationFailed'}
+
+============================================================
+🔍 CriticalAlert Agent Check - 2026-01-03 17:04:54
+============================================================
+
+🚨 Found 1 alert(s)!
+  [CRITICAL] PG-Bratislava-DEV: DATABASE_DOWN
+    ❌ Failed to save to MongoDB: Authentication failed., full error: {'ok': 0.0, 'errmsg': 'Authentication failed.', 'code': 18, 'codeName': 'AuthenticationFailed'}
+
+============================================================
+🔍 CriticalAlert Agent Check - 2026-01-03 17:05:03
+============================================================
+
+🚨 Found 2 alert(s)!
+  [CRITICAL] PG-Milano-DEV: DATABASE_DOWN
+    ❌ Failed to save to MongoDB: Authentication failed., full error: {'ok': 0.0, 'errmsg': 'Authentication failed.', 'code': 18, 'codeName': 'AuthenticationFailed'}
+  [CRITICAL] PG-Bratislava-DEV: DATABASE_DOWN
+    ❌ Failed to save to MongoDB: Authentication failed., full error: {'ok': 0.0, 'errmsg': 'Authentication failed.', 'code': 18, 'codeName': 'AuthenticationFailed'}
+
+============================================================
+🔍 CriticalAlert Agent Check - 2026-01-03 17:05:19
+============================================================
+
+🚨 Found 2 alert(s)!
+  [CRITICAL] PG-Milano-DEV: DATABASE_DOWN
+    ❌ Failed to save to MongoDB: Authentication failed., full error: {'ok': 0.0, 'errmsg': 'Authentication failed.', 'code': 18, 'codeName': 'AuthenticationFailed'}
+  [CRITICAL] PG-Bratislava-DEV: DATABASE_DOWN
+    ❌ Failed to save to MongoDB: Authentication failed., full error: {'ok': 0.0, 'errmsg': 'Authentication failed.', 'code': 18, 'codeName': 'AuthenticationFailed'}
+
+============================================================
+🔍 CriticalAlert Agent Check - 2026-01-03 17:05:39
+============================================================
+
+🚨 Found 2 alert(s)!
+  [CRITICAL] PG-Milano-DEV: DATABASE_DOWN
+    ❌ Failed to save to MongoDB: Authentication failed., full error: {'ok': 0.0, 'errmsg': 'Authentication failed.', 'code': 18, 'codeName': 'AuthenticationFailed'}
+  [CRITICAL] PG-Bratislava-DEV: DATABASE_DOWN
+    ❌ Failed to save to MongoDB: Authentication failed., full error: {'ok': 0.0, 'errmsg': 'Authentication failed.', 'code': 18, 'codeName': 'AuthenticationFailed'}
+
+============================================================
+🔍 CriticalAlert Agent Check - 2026-01-03 17:05:59
+============================================================
+
+🚨 Found 2 alert(s)!
+  [CRITICAL] PG-Milano-DEV: DATABASE_DOWN
+    ❌ Failed to save to MongoDB: Authentication failed., full error: {'ok': 0.0, 'errmsg': 'Authentication failed.', 'code': 18, 'codeName': 'AuthenticationFailed'}
+  [CRITICAL] PG-Bratislava-DEV: DATABASE_DOWN
+    ❌ Failed to save to MongoDB: Authentication failed., full error: {'ok': 0.0, 'errmsg': 'Authentication failed.', 'code': 18, 'codeName': 'AuthenticationFailed'}
+
+============================================================
+🔍 CriticalAlert Agent Check - 2026-01-03 17:06:19
+============================================================
+
+🚨 Found 2 alert(s)!
+  [CRITICAL] PG-Milano-DEV: DATABASE_DOWN
+    ❌ Failed to save to MongoDB: Authentication failed., full error: {'ok': 0.0, 'errmsg': 'Authentication failed.', 'code': 18, 'codeName': 'AuthenticationFailed'}
+  [CRITICAL] PG-Bratislava-DEV: DATABASE_DOWN
+    ❌ Failed to save to MongoDB: Authentication failed., full error: {'ok': 0.0, 'errmsg': 'Authentication failed.', 'code': 18, 'codeName': 'AuthenticationFailed'}
+
+============================================================
+🔍 CriticalAlert Agent Check - 2026-01-03 17:06:39

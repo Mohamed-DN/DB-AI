@@ -4,6 +4,7 @@ CriticalAlert Agent - Real-time monitoring and email alerts
 import os
 import time
 import smtplib
+import sys
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 from datetime import datetime
@@ -142,7 +143,21 @@ class CriticalAlertAgent:
         self.email_sender = EmailSender()
         self.databases = []
         self.alerts_sent = []
-    
+        
+        # Connect to MongoDB via Proxy
+        try:
+            # Add path to find Orchestrator modules if needed, or just import
+            # We need to make sure we can import MongoProxy.
+            # Assuming running from root or similar. 
+            # We will copy MongoProxy to CriticalAlert folder for simplicity if import fails.
+            sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '../../')))
+            from Orchestrator.src.mongo_proxy import MongoProxy
+            self.mongo_proxy = MongoProxy()
+            print("✅ Connected to MongoDB (Proxy)")
+        except Exception as e:
+            print(f"❌ MongoDB Proxy Setup Failed: {e}")
+            self.mongo_proxy = None
+
     def add_database(self, host: str, port: int, user: str, password: str, database: str, name: str):
         """Add a database to monitor"""
         self.databases.append(PostgresChecker(host, port, user, password, database, name))
@@ -159,8 +174,13 @@ class CriticalAlertAgent:
                     "severity": "CRITICAL",
                     "type": "DATABASE_DOWN",
                     "database": db.name,
+                    "host_name": db.host,
+                    "service": f"PostgreSQL-{db.name}",
                     "message": f"Database {db.name} is DOWN! Error: {conn_result.get('error', 'Unknown')}",
-                    "timestamp": datetime.now()
+                    "output": f"Database {db.name} is DOWN! Error: {conn_result.get('error', 'Unknown')}",
+                    "state": "CRITICAL",
+                    "timestamp": datetime.now(),
+                    "processed": False
                 }
                 alerts.append(alert)
             else:
@@ -173,8 +193,13 @@ class CriticalAlertAgent:
                             "severity": "WARNING",
                             "type": "STORAGE_HIGH",
                             "database": db.name,
+                            "service": f"PostgreSQL-{db.name}",
+                            "host_name": db.host,
+                            "output": f"Database {db.name} storage is HIGH: {storage_result['size_mb']}MB",
+                             "state": "WARNING",
                             "message": f"Database {db.name} storage is HIGH: {storage_result['size_mb']}MB",
-                            "timestamp": datetime.now()
+                            "timestamp": datetime.now(),
+                            "processed": False
                         }
                         alerts.append(alert)
         
@@ -193,14 +218,21 @@ class CriticalAlertAgent:
             for alert in alerts:
                 print(f"  [{alert['severity']}] {alert['database']}: {alert['type']}")
                 
-                # Send email for CRITICAL alerts
-                if alert['severity'] == 'CRITICAL':
-                    self.email_sender.send_alert(
-                        self.alert_email,
-                        f"{alert['type']} - {alert['database']}",
-                        alert['message']
-                    )
-                    self.alerts_sent.append(alert)
+                # Save to MongoDB
+                if self.mongo_proxy is not None:
+                    try:
+                        self.mongo_proxy.insert_alert(alert)
+                        print("    💾 Alert saved to MongoDB")
+                    except Exception as e:
+                        print(f"    ❌ Failed to save to MongoDB: {e}")
+
+                # Send email for CRITICAL alerts (Directly OR handled by Orchestrator? 
+                # User asked for Orchestrator to do it. But agent also has logic. 
+                # I'll disable direct email here if Orchestrator is supposed to do it, 
+                # OR keep it as redundant backup. I'll comment it out to let Orchestrator demonstrate.)
+                
+                # if alert['severity'] == 'CRITICAL':
+                #     self.email_sender.send_alert(...)
         else:
             print("✅ All databases OK")
         
