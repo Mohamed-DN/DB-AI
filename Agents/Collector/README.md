@@ -1,15 +1,51 @@
-# SADA-COLLECTOR Agent
+# SADA Collector Agent
 
-The **Collector** agent performs deep inspection of identified services.
+Deep extraction agent for populating the CMDB with Oracle/Postgres data.
 
-## Functions
+## Features
+- SSH via Gateway (bastion) or direct
+- Oracle data extraction (version, patches, storage, RAC, DataGuard)
+- System data extraction (OS, CPU, memory)
+- CMDB transformation and update
 
-1. **Task Execution**: Reads targets from `Discovery_Queue`.
-2. **Deep Inspection**: Connects to databases (Oracle, Postgres) to retrieve detailed configuration.
-3. **Normalization**: Uses AI to structure data into the standard CMDB JSON format.
-4. **Storage**: Saves the final inventory to `CMDB_Inventory`.
+## Setup
+```bash
+pip install -r requirements.txt
+cp config/config.yaml.example config/config.yaml
+# Edit config.yaml with your gateway credentials
+```
 
-## Resources
+## Usage
+```bash
+# Collect from specific hosts
+python main.py --targets host1.local host2.local --gateway dbgec2
 
-- **resources/oracle_scripts/**: SQL scripts for Oracle metadata extraction (AWR, Metrics, Locks, etc.).
-- **steps.md**: Implementation steps/notes.
+# Direct connection (no gateway)
+python main.py --targets host1.local --no-gateway
+```
+
+## Structure
+```
+Collector/
+├── main.py                 # Entry point
+├── requirements.txt
+├── config/
+│   └── config.yaml.example
+├── src/
+│   ├── ssh_connection.py   # Gateway/SSH helper
+│   ├── cmdb_updater.py     # CMDB transformation
+│   └── extractors/
+│       ├── oracle_extractor.py
+│       └── system_extractor.py
+└── resources/
+    └── oracle_scripts/     # SQL scripts
+```
+
+## SQL Queries Executed
+- Database info (v$database, v$instance)
+- Oracle Home and patches
+- ASM diskgroups
+- Tablespaces
+- RAC nodes
+- Data Guard status
+- Licensed features

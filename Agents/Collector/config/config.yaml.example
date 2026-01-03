@@ -1,0 +1,27 @@
+# Gateway SSH Configuration
+gateway:
+  hostname: "ssh-gateway.prod.local"
+  port: 22
+  username: "service_audit"
+  key_file: "./keys/gateway.pem"
+  # password: "${GATEWAY_PASSWORD}"  # Use env var if no key
+
+# MongoDB Connection
+mongodb:
+  uri: "${MONGO_URI}"
+  database: "nexi_cmdb"
+
+# LLM Configuration (Ollama)
+llm:
+  base_url: "http://localhost:11434"
+  model: "llama3:8b"
+
+# Collection Schedule
+schedule:
+  interval_hours: 24
+  start_time: "02:00"
+
+# Logging
+logging:
+  level: "INFO"
+  file: "./logs/collector.log"
