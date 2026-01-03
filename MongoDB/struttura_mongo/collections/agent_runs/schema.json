@@ -1,0 +1,20 @@
+{
+    "_id": "ObjectId",
+    "agent_type": "SCOUT | COLLECTOR",
+    "run_id": "uuid",
+    "started_at": "ISODate",
+    "finished_at": "ISODate",
+    "duration_seconds": 120,
+    "status": "SUCCESS | PARTIAL | FAILED",
+    "targets_scanned": 20,
+    "targets_processed": 15,
+    "new_discoveries": 2,
+    "errors": [
+        {
+            "target": "host123",
+            "error_type": "CONNECTION_REFUSED",
+            "message": "Could not connect to port 1521"
+        }
+    ],
+    "summary": "Scanned 20 hosts, found 2 new DBs, 5 errors"
+}

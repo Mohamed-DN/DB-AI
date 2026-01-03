@@ -1,0 +1,24 @@
+{
+    "_id": "ObjectId",
+    "report_date": "ISODate",
+    "agent": "DailyAudit",
+    "run_id": "uuid",
+    "summary": {
+        "total_dbs_checked": 1600,
+        "compliant": 1450,
+        "warnings": 120,
+        "critical": 30
+    },
+    "issues": [
+        {
+            "db_unique_name": "NZSEP",
+            "category": "CAPACITY | PERFORMANCE | BEST_PRACTICE | CENSUS",
+            "severity": "CRITICAL | WARNING | INFO",
+            "check_name": "tablespace_threshold",
+            "message": "Tablespace APP_DATA at 92%, threshold 90%",
+            "bao_email": "mario.rossi@nexi.it",
+            "remediation_sent": true,
+            "remediation_status": "PENDING | ACKNOWLEDGED | RESOLVED"
+        }
+    ]
+}

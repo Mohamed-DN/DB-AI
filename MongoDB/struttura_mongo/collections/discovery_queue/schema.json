@@ -1,0 +1,14 @@
+{
+    "_id": "ObjectId",
+    "target_host": "ldbrbnzp03.local",
+    "target_port": 1521,
+    "discovered_service": "ora_pmon_NEWDB",
+    "engine_guess": "ORACLE",
+    "discovery_source": "process_scan | port_scan | manual",
+    "discovered_at": "ISODate",
+    "status": "PENDING | PROCESSING | COMPLETED | FAILED",
+    "assigned_to_collector": null,
+    "attempts": 0,
+    "last_attempt_at": null,
+    "error_message": null
+}

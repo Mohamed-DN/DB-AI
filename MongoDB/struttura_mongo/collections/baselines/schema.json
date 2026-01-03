@@ -1,0 +1,26 @@
+{
+    "_id": "ObjectId",
+    "db_unique_name": "NZSEP",
+    "baseline_date": "ISODate",
+    "type": "WEEKLY | MONTHLY",
+    "metrics": {
+        "cpu": {
+            "avg_pct": 25,
+            "max_pct": 78,
+            "p95_pct": 45
+        },
+        "memory": {
+            "sga_used_gb": 48,
+            "pga_used_gb": 12,
+            "total_ram_used_pct": 65
+        },
+        "storage": {
+            "total_used_gb": 1500,
+            "growth_rate_gb_per_month": 50
+        },
+        "sessions": {
+            "avg_active": 120,
+            "max_active": 450
+        }
+    }
+}

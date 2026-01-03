@@ -1,0 +1,24 @@
+{
+    "_id": "ObjectId",
+    "source": "CHECKMK",
+    "host_name": "ldbrbnzp03.gpaprod.local",
+    "service_name": "Oracle Tablespace APP_DATA",
+    "state": "CRIT | WARN | OK | UNKNOWN",
+    "state_type": "HARD | SOFT",
+    "output": "Tablespace APP_DATA 92% used (threshold: 90%)",
+    "last_check": "ISODate",
+    "last_state_change": "ISODate",
+    "cmdb_db_ref": "NZSEP",
+    "acknowledged": false,
+    "downtime_scheduled": false,
+    "tags": [
+        "oracle",
+        "tablespace",
+        "storage"
+    ],
+    "metrics": {
+        "used_pct": 92,
+        "total_gb": 100,
+        "free_gb": 8
+    }
+}
