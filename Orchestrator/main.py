@@ -6,6 +6,9 @@ import sys
 import time
 import json
 from datetime import datetime
+from dotenv import load_dotenv
+load_dotenv()
+
 sys.path.append('../../')
 
 from Orchestrator.src.mongo_proxy import MongoProxy
