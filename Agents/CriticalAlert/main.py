@@ -281,18 +281,37 @@ class CriticalAlertAgent:
         
         return alerts
     
+    def get_interval(self):
+        try:
+             cmd = "db.system_config.findOne({key: 'check_interval'})"
+             doc = self.mongo_proxy.execute_eval(cmd)
+             if doc and 'value' in doc:
+                 return int(doc['value'])
+        except:
+             pass
+        return 30
+
     def run_continuous(self, interval_seconds: int = 30):
         """Run continuous monitoring"""
-        print(f"🚀 Starting CriticalAlert Agent (checking every {interval_seconds}s)")
-        print(f"📧 Alerts will be sent to: {self.alert_email}")
+        print(f"🚀 Starting CriticalAlert Agent")
         
         while True:
             try:
+                # Reload targets dynamically
+                self.load_targets_from_inventory()
+                
                 self.run_once()
-                time.sleep(interval_seconds)
+                
+                # Dynamic Interval
+                actual_wait = self.get_interval()
+                print(f"💤 Sleeping for {actual_wait}s...")
+                time.sleep(actual_wait)
             except KeyboardInterrupt:
                 print("\n⏹️ Agent stopped")
                 break
+            except Exception as e:
+                print(f"Error: {e}")
+                time.sleep(30)
 
 
 def main():

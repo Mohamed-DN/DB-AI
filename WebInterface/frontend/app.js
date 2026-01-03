@@ -27,12 +27,14 @@ async function loadStats() {
         const criticalCount = alerts.filter(a => a.state === 'CRITICAL' && !a.processed).length;
         document.getElementById('stat-critical').innerText = criticalCount;
 
-        const healthy = inv.length - criticalCount; // Approximation
-        document.getElementById('stat-healthy').innerText = healthy;
+        const healthy = inv.filter(d => d.state && d.state.status === 'UP').length;
+        // Or approx: inv.length - criticalCount (if critical implies DB down)
+        // Better: use the status field we added in Scout
+        document.getElementById('stat-healthy').innerText = healthy || (inv.length - criticalCount);
 
-        logActivity("Dashboard updated.");
+        // Log update? No, too spammy.
     } catch (e) {
-        logActivity("Error loading stats.", "error");
+        // Silent fail
     }
 }
 
@@ -50,9 +52,12 @@ async function loadInventory() {
             const host = db.identity.host;
             const port = db.configuration.port;
             const env = db.identity.environment;
+            const status = db.state?.status || 'UP';
+
+            const badgeClass = status === 'UP' ? 'status-up' : 'status-down';
 
             tr.innerHTML = `
-                <td><span class="status-badge status-up">UP</span></td>
+                <td><span class="status-badge ${badgeClass}">${status}</span></td>
                 <td>${name}</td>
                 <td><i class="fa-solid fa-database"></i> ${engine}</td>
                 <td>${host}</td>
@@ -101,11 +106,32 @@ async function triggerAction(action) {
     }
 }
 
+async function saveSettings() {
+    const scout = document.getElementById('setting-scout').value;
+    const check = document.getElementById('setting-check').value;
+
+    try {
+        logActivity("Saving settings...");
+        await fetch(`${API_URL}/config`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                scout_interval: parseInt(scout),
+                check_interval: parseInt(check)
+            })
+        });
+        logActivity("Configuration Saved!", "success");
+    } catch (e) {
+        logActivity("Error saving settings", "error");
+    }
+}
+
 function logActivity(msg, type = 'info') {
     const ul = document.getElementById('refresh-log');
     const li = document.createElement('li');
     li.innerText = `[${new Date().toLocaleTimeString()}] ${msg}`;
     if (type === 'error') li.style.color = 'red';
+    if (type === 'success') li.style.color = 'green';
     ul.prepend(li);
 }
 
@@ -119,13 +145,11 @@ async function sendMessage() {
     const text = input.value.trim();
     if (!text) return;
 
-    // Add User Message
     addMessage(text, 'user');
     input.value = '';
 
-    // Call API
     try {
-        addMessage("Thinking...", 'ai', true); // Loading state
+        addMessage("Thinking...", 'ai', true);
         const res = await fetch(`${API_URL}/chat`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -133,11 +157,10 @@ async function sendMessage() {
         });
         const data = await res.json();
 
-        // Remove loading
         document.querySelector('.loading-msg')?.remove();
-
         addMessage(data, 'ai');
     } catch (e) {
+        document.querySelector('.loading-msg')?.remove();
         addMessage("Connection to Brain failed.", 'ai');
     }
 }
@@ -160,5 +183,4 @@ function addMessage(text, role, isLoading = false) {
 
 // Init
 loadStats();
-// Auto Refresh Stats every 10s
-setInterval(loadStats, 10000);
+setInterval(loadStats, 5000); // Faster refresh

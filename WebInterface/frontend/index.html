@@ -6,11 +6,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Nexi AI CMDB</title>
     <link rel="stylesheet" href="style.css">
-    <!-- Google Fonts -->
     <link
         href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600&family=JetBrains+Mono:wght@400;700&display=swap"
         rel="stylesheet">
-    <!-- Icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
 
@@ -31,6 +29,8 @@
                     Alerts</button>
                 <button class="nav-btn" onclick="showSection('chat')"><i class="fa-solid fa-robot"></i> AI
                     Assistant</button>
+                <button class="nav-btn" onclick="showSection('settings')"><i class="fa-solid fa-gear"></i>
+                    Settings</button>
             </nav>
             <div class="status-indicator">
                 <span class="dot"></span> System Online
@@ -119,6 +119,30 @@
                             onkeypress="handleChatKey(event)">
                         <button onclick="sendMessage()"><i class="fa-solid fa-paper-plane"></i></button>
                     </div>
+                </div>
+            </section>
+
+            <!-- Settings View -->
+            <section id="settings" class="page-section">
+                <div class="glass-panel" style="max-width: 600px;">
+                    <h2>Agent Configuration</h2>
+                    <p style="color: var(--text-muted); margin-bottom: 2rem;">Adjust the scanning intervals for your
+                        agents.</p>
+
+                    <div class="form-group" style="margin-bottom: 1.5rem;">
+                        <label style="display:block; margin-bottom: 0.5rem;">Scout Discovery Interval (seconds)</label>
+                        <input type="number" id="setting-scout" value="60"
+                            style="width: 100%; padding: 0.8rem; background: var(--bg-dark); border: 1px solid var(--border); color: white; border-radius: 6px;">
+                    </div>
+
+                    <div class="form-group" style="margin-bottom: 2rem;">
+                        <label style="display:block; margin-bottom: 0.5rem;">Critical Alert Check Interval
+                            (seconds)</label>
+                        <input type="number" id="setting-check" value="10"
+                            style="width: 100%; padding: 0.8rem; background: var(--bg-dark); border: 1px solid var(--border); color: white; border-radius: 6px;">
+                    </div>
+
+                    <button class="btn primary" onclick="saveSettings()">Save Configuration</button>
                 </div>
             </section>
         </main>

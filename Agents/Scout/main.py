@@ -6,6 +6,7 @@ import os
 import json
 import subprocess
 import datetime
+import time
 
 # Add path for shared modules
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '../../')))
@@ -36,17 +37,13 @@ class ScoutAgent:
                 elif "oracle" in image or "oracle" in name:
                     engine = "ORACLE"
                 elif "mongo" in image and "express" not in image: 
-                    # Skip mongo itself usually, but let's list it for fun, 
-                    # though CriticalAlert might not know how to check it yet.
                     pass 
                 
                 if engine and "gateway" not in name:
                     # Extract external port
-                    # Format: 0.0.0.0:5433->5432/tcp
                     port = 5432 # Default
                     if "->" in ports_str:
                         try:
-                            # Parse '0.0.0.0:5433->5432/tcp' or '5433->5432/tcp'
                             parts = ports_str.split('->')[0]
                             port = int(parts.split(':')[-1])
                         except:
@@ -55,16 +52,16 @@ class ScoutAgent:
                     db_info = {
                         "identity": {
                             "db_unique_name": name.upper(),
-                            "db_name": name, # Simplification
+                            "db_name": name,
                             "engine": engine,
                             "environment": "DEV" if "dev" in name.lower() else "PROD",
-                            "host": "127.0.0.1" # Localhost since we run agents locally against docker mapped ports
+                            "host": "127.0.0.1"
                         },
                         "configuration": {
                             "port": port,
                             "version": "Unknown"
                         },
-                        "last_scanned": "NOW" # Placeholder for Date
+                        "last_scanned": "NOW"
                     }
                     found_dbs.append(db_info)
                     
@@ -77,54 +74,76 @@ class ScoutAgent:
     def update_inventory(self, dbs):
         """Update MongoDB Inventory"""
         print(f"💾 Updating Inventory with {len(dbs)} databases...")
-        new_count = 0
         
-        # Get existing to check for new ones
+        # Get existing DBs
         existing_docs = self.mongo.execute_eval("db.inventory_databases.find({}, {'identity.db_unique_name': 1}).toArray()")
         existing_names = set()
         if existing_docs:
             for doc in existing_docs:
                 if 'identity' in doc and 'db_unique_name' in doc['identity']:
                     existing_names.add(doc['identity']['db_unique_name'])
-
+        
+        found_names = set()
         for db in dbs:
-            # Check if new
             name = db['identity']['db_unique_name']
+            found_names.add(name)
+            
+            # Check if NEW
             if name not in existing_names:
                 print(f"✨ NEW DATABASE FOUND: {name}")
-                new_count += 1
-                
-                # Create alert for new DB
                 alert = {
                     "severity": "WARNING",
                     "state": "WARNING",
                     "type": "NEW_DB_DISCOVERED",
                     "host_name": db['identity']['host'],
                     "service": f"{db['identity']['engine']}-{name}",
-                    "message": f"Scout discovered new {db['identity']['engine']} database: {name} on port {db['configuration']['port']}",
-                    "output": f"New Asset: {name}",
+                    "message": f"Scout discovered new {db['identity']['engine']} database: {name}",
+                    "output": "New Asset",
                     "timestamp": "NOW",
                     "processed": False
                 }
                 self.mongo.insert_alert(alert)
 
-            # Upsert into Inventory
-            # JS command to update
-            # We construct a JS object string carefully
+            # Upsert (Always update status to UP)
             db_json = json.dumps(db)
-            # Replace "NOW" with new Date()
             db_json = db_json.replace('"NOW"', 'new Date()')
             
             js_cmd = f"""
             db.inventory_databases.updateOne(
                 {{ "identity.db_unique_name": "{name}" }},
-                {{ $set: {db_json} }},
+                {{ $set: {db_json}, $set: {{"state.status": "UP", "state.last_seen": new Date()}} }},
                 {{ upsert: true }}
             )
             """
             self.mongo.execute_eval(js_cmd)
+        
+        # Check MISSING
+        missing_names = existing_names - found_names
+        for missing in missing_names:
+            print(f"⚠️ DETECTED MISSING ASSET: {missing}")
+            js_cmd = f"""
+            db.inventory_databases.updateOne(
+                {{ "identity.db_unique_name": "{missing}" }},
+                {{ $set: {{"state.status": "MISSING", "state.last_seen": new Date()}} }}
+            )
+            """
+            self.mongo.execute_eval(js_cmd)
             
-        print(f"✅ Inventory Updated. {new_count} new assets.")
+            # Create Alert
+            alert = {
+                "severity": "CRITICAL",
+                "state": "CRITICAL",
+                "type": "ASSET_MISSING",
+                "host_name": "Docker",
+                "service": f"DB-{missing}",
+                "message": f"Database {missing} was not found in Docker scan.",
+                "output": "Container Missing",
+                "timestamp": "NOW",
+                "processed": False
+            }
+            self.mongo.insert_alert(alert)
+        
+        print(f"✅ Inventory Sync Complete. Found: {len(found_names)}, Missing: {len(missing_names)}")
 
     def run(self):
         dbs = self.scan_docker()
@@ -133,6 +152,40 @@ class ScoutAgent:
         else:
             print("No databases found.")
 
+    def get_interval(self):
+        """Get scan interval from MongoDB Config"""
+        try:
+            cmd = "db.system_config.findOne({key: 'scout_interval'})"
+            doc = self.mongo.execute_eval(cmd)
+            if doc and 'value' in doc:
+                return int(doc['value'])
+        except:
+            pass
+        return 60 # Default 60s
+
+    def run_continuous(self):
+        """Run loop"""
+        print("🛰️ Scout Agent starting continuous monitoring...")
+        while True:
+            try:
+                interval = self.get_interval()
+                self.run()
+                print(f"💤 Sleeping for {interval}s...")
+                time.sleep(interval)
+            except KeyboardInterrupt:
+                break
+            except Exception as e:
+                print(f"Error in loop: {e}")
+                time.sleep(60)
+
 if __name__ == "__main__":
     agent = ScoutAgent()
-    agent.run()
+    import argparse
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--once", action="store_true")
+    args = parser.parse_args()
+    
+    if args.once:
+        agent.run()
+    else:
+        agent.run_continuous()
