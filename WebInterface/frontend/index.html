@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Nexi AI CMDB</title>
+    <link rel="stylesheet" href="style.css">
+    <!-- Google Fonts -->
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600&family=JetBrains+Mono:wght@400;700&display=swap"
+        rel="stylesheet">
+    <!-- Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+
+<body>
+    <div class="app-container">
+        <!-- Sidebar -->
+        <aside class="sidebar">
+            <div class="brand">
+                <i class="fa-solid fa-brain brand-icon"></i>
+                <span>NEXI<span class="highlight">AI</span></span>
+            </div>
+            <nav>
+                <button class="nav-btn active" onclick="showSection('dashboard')"><i class="fa-solid fa-chart-line"></i>
+                    Dashboard</button>
+                <button class="nav-btn" onclick="showSection('inventory')"><i class="fa-solid fa-server"></i>
+                    Inventory</button>
+                <button class="nav-btn" onclick="showSection('alerts')"><i class="fa-solid fa-triangle-exclamation"></i>
+                    Alerts</button>
+                <button class="nav-btn" onclick="showSection('chat')"><i class="fa-solid fa-robot"></i> AI
+                    Assistant</button>
+            </nav>
+            <div class="status-indicator">
+                <span class="dot"></span> System Online
+            </div>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <!-- Header -->
+            <header>
+                <h1 id="page-title">Dashboard Overview</h1>
+                <div class="actions">
+                    <button class="btn primary" onclick="triggerAction('scan')"><i
+                            class="fa-solid fa-satellite-dish"></i> Auto-Discovery</button>
+                    <button class="btn danger" onclick="triggerAction('check')"><i class="fa-solid fa-heart-pulse"></i>
+                        Agent Check</button>
+                </div>
+            </header>
+
+            <!-- Dashboard View -->
+            <section id="dashboard" class="page-section active">
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <h3>Total Databases</h3>
+                        <p id="stat-total-db">--</p>
+                    </div>
+                    <div class="stat-card">
+                        <h3>Critical Alerts</h3>
+                        <p id="stat-critical" class="text-danger">--</p>
+                    </div>
+                    <div class="stat-card">
+                        <h3>Healthy Assets</h3>
+                        <p id="stat-healthy" class="text-success">--</p>
+                    </div>
+                </div>
+                <div class="glass-panel">
+                    <h2><i class="fa-solid fa-clock-rotate-left"></i> Recent Activity</h2>
+                    <ul id="refresh-log" class="activity-list">
+                        <li>System Initialized...</li>
+                    </ul>
+                </div>
+            </section>
+
+            <!-- Inventory View -->
+            <section id="inventory" class="page-section">
+                <div class="glass-panel">
+                    <div class="table-container">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Status</th>
+                                    <th>Name</th>
+                                    <th>Engine</th>
+                                    <th>Host</th>
+                                    <th>Port</th>
+                                    <th>Env</th>
+                                </tr>
+                            </thead>
+                            <tbody id="inventory-list">
+                                <!-- JS Populated -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Alerts View -->
+            <section id="alerts" class="page-section">
+                <div id="alerts-container" class="alerts-grid">
+                    <!-- JS Populated -->
+                </div>
+            </section>
+
+            <!-- AI Chat View -->
+            <section id="chat" class="page-section">
+                <div class="chat-interface glass-panel">
+                    <div id="chat-history" class="chat-history">
+                        <div class="message ai">
+                            <i class="fa-solid fa-robot"></i>
+                            <div class="bubble">Hello Mohamed. I am the Nexi AI. How can I assist you with the database
+                                infrastructure today?</div>
+                        </div>
+                    </div>
+                    <div class="chat-input-area">
+                        <input type="text" id="chat-input" placeholder="Ask AI to check connectivity, analyze logs..."
+                            onkeypress="handleChatKey(event)">
+                        <button onclick="sendMessage()"><i class="fa-solid fa-paper-plane"></i></button>
+                    </div>
+                </div>
+            </section>
+        </main>
+    </div>
+    <script src="app.js"></script>
+</body>
+
+</html>
