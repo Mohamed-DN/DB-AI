@@ -38,6 +38,11 @@ class MongoProxy:
         js_cmd = 'db.monitoring_alerts.find({state: "CRITICAL", processed: {$ne: true}}).toArray()'
         return self.execute_eval(js_cmd)
 
+    def get_pending_alerts(self):
+        # Fetch both CRITICAL and WARNING
+        js_cmd = 'db.monitoring_alerts.find({state: {$in: ["CRITICAL", "WARNING"]}, processed: {$ne: true}}).toArray()'
+        return self.execute_eval(js_cmd)
+
     def mark_as_processed(self, alert_id, analysis):
         # alert_id from JSON is string if ObjectId. 
         # Need to wrap in ObjectId() if it's an ID.

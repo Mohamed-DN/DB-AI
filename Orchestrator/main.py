@@ -22,9 +22,11 @@ class AIOrchestrator:
         self.processed_ids = set()
 
     def check_new_alerts(self):
-        """Check for new CRITICAL alerts"""
+        """Check for new CRITICAL and WARNING alerts"""
         # Use proxy to find
-        alerts = self.mongo_proxy.get_pending_critical_alerts()
+        # Need to update mongo_proxy.py to allow filtering? Or just add method
+        # Let's rely on a more generic method in proxy or just update the hardcoded one there
+        alerts = self.mongo_proxy.get_pending_alerts()
         # alerts is a list of dicts (parsed from JSON)
         return alerts if alerts else []
 

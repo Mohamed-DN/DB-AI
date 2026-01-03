@@ -140,3 +140,548 @@
 
 ============================================================
 🔍 CriticalAlert Agent Check - 2026-01-03 17:06:39
+============================================================
+
+🚨 Found 2 alert(s)!
+  [CRITICAL] PG-Milano-DEV: DATABASE_DOWN
+    ❌ Failed to save to MongoDB: Authentication failed., full error: {'ok': 0.0, 'errmsg': 'Authentication failed.', 'code': 18, 'codeName': 'AuthenticationFailed'}
+  [CRITICAL] PG-Bratislava-DEV: DATABASE_DOWN
+    ❌ Failed to save to MongoDB: Authentication failed., full error: {'ok': 0.0, 'errmsg': 'Authentication failed.', 'code': 18, 'codeName': 'AuthenticationFailed'}
+
+============================================================
+🔍 CriticalAlert Agent Check - 2026-01-03 17:06:59
+============================================================
+
+🚨 Found 2 alert(s)!
+  [CRITICAL] PG-Milano-DEV: DATABASE_DOWN
+    ❌ Failed to save to MongoDB: Authentication failed., full error: {'ok': 0.0, 'errmsg': 'Authentication failed.', 'code': 18, 'codeName': 'AuthenticationFailed'}
+  [CRITICAL] PG-Bratislava-DEV: DATABASE_DOWN
+    ❌ Failed to save to MongoDB: Authentication failed., full error: {'ok': 0.0, 'errmsg': 'Authentication failed.', 'code': 18, 'codeName': 'AuthenticationFailed'}
+
+============================================================
+🔍 CriticalAlert Agent Check - 2026-01-03 17:07:19
+============================================================
+
+🚨 Found 2 alert(s)!
+  [CRITICAL] PG-Milano-DEV: DATABASE_DOWN
+    ❌ Failed to save to MongoDB: Authentication failed., full error: {'ok': 0.0, 'errmsg': 'Authentication failed.', 'code': 18, 'codeName': 'AuthenticationFailed'}
+  [CRITICAL] PG-Bratislava-DEV: DATABASE_DOWN
+    ❌ Failed to save to MongoDB: Authentication failed., full error: {'ok': 0.0, 'errmsg': 'Authentication failed.', 'code': 18, 'codeName': 'AuthenticationFailed'}
+
+============================================================
+🔍 CriticalAlert Agent Check - 2026-01-03 17:07:39
+============================================================
+
+🚨 Found 2 alert(s)!
+  [CRITICAL] PG-Milano-DEV: DATABASE_DOWN
+    ❌ Failed to save to MongoDB: Authentication failed., full error: {'ok': 0.0, 'errmsg': 'Authentication failed.', 'code': 18, 'codeName': 'AuthenticationFailed'}
+  [CRITICAL] PG-Bratislava-DEV: DATABASE_DOWN
+    ❌ Failed to save to MongoDB: Authentication failed., full error: {'ok': 0.0, 'errmsg': 'Authentication failed.', 'code': 18, 'codeName': 'AuthenticationFailed'}
+
+============================================================
+🔍 CriticalAlert Agent Check - 2026-01-03 17:07:59
+============================================================
+
+🚨 Found 2 alert(s)!
+  [CRITICAL] PG-Milano-DEV: DATABASE_DOWN
+    ❌ Failed to save to MongoDB: Authentication failed., full error: {'ok': 0.0, 'errmsg': 'Authentication failed.', 'code': 18, 'codeName': 'AuthenticationFailed'}
+  [CRITICAL] PG-Bratislava-DEV: DATABASE_DOWN
+    ❌ Failed to save to MongoDB: Authentication failed., full error: {'ok': 0.0, 'errmsg': 'Authentication failed.', 'code': 18, 'codeName': 'AuthenticationFailed'}
+
+============================================================
+🔍 CriticalAlert Agent Check - 2026-01-03 17:08:19
+============================================================
+
+🚨 Found 2 alert(s)!
+  [CRITICAL] PG-Milano-DEV: DATABASE_DOWN
+    ❌ Failed to save to MongoDB: Authentication failed., full error: {'ok': 0.0, 'errmsg': 'Authentication failed.', 'code': 18, 'codeName': 'AuthenticationFailed'}
+  [CRITICAL] PG-Bratislava-DEV: DATABASE_DOWN
+    ❌ Failed to save to MongoDB: Authentication failed., full error: {'ok': 0.0, 'errmsg': 'Authentication failed.', 'code': 18, 'codeName': 'AuthenticationFailed'}
+
+============================================================
+🔍 CriticalAlert Agent Check - 2026-01-03 17:08:39
+============================================================
+✅ All databases OK
+
+============================================================
+🔍 CriticalAlert Agent Check - 2026-01-03 17:08:44
+============================================================
+✅ All databases OK
+
+============================================================
+🔍 CriticalAlert Agent Check - 2026-01-03 17:08:49
+============================================================
+✅ All databases OK
+
+============================================================
+🔍 CriticalAlert Agent Check - 2026-01-03 17:08:55
+============================================================
+✅ All databases OK
+
+============================================================
+🔍 CriticalAlert Agent Check - 2026-01-03 17:09:00
+============================================================
+✅ All databases OK
+
+============================================================
+🔍 CriticalAlert Agent Check - 2026-01-03 17:09:05
+============================================================
+✅ All databases OK
+
+============================================================
+🔍 CriticalAlert Agent Check - 2026-01-03 17:09:10
+============================================================
+✅ All databases OK
+
+============================================================
+🔍 CriticalAlert Agent Check - 2026-01-03 17:09:15
+============================================================
+✅ All databases OK
+
+============================================================
+🔍 CriticalAlert Agent Check - 2026-01-03 17:09:20
+============================================================
+✅ All databases OK
+
+============================================================
+🔍 CriticalAlert Agent Check - 2026-01-03 17:09:25
+============================================================
+✅ All databases OK
+
+============================================================
+🔍 CriticalAlert Agent Check - 2026-01-03 17:09:30
+============================================================
+✅ All databases OK
+
+============================================================
+🔍 CriticalAlert Agent Check - 2026-01-03 17:09:35
+============================================================
+✅ All databases OK
+
+============================================================
+🔍 CriticalAlert Agent Check - 2026-01-03 17:09:40
+============================================================
+✅ All databases OK
+
+============================================================
+🔍 CriticalAlert Agent Check - 2026-01-03 17:09:46
+============================================================
+✅ All databases OK
+
+============================================================
+🔍 CriticalAlert Agent Check - 2026-01-03 17:09:51
+============================================================
+✅ All databases OK
+
+============================================================
+🔍 CriticalAlert Agent Check - 2026-01-03 17:09:56
+============================================================
+✅ All databases OK
+
+============================================================
+🔍 CriticalAlert Agent Check - 2026-01-03 17:10:01
+============================================================
+✅ All databases OK
+
+============================================================
+🔍 CriticalAlert Agent Check - 2026-01-03 17:10:06
+============================================================
+✅ All databases OK
+
+============================================================
+🔍 CriticalAlert Agent Check - 2026-01-03 17:10:11
+============================================================
+✅ All databases OK
+
+============================================================
+🔍 CriticalAlert Agent Check - 2026-01-03 17:10:16
+============================================================
+✅ All databases OK
+
+============================================================
+🔍 CriticalAlert Agent Check - 2026-01-03 17:10:21
+============================================================
+✅ All databases OK
+
+============================================================
+🔍 CriticalAlert Agent Check - 2026-01-03 17:10:26
+============================================================
+✅ All databases OK
+
+============================================================
+🔍 CriticalAlert Agent Check - 2026-01-03 17:10:31
+============================================================
+✅ All databases OK
+
+============================================================
+🔍 CriticalAlert Agent Check - 2026-01-03 17:10:37
+============================================================
+✅ All databases OK
+
+============================================================
+🔍 CriticalAlert Agent Check - 2026-01-03 17:10:42
+============================================================
+✅ All databases OK
+
+============================================================
+🔍 CriticalAlert Agent Check - 2026-01-03 17:10:47
+============================================================
+✅ All databases OK
+
+============================================================
+🔍 CriticalAlert Agent Check - 2026-01-03 17:10:52
+============================================================
+✅ All databases OK
+
+============================================================
+🔍 CriticalAlert Agent Check - 2026-01-03 17:10:57
+============================================================
+✅ All databases OK
+
+============================================================
+🔍 CriticalAlert Agent Check - 2026-01-03 17:11:02
+============================================================
+✅ All databases OK
+
+============================================================
+🔍 CriticalAlert Agent Check - 2026-01-03 17:11:07
+============================================================
+✅ All databases OK
+
+============================================================
+🔍 CriticalAlert Agent Check - 2026-01-03 17:11:12
+============================================================
+✅ All databases OK
+
+============================================================
+🔍 CriticalAlert Agent Check - 2026-01-03 17:11:17
+============================================================
+✅ All databases OK
+
+============================================================
+🔍 CriticalAlert Agent Check - 2026-01-03 17:11:22
+============================================================
+✅ All databases OK
+
+============================================================
+🔍 CriticalAlert Agent Check - 2026-01-03 17:11:28
+============================================================
+✅ All databases OK
+
+============================================================
+🔍 CriticalAlert Agent Check - 2026-01-03 17:11:33
+============================================================
+✅ All databases OK
+
+============================================================
+🔍 CriticalAlert Agent Check - 2026-01-03 17:11:38
+============================================================
+✅ All databases OK
+
+============================================================
+🔍 CriticalAlert Agent Check - 2026-01-03 17:11:43
+============================================================
+✅ All databases OK
+
+============================================================
+🔍 CriticalAlert Agent Check - 2026-01-03 17:11:48
+============================================================
+✅ All databases OK
+
+============================================================
+🔍 CriticalAlert Agent Check - 2026-01-03 17:11:53
+============================================================
+✅ All databases OK
+
+============================================================
+🔍 CriticalAlert Agent Check - 2026-01-03 17:11:58
+============================================================
+✅ All databases OK
+
+============================================================
+🔍 CriticalAlert Agent Check - 2026-01-03 17:12:03
+============================================================
+✅ All databases OK
+
+============================================================
+🔍 CriticalAlert Agent Check - 2026-01-03 17:12:08
+============================================================
+✅ All databases OK
+
+============================================================
+🔍 CriticalAlert Agent Check - 2026-01-03 17:12:14
+============================================================
+✅ All databases OK
+
+============================================================
+🔍 CriticalAlert Agent Check - 2026-01-03 17:12:19
+============================================================
+✅ All databases OK
+
+============================================================
+🔍 CriticalAlert Agent Check - 2026-01-03 17:12:24
+============================================================
+✅ All databases OK
+
+============================================================
+🔍 CriticalAlert Agent Check - 2026-01-03 17:12:29
+============================================================
+✅ All databases OK
+
+============================================================
+🔍 CriticalAlert Agent Check - 2026-01-03 17:12:34
+============================================================
+✅ All databases OK
+
+============================================================
+🔍 CriticalAlert Agent Check - 2026-01-03 17:12:39
+============================================================
+✅ All databases OK
+
+============================================================
+🔍 CriticalAlert Agent Check - 2026-01-03 17:12:44
+============================================================
+✅ All databases OK
+
+============================================================
+🔍 CriticalAlert Agent Check - 2026-01-03 17:12:49
+============================================================
+✅ All databases OK
+
+============================================================
+🔍 CriticalAlert Agent Check - 2026-01-03 17:12:54
+============================================================
+✅ All databases OK
+
+============================================================
+🔍 CriticalAlert Agent Check - 2026-01-03 17:13:00
+============================================================
+✅ All databases OK
+
+============================================================
+🔍 CriticalAlert Agent Check - 2026-01-03 17:13:05
+============================================================
+✅ All databases OK
+
+============================================================
+🔍 CriticalAlert Agent Check - 2026-01-03 17:13:10
+============================================================
+✅ All databases OK
+
+============================================================
+🔍 CriticalAlert Agent Check - 2026-01-03 17:13:15
+============================================================
+✅ All databases OK
+
+============================================================
+🔍 CriticalAlert Agent Check - 2026-01-03 17:13:20
+============================================================
+✅ All databases OK
+
+============================================================
+🔍 CriticalAlert Agent Check - 2026-01-03 17:13:25
+============================================================
+✅ All databases OK
+
+============================================================
+🔍 CriticalAlert Agent Check - 2026-01-03 17:13:30
+============================================================
+✅ All databases OK
+
+============================================================
+🔍 CriticalAlert Agent Check - 2026-01-03 17:13:35
+============================================================
+✅ All databases OK
+
+============================================================
+🔍 CriticalAlert Agent Check - 2026-01-03 17:13:40
+============================================================
+✅ All databases OK
+
+============================================================
+🔍 CriticalAlert Agent Check - 2026-01-03 17:13:46
+============================================================
+✅ All databases OK
+
+============================================================
+🔍 CriticalAlert Agent Check - 2026-01-03 17:13:51
+============================================================
+✅ All databases OK
+
+============================================================
+🔍 CriticalAlert Agent Check - 2026-01-03 17:13:56
+============================================================
+✅ All databases OK
+
+============================================================
+🔍 CriticalAlert Agent Check - 2026-01-03 17:14:01
+============================================================
+✅ All databases OK
+
+============================================================
+🔍 CriticalAlert Agent Check - 2026-01-03 17:14:06
+============================================================
+✅ All databases OK
+
+============================================================
+🔍 CriticalAlert Agent Check - 2026-01-03 17:14:11
+============================================================
+✅ All databases OK
+
+============================================================
+🔍 CriticalAlert Agent Check - 2026-01-03 17:14:16
+============================================================
+✅ All databases OK
+
+============================================================
+🔍 CriticalAlert Agent Check - 2026-01-03 17:14:21
+============================================================
+✅ All databases OK
+
+============================================================
+🔍 CriticalAlert Agent Check - 2026-01-03 17:14:26
+============================================================
+✅ All databases OK
+
+============================================================
+🔍 CriticalAlert Agent Check - 2026-01-03 17:14:31
+============================================================
+✅ All databases OK
+
+============================================================
+🔍 CriticalAlert Agent Check - 2026-01-03 17:14:37
+============================================================
+✅ All databases OK
+
+============================================================
+🔍 CriticalAlert Agent Check - 2026-01-03 17:14:42
+============================================================
+✅ All databases OK
+
+============================================================
+🔍 CriticalAlert Agent Check - 2026-01-03 17:14:47
+============================================================
+
+🚨 Found 1 alert(s)!
+  [CRITICAL] PG-Bratislava-DEV: DATABASE_DOWN
+    ❌ Failed to save to MongoDB: Authentication failed., full error: {'ok': 0.0, 'errmsg': 'Authentication failed.', 'code': 18, 'codeName': 'AuthenticationFailed'}
+
+============================================================
+🔍 CriticalAlert Agent Check - 2026-01-03 17:14:56
+============================================================
+
+🚨 Found 1 alert(s)!
+  [CRITICAL] PG-Bratislava-DEV: DATABASE_DOWN
+    ❌ Failed to save to MongoDB: Authentication failed., full error: {'ok': 0.0, 'errmsg': 'Authentication failed.', 'code': 18, 'codeName': 'AuthenticationFailed'}
+
+============================================================
+🔍 CriticalAlert Agent Check - 2026-01-03 17:15:05
+============================================================
+
+🚨 Found 1 alert(s)!
+  [CRITICAL] PG-Bratislava-DEV: DATABASE_DOWN
+    ❌ Failed to save to MongoDB: Authentication failed., full error: {'ok': 0.0, 'errmsg': 'Authentication failed.', 'code': 18, 'codeName': 'AuthenticationFailed'}
+
+============================================================
+🔍 CriticalAlert Agent Check - 2026-01-03 17:15:14
+============================================================
+
+🚨 Found 1 alert(s)!
+  [CRITICAL] PG-Bratislava-DEV: DATABASE_DOWN
+    ❌ Failed to save to MongoDB: Authentication failed., full error: {'ok': 0.0, 'errmsg': 'Authentication failed.', 'code': 18, 'codeName': 'AuthenticationFailed'}
+
+============================================================
+🔍 CriticalAlert Agent Check - 2026-01-03 17:15:23
+============================================================
+
+🚨 Found 1 alert(s)!
+  [CRITICAL] PG-Bratislava-DEV: DATABASE_DOWN
+    ❌ Failed to save to MongoDB: Authentication failed., full error: {'ok': 0.0, 'errmsg': 'Authentication failed.', 'code': 18, 'codeName': 'AuthenticationFailed'}
+
+============================================================
+🔍 CriticalAlert Agent Check - 2026-01-03 17:15:32
+============================================================
+
+🚨 Found 1 alert(s)!
+  [CRITICAL] PG-Bratislava-DEV: DATABASE_DOWN
+    ❌ Failed to save to MongoDB: Authentication failed., full error: {'ok': 0.0, 'errmsg': 'Authentication failed.', 'code': 18, 'codeName': 'AuthenticationFailed'}
+
+============================================================
+🔍 CriticalAlert Agent Check - 2026-01-03 17:15:41
+============================================================
+
+🚨 Found 1 alert(s)!
+  [CRITICAL] PG-Bratislava-DEV: DATABASE_DOWN
+    ❌ Failed to save to MongoDB: Authentication failed., full error: {'ok': 0.0, 'errmsg': 'Authentication failed.', 'code': 18, 'codeName': 'AuthenticationFailed'}
+
+============================================================
+🔍 CriticalAlert Agent Check - 2026-01-03 17:15:50
+============================================================
+
+🚨 Found 1 alert(s)!
+  [CRITICAL] PG-Bratislava-DEV: DATABASE_DOWN
+    ❌ Failed to save to MongoDB: Authentication failed., full error: {'ok': 0.0, 'errmsg': 'Authentication failed.', 'code': 18, 'codeName': 'AuthenticationFailed'}
+
+============================================================
+🔍 CriticalAlert Agent Check - 2026-01-03 17:16:00
+============================================================
+
+🚨 Found 1 alert(s)!
+  [CRITICAL] PG-Bratislava-DEV: DATABASE_DOWN
+    ❌ Failed to save to MongoDB: Authentication failed., full error: {'ok': 0.0, 'errmsg': 'Authentication failed.', 'code': 18, 'codeName': 'AuthenticationFailed'}
+
+============================================================
+🔍 CriticalAlert Agent Check - 2026-01-03 17:16:09
+============================================================
+
+🚨 Found 1 alert(s)!
+  [CRITICAL] PG-Bratislava-DEV: DATABASE_DOWN
+    ❌ Failed to save to MongoDB: Authentication failed., full error: {'ok': 0.0, 'errmsg': 'Authentication failed.', 'code': 18, 'codeName': 'AuthenticationFailed'}
+
+============================================================
+🔍 CriticalAlert Agent Check - 2026-01-03 17:16:19
+============================================================
+
+🚨 Found 1 alert(s)!
+  [CRITICAL] PG-Bratislava-DEV: DATABASE_DOWN
+    ❌ Failed to save to MongoDB: Authentication failed., full error: {'ok': 0.0, 'errmsg': 'Authentication failed.', 'code': 18, 'codeName': 'AuthenticationFailed'}
+
+============================================================
+🔍 CriticalAlert Agent Check - 2026-01-03 17:16:29
+============================================================
+
+🚨 Found 1 alert(s)!
+  [CRITICAL] PG-Bratislava-DEV: DATABASE_DOWN
+    ❌ Failed to save to MongoDB: Authentication failed., full error: {'ok': 0.0, 'errmsg': 'Authentication failed.', 'code': 18, 'codeName': 'AuthenticationFailed'}
+
+============================================================
+🔍 CriticalAlert Agent Check - 2026-01-03 17:16:39
+============================================================
+✅ All databases OK
+
+============================================================
+🔍 CriticalAlert Agent Check - 2026-01-03 17:16:44
+============================================================
+✅ All databases OK
+
+============================================================
+🔍 CriticalAlert Agent Check - 2026-01-03 17:16:49
+============================================================
+✅ All databases OK
+
+============================================================
+🔍 CriticalAlert Agent Check - 2026-01-03 17:16:55
+============================================================
+✅ All databases OK
+
+============================================================
+🔍 CriticalAlert Agent Check - 2026-01-03 17:17:00
+============================================================
+
+🚨 Found 1 alert(s)!
+  [CRITICAL] PG-Bratislava-DEV: DATABASE_DOWN
+    ❌ Failed to save to MongoDB: Authentication failed., full error: {'ok': 0.0, 'errmsg': 'Authentication failed.', 'code': 18, 'codeName': 'AuthenticationFailed'}
+
+============================================================
+🔍 CriticalAlert Agent Check - 2026-01-03 17:17:09
+============================================================

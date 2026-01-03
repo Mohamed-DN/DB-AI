@@ -59,14 +59,32 @@ class EmailSender:
                     server.starttls()
                     server.login(self.smtp_user, self.smtp_password)
                     server.send_message(msg)
-                print(f"✅ Email sent to {to_email}: {subject}")
-                return True
+                print(f"✅ [REAL EMAIL] Sent to {to_email}")
             else:
                 # Simulate email if no SMTP configured
                 print(f"📧 [SIMULATED EMAIL] To: {to_email}")
                 print(f"   Subject: {subject}")
-                print(f"   Body: {body}")
-                return True
+                print(f"   Body: {body[:100]}...")
+
+            # Save to file for verification
+            try:
+                # Assuming running from Agents/CriticalAlert/ or root, try to find root
+                base_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), '../../'))
+                emails_dir = os.path.join(base_dir, 'emails')
+                if not os.path.exists(emails_dir):
+                    os.makedirs(emails_dir)
+                
+                timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
+                clean_subject = "".join([c if c.isalnum() else "_" for c in subject])[:30]
+                filename = os.path.join(emails_dir, f"email_{timestamp}_{clean_subject}.html")
+                
+                with open(filename, "w", encoding="utf-8") as f:
+                    f.write(html_body)
+                print(f"    💾 Email saved to: {filename}")
+            except Exception as e:
+                print(f"    ❌ Failed to save email to file: {e}")
+
+            return True
                 
         except Exception as e:
             print(f"❌ Failed to send email: {e}")
@@ -146,17 +164,42 @@ class CriticalAlertAgent:
         
         # Connect to MongoDB via Proxy
         try:
-            # Add path to find Orchestrator modules if needed, or just import
-            # We need to make sure we can import MongoProxy.
-            # Assuming running from root or similar. 
-            # We will copy MongoProxy to CriticalAlert folder for simplicity if import fails.
             sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '../../')))
             from Orchestrator.src.mongo_proxy import MongoProxy
             self.mongo_proxy = MongoProxy()
             print("✅ Connected to MongoDB (Proxy)")
+            
+            # Load targets from Inventory
+            self.load_targets_from_inventory()
         except Exception as e:
             print(f"❌ MongoDB Proxy Setup Failed: {e}")
             self.mongo_proxy = None
+
+    def load_targets_from_inventory(self):
+        """Fetch active databases from MongoDB Inventory"""
+        print("🔄 Fetching targets from Inventory...")
+        try:
+            # Query inventory
+            dbs = self.mongo_proxy.execute_eval("db.inventory_databases.find({'identity.engine': 'POSTGRES'}).toArray()")
+            if dbs:
+                count = 0
+                for db in dbs:
+                    identity = db.get('identity', {})
+                    config = db.get('configuration', {})
+                    name = identity.get('db_unique_name', 'UNKNOWN')
+                    host = identity.get('host', '127.0.0.1')
+                    port = config.get('port', 5432)
+                    
+                    # Add to monitoring list if not exists or update?
+                    # For simplicity, we just append or recreating list logic
+                    # Just add standard credentials for now (In real world, fetch from Vault)
+                    self.add_database(host, port, "postgres", "nexi2024", "postgres", name)
+                    count += 1
+                print(f"✅ Loaded {count} targets from Inventory.")
+            else:
+                print("⚠️ No targets found in Inventory.")
+        except Exception as e:
+            print(f"❌ Failed to load targets: {e}")
 
     def add_database(self, host: str, port: int, user: str, password: str, database: str, name: str):
         """Add a database to monitor"""
@@ -262,9 +305,9 @@ def main():
     
     agent = CriticalAlertAgent(args.email)
     
-    # Add Docker lab databases
-    agent.add_database("localhost", 5433, "postgres", "nexi2024", "payments_dev", "PG-Milano-DEV")
-    agent.add_database("localhost", 5434, "postgres", "nexi2024", "cards_dev", "PG-Bratislava-DEV")
+    # Add Docker lab databases - REMOVED, now using dynamic loading
+    # agent.add_database("localhost", 5433, "postgres", "nexi2024", "payments_dev", "PG-Milano-DEV")
+    # agent.add_database("localhost", 5434, "postgres", "nexi2024", "cards_dev", "PG-Bratislava-DEV")
     
     if args.once:
         agent.run_once()
