@@ -221,7 +221,39 @@ Remember: BE HELPFUL, BE DECISIVE, SOLVE THE PROBLEM!
                 elif action == "run_query":
                     db_name = action_json.get("database")
                     sql = action_json.get("sql")
-                    return f"📋 **Query Ready to Execute on {db_name}**:\n```sql\n{sql}\n```\n\n*Use the terminal to execute this query, or ask me to open a SQL console.*"
+                    
+                    # EXECUTE THE QUERY
+                    try:
+                        # Lookup database container info
+                        db_info = mongo.execute_eval(f"db.inventory_databases.findOne({{'identity.db_unique_name': '{db_name}'}})")
+                        if not db_info:
+                            return f"⚠️ Database **{db_name}** not found in inventory.\n\n{reply}"
+                        
+                        container = db_info.get('identity', {}).get('db_name') or db_info.get('identity', {}).get('host')
+                        engine = db_info.get('identity', {}).get('engine', 'POSTGRES').upper()
+                        
+                        # Build docker exec command
+                        if engine == 'ORACLE':
+                            exec_cmd = f'docker exec {container} sqlplus -s sys/nexi2024 as sysdba <<< "{sql}"'
+                        elif engine == 'MYSQL':
+                            exec_cmd = f'docker exec {container} mysql -u root -ppassword -e "{sql}"'
+                        elif engine == 'POSTGRES':
+                            exec_cmd = f'docker exec {container} psql -U postgres -c "{sql}"'
+                        else:
+                            return f"⚠️ Unsupported engine: {engine}\n\n{reply}"
+                        
+                        # Execute via subprocess
+                        result = subprocess.run(exec_cmd, shell=True, capture_output=True, text=True, timeout=30)
+                        output = result.stdout or result.stderr
+                        
+                        if result.returncode == 0:
+                            return f"✅ **Query Executed on {db_name} ({engine})**:\n\n```sql\n{sql}\n```\n\n**Result:**\n```\n{output[:3000]}\n```"
+                        else:
+                            return f"⚠️ **Query Error on {db_name}**:\n\n```\n{output[:2000]}\n```\n\n{reply}"
+                    except subprocess.TimeoutExpired:
+                        return f"⚠️ Query timeout after 30 seconds.\n\n{reply}"
+                    except Exception as exec_err:
+                        return f"⚠️ Execution error: {exec_err}\n\n{reply}"
                 
                 elif action == "create_alert":
                     db_name = action_json.get("database")

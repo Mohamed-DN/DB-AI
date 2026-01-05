@@ -1,29 +1,38 @@
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;800&family=JetBrains+Mono:wght@400;700&display=swap');
 
 :root {
-    --bg-color: #050505;
-    --card-bg: #0a0a0a;
+    --bg-color: #050508;
+    --card-bg: rgba(15, 15, 20, 0.8);
+    --card-bg-solid: #0f0f14;
     --navbar-bg: #000000;
-    --border-color: #222;
+    --border-color: rgba(255, 255, 255, 0.08);
 
-    --text-primary: #f0f0f0;
-    --text-secondary: #888;
+    --text-primary: #f0f0f5;
+    --text-secondary: #8888a0;
 
-    --accent: #A1FF62;
-    /* Osmo Lime */
+    --accent: #7DF9FF;
+    /* Electric Cyan */
+    --accent-glow: rgba(125, 249, 255, 0.3);
     --marquee-bg: #FFD700;
     /* Yellow/Gold */
     --marquee-text: #000;
 
-    --danger: #ff4747;
+    --danger: #ff5c5c;
     --warning: #ffbd2e;
-    --success: #A1FF62;
+    --success: #4ade80;
+    --info: #60a5fa;
 
     --font-heading: 'Inter', sans-serif;
     --font-mono: 'JetBrains Mono', monospace;
 
-    --radius: 24px;
+    --radius: 16px;
+    --radius-lg: 24px;
     --pill: 999px;
+
+    /* Glassmorphism */
+    --glass-bg: rgba(10, 10, 15, 0.6);
+    --glass-border: rgba(255, 255, 255, 0.1);
+    --glass-blur: blur(12px);
 }
 
 * {
@@ -278,13 +287,40 @@ body {
 }
 
 .stat-card {
-    background: var(--card-bg);
-    border: 1px solid var(--border-color);
+    background: var(--glass-bg);
+    backdrop-filter: var(--glass-blur);
+    -webkit-backdrop-filter: var(--glass-blur);
+    border: 1px solid var(--glass-border);
     padding: 1.5rem;
-    border-radius: var(--radius);
+    border-radius: var(--radius-lg);
     display: flex;
     flex-direction: column;
     gap: 10px;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    position: relative;
+    overflow: hidden;
+}
+
+.stat-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 2px;
+    background: linear-gradient(90deg, transparent, var(--accent), transparent);
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
+.stat-card:hover {
+    border-color: var(--accent);
+    transform: translateY(-4px);
+    box-shadow: 0 8px 32px var(--accent-glow);
+}
+
+.stat-card:hover::before {
+    opacity: 1;
 }
 
 .stat-value {
