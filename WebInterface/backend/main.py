@@ -516,6 +516,40 @@ def get_email_content(filename: str):
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
+@app.delete("/api/emails/{filename}")
+def delete_email(filename: str):
+    """Delete a single email"""
+    try:
+        # Security check: filename only
+        if "/" in filename or "\\" in filename: raise Exception("Invalid filename")
+        
+        email_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), '../../emails'))
+        path = os.path.join(email_dir, filename)
+        
+        if not os.path.exists(path): raise HTTPException(status_code=404, detail="File not found")
+        
+        os.remove(path)
+        return {"status": "deleted", "filename": filename}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.delete("/api/emails/all")
+def delete_all_emails():
+    """Delete all emails from the inbox"""
+    try:
+        email_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), '../../emails'))
+        if not os.path.exists(email_dir): return {"status": "no emails to delete", "count": 0}
+        
+        count = 0
+        for f in os.listdir(email_dir):
+            if f.endswith('.html'):
+                os.remove(os.path.join(email_dir, f))
+                count += 1
+        
+        return {"status": "deleted", "count": count}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
 # =============================================================================
 # LLM MANAGEMENT ENDPOINTS
 # =============================================================================

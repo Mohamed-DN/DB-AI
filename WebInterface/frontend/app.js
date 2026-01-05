@@ -276,19 +276,38 @@ async function loadEmails() {
         const files = await fetch(`${API_URL}/emails`).then(r => r.json());
         const list = document.getElementById('email-list');
         list.innerHTML = '';
-        if (files.length === 0) list.innerHTML = '<li style="text-align:center; padding:1rem;">No emails found</li>';
+        if (files.length === 0) {
+            list.innerHTML = '<div style="text-align:center; padding:2rem; color:#666;"><i class="fa-solid fa-inbox" style="font-size:2rem; margin-bottom:1rem; opacity:0.3;"></i><br>No emails</div>';
+            return;
+        }
         files.forEach(f => {
-            const li = document.createElement('li');
-            li.innerText = f.replace('email_', '').replace('.html', '').replace(/_/g, ' ');
-            li.onclick = () => viewEmail(f, li);
-            list.appendChild(li);
+            const div = document.createElement('div');
+            div.className = 'email-item';
+            div.style.cssText = 'display:flex; align-items:center; gap:8px; padding:10px 12px; margin-bottom:6px; background:rgba(125,249,255,0.05); border:1px solid rgba(125,249,255,0.15); border-radius:10px; cursor:pointer; transition:all 0.2s;';
+
+            // Parse filename for display
+            const displayName = f.replace('alert_', '').replace('.html', '').replace(/_/g, ' ');
+
+            div.innerHTML = `
+                <button class="email-btn" onclick="viewEmail('${f}', this.parentElement)" style="flex:1; background:none; border:none; color:var(--text-primary); text-align:left; cursor:pointer; font-size:0.85rem; padding:0;">
+                    <i class="fa-solid fa-envelope" style="color:var(--accent); margin-right:8px;"></i>${displayName}
+                </button>
+                <button class="btn-delete-email" onclick="event.stopPropagation(); deleteEmail('${f}')" style="background:none; border:none; color:var(--danger); cursor:pointer; padding:4px 8px; border-radius:6px; transition:background 0.2s;" title="Delete">
+                    <i class="fa-solid fa-trash"></i>
+                </button>
+            `;
+
+            div.onmouseover = () => { div.style.background = 'rgba(125,249,255,0.12)'; div.style.borderColor = 'var(--accent)'; };
+            div.onmouseout = () => { div.style.background = 'rgba(125,249,255,0.05)'; div.style.borderColor = 'rgba(125,249,255,0.15)'; };
+
+            list.appendChild(div);
         });
     } catch (e) { console.error(e); }
 }
 
 async function viewEmail(filename, el) {
-    document.querySelectorAll('.email-list li').forEach(l => l.classList.remove('active'));
-    if (el) el.classList.add('active');
+    document.querySelectorAll('.email-item').forEach(l => { l.style.background = 'rgba(125,249,255,0.05)'; l.style.borderColor = 'rgba(125,249,255,0.15)'; });
+    if (el) { el.style.background = 'rgba(125,249,255,0.2)'; el.style.borderColor = 'var(--accent)'; }
     try {
         const res = await fetch(`${API_URL}/emails/content?filename=${filename}`).then(r => r.json());
         const iframe = document.getElementById('email-preview');
@@ -296,6 +315,36 @@ async function viewEmail(filename, el) {
         iframe.contentWindow.document.write(res.content);
         iframe.contentWindow.document.close();
     } catch (e) { alert("Error loading email"); }
+}
+
+async function deleteEmail(filename) {
+    try {
+        const res = await fetch(`${API_URL}/emails/${filename}`, { method: 'DELETE' });
+        if (res.ok) {
+            loadEmails();
+            document.getElementById('email-preview').contentWindow.document.open();
+            document.getElementById('email-preview').contentWindow.document.write('<html><body style="background:#000;color:#666;display:flex;align-items:center;justify-content:center;height:100%;margin:0;">Email deleted</body></html>');
+            document.getElementById('email-preview').contentWindow.document.close();
+        }
+    } catch (e) { alert('Failed to delete email: ' + e); }
+}
+
+async function deleteAllEmails() {
+    showModal(
+        'Delete All Emails?',
+        'Are you sure you want to delete ALL emails from the inbox? This cannot be undone.',
+        async () => {
+            try {
+                const res = await fetch(`${API_URL}/emails/all`, { method: 'DELETE' });
+                if (res.ok) {
+                    loadEmails();
+                    document.getElementById('email-preview').contentWindow.document.open();
+                    document.getElementById('email-preview').contentWindow.document.write('<html><body style="background:#000;color:#666;display:flex;align-items:center;justify-content:center;height:100%;margin:0;">All emails deleted</body></html>');
+                    document.getElementById('email-preview').contentWindow.document.close();
+                }
+            } catch (e) { alert('Failed to delete emails: ' + e); }
+        }
+    );
 }
 
 // --- EXPLORER ENGINE (Master/Detail) ---
@@ -569,7 +618,7 @@ function showProcessLog(title) {
     const content = document.getElementById('process-log-content');
 
     titleEl.innerText = title;
-    content.innerHTML = '<div class="process-log-entry pending"><span class="icon"><i class="fa-solid fa-spinner fa-spin"></i></span><span class="name">Initializing...</span><span class="status">PENDING</span></div>';
+    content.innerHTML = '<div id="process-log-initializing" class="process-log-entry pending"><span class="icon"><i class="fa-solid fa-spinner fa-spin"></i></span><span class="name">Initializing...</span><span class="status">PENDING</span></div>';
 
     overlay.style.display = 'flex';
     overlay.style.opacity = '1';
@@ -594,6 +643,11 @@ function displayProcessResults(results) {
 
 function addProcessLogEntry(name, success, message) {
     const content = document.getElementById('process-log-content');
+
+    // Remove the initializing spinner if present
+    const initSpinner = document.getElementById('process-log-initializing');
+    if (initSpinner) initSpinner.remove();
+
     const entry = document.createElement('div');
     entry.className = `process-log-entry ${success ? 'success' : 'error'}`;
     entry.innerHTML = `
