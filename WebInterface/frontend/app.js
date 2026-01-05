@@ -95,14 +95,19 @@ async function loadInventory() {
         dbs.forEach(db => {
             const tr = document.createElement('tr');
             const status = db.state?.status || 'UNKNOWN';
-            const name = db.identity.db_unique_name;
-            const engine = db.identity.engine;
-            const host = db.identity.host;
-            const port = db.configuration.port;
-            const env = db.identity.environment;
+            const name = db.identity?.db_unique_name || 'UNKNOWN';
+            const engine = db.identity?.engine || 'UNKNOWN';
+            const host = db.identity?.host || 'N/A';
+            // Port can be in identity or configuration
+            const port = db.identity?.port || db.configuration?.port || 'N/A';
+            const env = db.identity?.environment || 'N/A';
 
             let badgeClass = 'status-down';
             if (status === 'UP') badgeClass = 'status-up';
+
+            const isOracle = engine === 'ORACLE';
+            const sqlLabel = isOracle ? 'sqlplus' : 'psql';
+            const sqlIcon = isOracle ? 'fa-solid fa-server' : 'fa-solid fa-terminal';
 
             tr.innerHTML = `
                 <td><span class="status-badge ${badgeClass}">${status}</span></td>
@@ -113,7 +118,7 @@ async function loadInventory() {
                 <td>${env}</td>
                 <td>
                     <div style="display:flex; gap:5px;">
-                        <button class="btn sm" onclick="connectDB('${name}', 'sql')" title="SQL Console"><i class="fa-solid fa-terminal"></i> psql</button>
+                        <button class="btn sm" onclick="connectDB('${name}', 'sql')" title="SQL Console"><i class="${sqlIcon}"></i> ${sqlLabel}</button>
                         <button class="btn sm" onclick="connectDB('${name}', 'bash')" title="Linux Shell" style="background:#4e5d6c;"><i class="fa-brands fa-linux"></i> bash</button>
                         ${status !== 'UP' ? `<button class="btn sm btn-danger" onclick="deleteDB('${name}')" title="Delete from Inventory"><i class="fa-solid fa-trash"></i></button>` : ''}
                     </div>

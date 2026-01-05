@@ -239,12 +239,19 @@ def connect_db(db_name: str, mode: str = "sql"):
              raise HTTPException(status_code=404, detail="Container name not found for database")
             
         # Determine command based on mode
+        engine = db_info.get('identity', {}).get('engine', 'POSTGRES').upper()
+
         if mode == "bash":
             # Use PowerShell to host the Bash session
             cmd = f'start powershell -NoExit -Command "Write-Host \'Starting Linux Shell (Docker)...\' -ForegroundColor Cyan; docker exec -it {container} bash"'
         else:
-            # SQL Mode (Default)
-            cmd = f'start powershell -NoExit -Command "Write-Host \'Starting PostgreSQL Console...\' -ForegroundColor Green; docker exec -it {container} psql -U postgres"'
+            # SQL Mode
+            if engine == 'ORACLE':
+                # Oracle SQLPlus as SYSDBA
+                cmd = f'start powershell -NoExit -Command "Write-Host \'Starting Oracle SQLPlus (SYSDBA)...\' -ForegroundColor Red; docker exec -it {container} sqlplus sys/nexi2024 as sysdba"'
+            else:
+                # Default to PostgreSQL
+                cmd = f'start powershell -NoExit -Command "Write-Host \'Starting PostgreSQL Console...\' -ForegroundColor Green; docker exec -it {container} psql -U postgres"'
         
         subprocess.Popen(cmd, shell=True)
         return {"status": f"Terminal ({mode}) opened for {container}"}
