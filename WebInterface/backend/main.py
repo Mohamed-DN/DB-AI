@@ -192,24 +192,26 @@ class ConfigRequest(BaseModel):
 
 @app.get("/api/config")
 def get_config():
-    """Get System Intervals"""
+    """Get all agent intervals"""
+    agents = ['scout', 'criticalalert', 'watcher', 'forensicanalyzer', 'checkmk_bridge', 'collector']
+    defaults = {'scout': 60, 'criticalalert': 30, 'watcher': 10, 'forensicanalyzer': 30, 'checkmk_bridge': 60, 'collector': 30}
+    
+    config = {}
     try:
-        scout = mongo.execute_eval("db.system_config.findOne({key: 'scout_interval'})")
-        check = mongo.execute_eval("db.system_config.findOne({key: 'check_interval'})")
-        return {
-            "scout_interval": scout.get('value', 60) if scout else 60,
-            "check_interval": check.get('value', 10) if check else 10
-        }
+        for agent in agents:
+            doc = mongo.execute_eval(f"db.system_config.findOne({{key: '{agent}_interval'}})")
+            config[f"{agent}_interval"] = doc.get('value', defaults[agent]) if doc else defaults[agent]
+        return config
     except:
-        return {"scout_interval": 60, "check_interval": 10}
+        return {f"{a}_interval": defaults[a] for a in agents}
 
 @app.post("/api/config")
-def update_config(cfg: ConfigRequest):
-    """Update System Intervals"""
+def update_config(cfg: dict):
+    """Update agent intervals"""
     try:
-        # Upsert keys
-        mongo.execute_eval(f"db.system_config.updateOne({{key: 'scout_interval'}}, {{$set: {{value: {cfg.scout_interval}}}}}, {{upsert: true}})")
-        mongo.execute_eval(f"db.system_config.updateOne({{key: 'check_interval'}}, {{$set: {{value: {cfg.check_interval}}}}}, {{upsert: true}})")
+        for key, value in cfg.items():
+            if key.endswith('_interval'):
+                mongo.execute_eval(f"db.system_config.updateOne({{key: '{key}'}}, {{$set: {{value: {int(value)}}}}}, {{upsert: true}})")
         return {"status": "Updated", "config": cfg}
     except Exception as e:
          raise HTTPException(status_code=500, detail=str(e))
@@ -546,24 +548,53 @@ def get_agents_status():
 
 @app.post("/api/agents/start/{agent_name}")
 def start_agent(agent_name: str):
-    """Start a specific agent"""
+    """Start a specific agent (runs once and returns output)"""
     agent_scripts = {
-        "scout": "Agents/Scout/main.py",
-        "criticalalert": "Agents/CriticalAlert/critical_alert.py",
-        "watcher": "Agents/Watcher/main.py",
-        "forensicanalyzer": "Agents/Watcher/ai_analyzer.py",
-        "checkmk_bridge": "Agents/CheckMK_Bridge/main.py",
-        "collector": "Agents/Collector/main.py"
+        "scout": ("Agents/Scout/main.py", ["--once"]),
+        "criticalalert": ("Agents/CriticalAlert/critical_alert.py", ["--once"]),
+        "watcher": ("Agents/Watcher/main.py", []),  # Watcher runs continuously
+        "forensicanalyzer": ("Agents/Watcher/ai_analyzer.py", ["--once"]),
+        "checkmk_bridge": ("Agents/CheckMK_Bridge/main.py", ["--once"]),
+        "collector": ("Agents/Collector/main.py", ["--once"])
     }
     
-    script = agent_scripts.get(agent_name.lower())
-    if not script:
+    agent_info = agent_scripts.get(agent_name.lower())
+    if not agent_info:
         raise HTTPException(status_code=404, detail=f"Agent {agent_name} not found")
+    
+    script, args = agent_info
     
     try:
         script_path = os.path.abspath(os.path.join(os.path.dirname(__file__), '../../', script))
-        subprocess.Popen([sys.executable, script_path], creationflags=subprocess.CREATE_NEW_CONSOLE)
-        return {"status": f"Agent {agent_name} started", "script": script}
+        
+        # Run agent and capture output
+        result = subprocess.run(
+            [sys.executable, script_path] + args,
+            capture_output=True,
+            text=True,
+            timeout=60,
+            encoding='utf-8',
+            errors='replace'
+        )
+        
+        output = result.stdout + result.stderr
+        # Clean emoji and special chars for JSON
+        output_lines = [line for line in output.split('\n') if line.strip()]
+        
+        return {
+            "status": "completed",
+            "agent": agent_name,
+            "exit_code": result.returncode,
+            "output": output_lines[-20:] if len(output_lines) > 20 else output_lines,  # Last 20 lines
+            "success": result.returncode == 0
+        }
+    except subprocess.TimeoutExpired:
+        return {
+            "status": "timeout",
+            "agent": agent_name,
+            "output": ["Agent execution timed out (60s limit)"],
+            "success": False
+        }
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 

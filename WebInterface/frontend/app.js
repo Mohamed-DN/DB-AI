@@ -220,22 +220,41 @@ function handleChatKey(e) { if (e.key === 'Enter') sendMessage(); }
 async function loadSettings() {
     try {
         const config = await fetch(`${API_URL}/config`).then(r => r.json());
-        document.getElementById('setting-scout').value = config.scout_interval;
-        document.getElementById('setting-check').value = config.check_interval;
+        // Load all agent intervals
+        const agents = ['scout', 'criticalalert', 'watcher', 'forensicanalyzer', 'checkmk_bridge', 'collector'];
+        agents.forEach(agent => {
+            const input = document.getElementById(`setting-${agent}`);
+            if (input && config[`${agent}_interval`]) {
+                input.value = config[`${agent}_interval`];
+            }
+        });
     } catch (e) { console.error(e); }
 }
 
 async function saveSettings() {
-    const scout = document.getElementById('setting-scout').value;
-    const check = document.getElementById('setting-check').value;
+    // Collect all agent intervals
+    const agents = ['scout', 'criticalalert', 'watcher', 'forensicanalyzer', 'checkmk_bridge', 'collector'];
+    const config = {};
+
+    agents.forEach(agent => {
+        const input = document.getElementById(`setting-${agent}`);
+        if (input) {
+            config[`${agent}_interval`] = parseInt(input.value) || 60;
+        }
+    });
+
     try {
         await fetch(`${API_URL}/config`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ scout_interval: parseInt(scout), check_interval: parseInt(check) })
+            body: JSON.stringify(config)
         });
-        alert("✅ Configurazione Salvata!");
-    } catch (e) { alert("❌ Errore nel salvataggio!"); }
+        showProcessLog('Configuration Saved');
+        addProcessLogEntry('Settings', true, 'All agent intervals saved to database');
+    } catch (e) {
+        showProcessLog('Error');
+        addProcessLogEntry('Settings', false, 'Failed to save configuration');
+    }
 }
 
 async function triggerAction(action) {
@@ -691,13 +710,36 @@ async function loadRagStatus() {
 }
 
 async function startAgent(name) {
+    // Show loading state in process log
+    showProcessLog(`Running ${name}...`);
+    addProcessLogEntry(name, null, 'Starting...');
+
     try {
         const response = await fetch(`${API_URL}/agents/start/${name}`, { method: 'POST' });
         const data = await response.json();
-        alert(`Agent ${name} started: ${data.status}`);
-        setTimeout(loadAgentsStatus, 2000);
+
+        // Clear and show results
+        document.getElementById('process-log-content').innerHTML = '';
+
+        if (data.output && data.output.length > 0) {
+            data.output.forEach(line => {
+                const isSuccess = line.includes('✅') || line.includes('ALLOWED') || line.includes('Complete');
+                const isError = line.includes('❌') || line.includes('Error') || line.includes('BLOCKED');
+                addProcessLogEntry('', isError ? false : (isSuccess ? true : null), line);
+            });
+        }
+
+        // Add summary line
+        addProcessLogEntry(
+            name,
+            data.success,
+            data.success ? 'Execution completed successfully' : `Exited with code ${data.exit_code}`
+        );
+
+        // Refresh agent status after delay
+        setTimeout(loadAgentsStatus, 1000);
     } catch (e) {
-        alert(`Error starting agent: ${e}`);
+        addProcessLogEntry(name, false, `Error: ${e}`);
     }
 }
 
