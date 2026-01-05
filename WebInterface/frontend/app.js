@@ -315,22 +315,20 @@ async function loadEmails() {
         files.forEach(f => {
             const div = document.createElement('div');
             div.className = 'email-item';
-            div.style.cssText = 'display:flex; align-items:center; gap:8px; padding:10px 12px; margin-bottom:6px; background:rgba(125,249,255,0.05); border:1px solid rgba(125,249,255,0.15); border-radius:10px; cursor:pointer; transition:all 0.2s;';
+            // Removed inline styles, now handled by CSS
 
             // Parse filename for display
             const displayName = f.replace('alert_', '').replace('.html', '').replace(/_/g, ' ');
 
             div.innerHTML = `
-                <button class="email-btn" onclick="viewEmail('${f}', this.parentElement)" style="flex:1; background:none; border:none; color:var(--text-primary); text-align:left; cursor:pointer; font-size:0.85rem; padding:0;">
+                <button class="email-btn" onclick="viewEmail('${f}', this.parentElement)">
                     <i class="fa-solid fa-envelope" style="color:var(--accent); margin-right:8px;"></i>${displayName}
                 </button>
-                <button class="btn-delete-email" onclick="event.stopPropagation(); deleteEmail('${f}')" style="background:none; border:none; color:var(--danger); cursor:pointer; padding:4px 8px; border-radius:6px; transition:background 0.2s;" title="Delete">
+                <button class="btn-delete-email" onclick="event.stopPropagation(); deleteEmail('${f}')" title="Delete">
                     <i class="fa-solid fa-trash"></i>
                 </button>
             `;
-
-            div.onmouseover = () => { div.style.background = 'rgba(125,249,255,0.12)'; div.style.borderColor = 'var(--accent)'; };
-            div.onmouseout = () => { div.style.background = 'rgba(125,249,255,0.05)'; div.style.borderColor = 'rgba(125,249,255,0.15)'; };
+            // Removed inline onmouseover/out handlers
 
             list.appendChild(div);
         });
@@ -338,8 +336,10 @@ async function loadEmails() {
 }
 
 async function viewEmail(filename, el) {
-    document.querySelectorAll('.email-item').forEach(l => { l.style.background = 'rgba(125,249,255,0.05)'; l.style.borderColor = 'rgba(125,249,255,0.15)'; });
-    if (el) { el.style.background = 'rgba(125,249,255,0.2)'; el.style.borderColor = 'var(--accent)'; }
+    // Use classes for active state
+    document.querySelectorAll('.email-item').forEach(l => l.classList.remove('active'));
+    if (el) el.classList.add('active');
+
     try {
         const res = await fetch(`${API_URL}/emails/content?filename=${filename}`).then(r => r.json());
         const iframe = document.getElementById('email-preview');
