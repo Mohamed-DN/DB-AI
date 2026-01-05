@@ -86,83 +86,164 @@ def get_alerts():
 
 @app.post("/api/chat")
 def chat_with_ai(request: ChatRequest):
-    """Interact with Local Ollama with Action Capabilities"""
+    """Interact with Local Ollama - Multi-DB Expert with Action Capabilities"""
     import requests
     import json
+    import re
     
     prompt = request.message
     
-    # Context
+    # Get system context
     try:
         db_count = mongo.execute_eval("db.inventory_databases.countDocuments({})")
         active_alerts = mongo.execute_eval('db.monitoring_alerts.countDocuments({"state": "CRITICAL", "processed": false})')
+        # Get list of databases
+        dbs = mongo.execute_eval("db.inventory_databases.find({}, {'identity.db_unique_name': 1, 'identity.engine': 1, 'state.status': 1}).limit(20).toArray()")
+        db_list = "\n".join([f"   - {d['identity']['db_unique_name']} ({d['identity']['engine']}) - {d['state']['status']}" for d in dbs]) if dbs else "No databases found"
     except:
         db_count = "Unknown"
         active_alerts = "Unknown"
+        db_list = "Unable to fetch"
     
-    system_prompt = f"""You are the Nexi DBA AI Assistant, an expert in PostgreSQL and Database Administration.
-    
-    CRITICAL INSTRUCTIONS:
-    1. LANGUAGE: You MUST detect the language of the user's message (e.g., Italian, English) and respond in the SAME language. This is mandatory.
-    2. QUERY ADVICE: If the user asks about data or actions, propose specific, optimized SQL queries for PostgreSQL.
-    3. TONE: Professional, concise, and helpful.
+    system_prompt = f"""You are NEXI DBA, an EXPERT Database Administrator AI with 20+ years of experience.
+You are a MULTI-DATABASE EXPERT specializing in:
+- **Oracle** (19c, 21c, RAC, Data Guard, RMAN, ASM, AWR, PDBs, CDBs)
+- **PostgreSQL** (15+, replication, extensions, pg_stat)
+- **MySQL** (8.0+, InnoDB, replication, performance_schema)
+- **DB2** (LUW, z/OS, HADR, backup/recovery)
+- **Cassandra** (clusters, CQL, compaction, repair)
+- **MongoDB** (replica sets, sharding, aggregation)
 
-    Current System State:
-    - Total Databases Managed: {db_count}
-    - Active Critical Alerts: {active_alerts}
+⚡ CRITICAL BEHAVIOR RULES:
+1. **LANGUAGE**: ALWAYS respond in the SAME language as the user (Italian, English, etc.)
+2. **BE DECISIVE**: Do NOT ask unnecessary questions. REASON through the problem, then EXECUTE or PROVIDE the solution.
+3. **ACTION-ORIENTED**: When user asks to DO something, DO IT. Don't just explain.
+4. **PROVIDE COMPLETE SOLUTIONS**: Give full SQL/commands, not partial examples.
+5. **REASON STEP-BY-STEP**: For complex problems, think through the solution, then act.
+
+📊 CURRENT SYSTEM STATE:
+- Total Databases: {db_count}
+- Critical Alerts: {active_alerts}
+- Available Databases:
+{db_list}
+
+🔧 TOOLS AVAILABLE (output JSON to execute):
+
+1. **run_query**: Execute SQL on a database
+   {{"action": "run_query", "database": "DB_NAME", "sql": "SELECT ..."}}
+
+2. **connect_terminal**: Open SQL terminal to database
+   {{"action": "connect_terminal", "database": "DB_NAME", "mode": "sql|bash"}}
+
+3. **send_email**: Send email notification
+   {{"action": "send_email", "to": "email", "subject": "...", "body": "..."}}
+
+4. **create_alert**: Create monitoring alert
+   {{"action": "create_alert", "database": "DB_NAME", "type": "WARNING|CRITICAL", "message": "..."}}
+
+5. **run_script**: Execute maintenance script
+   {{"action": "run_script", "script": "rman_backup|dataguard_check|tablespace_check", "database": "DB_NAME"}}
+
+📝 RESPONSE GUIDELINES:
+- For Oracle: Use V$ views, DBA_* views, RMAN commands, Data Guard broker
+- For PostgreSQL: Use pg_* catalog, pg_stat views, psql commands
+- For MySQL: Use information_schema, performance_schema, SHOW commands
+- For DB2: Use SYSCAT views, db2 commands, HADR status
+- If user needs help with a specific database, check if it's in the list above
+
+🎯 EXAMPLES OF GOOD RESPONSES:
+User: "oracle pdb on cairo"
+→ List the PDBs on NEXI-ORACLE-CAIRO-PRIMARY with:
+```sql
+SELECT pdb_name, status, open_mode FROM cdb_pdbs ORDER BY pdb_name;
+```
+
+User: "drop user in postgres"  
+→ Provide immediate solution:
+```sql
+DROP USER IF EXISTS username;
+-- OR with dependencies:
+REASSIGN OWNED BY username TO postgres;
+DROP OWNED BY username;
+DROP USER username;
+```
+
+User: "we sai oracle"
+→ Understand as "verifica/status Oracle" and provide:
+```sql
+SELECT instance_name, status, database_status, active_state FROM v$instance;
+SELECT name, open_mode, database_role FROM v$database;
+```
+
+Remember: BE HELPFUL, BE DECISIVE, SOLVE THE PROBLEM!
+"""
     
-    TOOLS AVAILABLE:
-    1. send_email: Send an email to a user. Format: {{"action": "send_email", "to": "email_address", "subject": "subject", "body": "message_body"}}
-    
-    TOOL USAGE:
-    - If the user asks to send an email, output ONLY the JSON object.
-    - If no action is needed, just reply as a helpful assistant in the user's language.
-    """
     try:
-        # Determine which model to use
         global current_llm_model
         model_to_use = request.model if request.model else current_llm_model
         
-        # Call Ollama with selected model
+        # Call Ollama with enhanced prompt
         response = requests.post(f"{OLLAMA_CONFIG['base_url']}/api/generate", json={
             "model": model_to_use,
-            "prompt": f"System: {system_prompt}\nUser: {prompt}\nAssistant:",
+            "prompt": f"System: {system_prompt}\n\nUser: {prompt}\n\nAssistant (be decisive and action-oriented):",
             "stream": False,
-            "options": OLLAMA_CONFIG.get("options", {})
+            "options": {**OLLAMA_CONFIG.get("options", {}), "temperature": 0.7}
         }, timeout=OLLAMA_CONFIG.get("timeout", 120))
         
         reply = response.json().get("response", "")
         
-        # Check for JSON Action
+        # Check for JSON Action in reply
         clean_reply = reply.strip()
-        action_performed = False
-        action_result = ""
         
-        if clean_reply.startswith("{") and "action" in clean_reply:
+        # Try to extract and execute JSON actions
+        json_match = re.search(r'\{[^{}]*"action"[^{}]*\}', clean_reply)
+        if json_match:
             try:
-                # Setup Email Sender
-                from Agents.CriticalAlert.main import EmailSender
-                sender = EmailSender()
+                action_json = json.loads(json_match.group())
+                action = action_json.get("action")
                 
-                # Parse JSON
-                data = json.loads(clean_reply)
-                if data.get("action") == "send_email":
-                    to = data.get("to", "mohamed.d.n.2002@gmail.com")
-                    subj = data.get("subject", "Nexi AI Alert")
-                    body = data.get("body", "No content")
-                    
-                    print(f"🤖 AI Action: Sending email to {to}")
+                if action == "send_email":
+                    from Agents.CriticalAlert.main import EmailSender
+                    sender = EmailSender()
+                    to = action_json.get("to", "mohamed.d.n.2002@gmail.com")
+                    subj = action_json.get("subject", "Nexi AI Alert")
+                    body = action_json.get("body", "No content")
                     sender.send_alert(to, subj, body)
-                    action_performed = True
-                    return f"✅ Action Executed: Email sent to {to}."
+                    return f"✅ **Action Executed**: Email sent to {to}\n\n{reply}"
+                
+                elif action == "connect_terminal":
+                    db_name = action_json.get("database")
+                    mode = action_json.get("mode", "sql")
+                    # Trigger terminal connection
+                    connect_db(db_name, mode)
+                    return f"✅ **Action Executed**: Terminal opened for {db_name} ({mode})\n\n{reply}"
+                
+                elif action == "run_query":
+                    db_name = action_json.get("database")
+                    sql = action_json.get("sql")
+                    return f"📋 **Query Ready to Execute on {db_name}**:\n```sql\n{sql}\n```\n\n*Use the terminal to execute this query, or ask me to open a SQL console.*"
+                
+                elif action == "create_alert":
+                    db_name = action_json.get("database")
+                    alert_type = action_json.get("type", "WARNING")
+                    message = action_json.get("message")
+                    mongo.insert_alert({
+                        "type": "USER_ALERT",
+                        "state": alert_type,
+                        "db_unique_name": db_name,
+                        "message": message
+                    })
+                    return f"✅ **Alert Created**: {alert_type} alert for {db_name}\n\n{reply}"
+                    
+            except json.JSONDecodeError:
+                pass
             except Exception as e:
-                print(f"Action Failed: {e}")
-                return f"⚠️ I tried to send the email but failed: {e}"
+                return f"⚠️ Action failed: {e}\n\n{reply}"
         
         return reply
 
     except Exception as e:
-        return f"AI Brain Offline: {str(e)}"
+        return f"❌ AI Brain Offline: {str(e)}"
 
 @app.post("/api/action/scan")
 def trigger_scan():
