@@ -1,16 +1,29 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;800&family=JetBrains+Mono:wght@400;700&display=swap');
+
 :root {
-    --bg-dark: #0a0b14;
-    --bg-panel: #141522;
-    --primary: #3b82f6;
-    --accent: #8b5cf6;
-    --text-main: #e2e8f0;
-    --text-muted: #94a3b8;
-    --danger: #ef4444;
-    --success: #10b981;
-    --warning: #f59e0b;
-    --border: #1e293b;
+    --bg-color: #050505;
+    --card-bg: #0a0a0a;
+    --navbar-bg: #000000;
+    --border-color: #222;
+
+    --text-primary: #f0f0f0;
+    --text-secondary: #888;
+
+    --accent: #A1FF62;
+    /* Osmo Lime */
+    --marquee-bg: #FFD700;
+    /* Yellow/Gold */
+    --marquee-text: #000;
+
+    --danger: #ff4747;
+    --warning: #ffbd2e;
+    --success: #A1FF62;
+
     --font-heading: 'Inter', sans-serif;
     --font-mono: 'JetBrains Mono', monospace;
+
+    --radius: 12px;
+    --pill: 999px;
 }
 
 * {
@@ -20,149 +33,163 @@
 }
 
 body {
-    background-color: var(--bg-dark);
-    color: var(--text-main);
+    background-color: var(--bg-color);
+    color: var(--text-primary);
     font-family: var(--font-heading);
+    display: flex;
+    flex-direction: column;
+    /* Vertical stack: Nav -> Marquee -> Content */
     height: 100vh;
     overflow: hidden;
 }
 
-.app-container {
-    display: flex;
-    height: 100%;
-}
-
-/* Sidebar */
-.sidebar {
-    width: 260px;
-    background-color: var(--bg-panel);
-    border-right: 1px solid var(--border);
-    display: flex;
-    flex-direction: column;
-    padding: 1.5rem;
-}
-
-.brand {
-    font-size: 1.5rem;
-    font-weight: 700;
-    margin-bottom: 2rem;
+/* --- NAVBAR (Horizontal) --- */
+.navbar {
+    height: 70px;
+    background: var(--navbar-bg);
+    border-bottom: 1px solid var(--border-color);
     display: flex;
     align-items: center;
-    gap: 0.5rem;
+    padding: 0 2rem;
+    gap: 2rem;
+    flex-shrink: 0;
 }
 
-.brand-icon {
-    color: var(--primary);
+.logo {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-weight: 800;
+    font-size: 1.2rem;
+    color: var(--text-primary);
+    letter-spacing: -0.5px;
 }
 
-.highlight {
-    color: var(--primary);
+.logo span {
+    color: var(--accent);
+}
+
+.nav-links {
+    display: flex;
+    gap: 10px;
+    margin-left: auto;
+    /* Push to right? Or Center? Osmo has center/right. Let's do left for nav, right for actions. */
+    margin-left: 2rem;
+    margin-right: auto;
 }
 
 .nav-btn {
-    width: 100%;
-    text-align: left;
-    background: none;
-    border: none;
-    color: var(--text-muted);
-    padding: 0.75rem 1rem;
-    cursor: pointer;
-    font-size: 0.95rem;
-    border-radius: 8px;
-    margin-bottom: 0.5rem;
-    transition: all 0.2s;
     display: flex;
     align-items: center;
-    gap: 0.75rem;
+    gap: 8px;
+    padding: 0.6rem 1.2rem;
+    border-radius: var(--pill);
+    color: var(--text-secondary);
+    cursor: pointer;
+    transition: all 0.2s;
+    font-weight: 600;
+    font-size: 0.9rem;
+    border: 1px solid transparent;
 }
 
-.nav-btn:hover, .nav-btn.active {
-    background-color: rgba(59, 130, 246, 0.1);
-    color: var(--text-main);
+.nav-btn:hover {
+    color: var(--text-primary);
+    background: #111;
 }
 
 .nav-btn.active {
-    border-left: 3px solid var(--primary);
+    background: var(--text-primary);
+    /* White/Light for Osmo black theme contrast */
+    color: #000;
+    border-color: var(--text-primary);
 }
 
 .status-indicator {
-    margin-top: auto;
-    font-size: 0.85rem;
-    color: var(--success);
     display: flex;
     align-items: center;
-    gap: 0.5rem;
+    gap: 8px;
+    font-family: var(--font-mono);
+    font-size: 0.8rem;
+    color: var(--success);
+    border: 1px solid #333;
+    padding: 4px 12px;
+    border-radius: var(--pill);
 }
 
-.dot {
+.status-indicator .dot {
     width: 8px;
     height: 8px;
-    background-color: var(--success);
+    background: var(--success);
     border-radius: 50%;
     box-shadow: 0 0 10px var(--success);
 }
 
-/* Main Content */
-.main-content {
-    flex: 1;
-    padding: 2rem;
-    overflow-y: auto;
-    background: radial-gradient(circle at top right, rgba(59, 130, 246, 0.05), transparent 40%);
+/* --- MARQUEE (Yellow) --- */
+.marquee-container {
+    width: 100%;
+    background: var(--marquee-bg);
+    color: var(--marquee-text);
+    overflow: hidden;
+    white-space: nowrap;
+    padding: 6px 0;
+    font-family: var(--font-mono);
+    font-size: 0.85rem;
+    font-weight: 800;
+    text-transform: uppercase;
+    flex-shrink: 0;
+    border-bottom: 1px solid var(--border-color);
 }
 
-header {
+.marquee-content {
+    display: inline-block;
+    padding-left: 100%;
+    animation: marquee 20s linear infinite;
+}
+
+@keyframes marquee {
+    0% {
+        transform: translate(0, 0);
+    }
+
+    100% {
+        transform: translate(-100%, 0);
+    }
+}
+
+/* --- MAIN CONTENT --- */
+.main-content {
+    flex: 1;
+    overflow: hidden;
+    position: relative;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+}
+
+/* TOP ACTIONS BAR (Below Marquee, inside Main) */
+/* Or maybe integrate actions into Navbar? 
+   Osmo has clean top. Let's put actions (Auto-Discovery) inside the Page Section or a Sub-header.
+   Let's keep a slim sub-header for Page Title + Actions.
+*/
+.sub-header {
+    padding: 1.5rem 2rem;
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin-bottom: 2rem;
 }
 
-h1 {
-    font-weight: 600;
+.page-title {
+    font-size: 1.8rem;
+    font-weight: 800;
+    letter-spacing: -1px;
 }
 
-.actions {
-    display: flex;
-    gap: 1rem;
-}
-
-.btn {
-    padding: 0.6rem 1.2rem;
-    border-radius: 6px;
-    border: none;
-    cursor: pointer;
-    font-weight: 500;
-    font-family: var(--font-heading);
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-    transition: transform 0.1s;
-}
-
-.btn:active {
-    transform: scale(0.98);
-}
-
-.btn.primary {
-    background-color: var(--primary);
-    color: white;
-    box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
-}
-
-.btn.danger {
-    background-color: rgba(239, 68, 68, 0.1);
-    color: var(--danger);
-    border: 1px solid var(--danger);
-}
-
-.btn.danger:hover {
-    background-color: var(--danger);
-    color: white;
-}
-
-/* Page Sections */
+/* REST IS SIMILAR */
 .page-section {
     display: none;
+    padding: 0 2rem 2rem 2rem;
+    overflow-y: auto;
+    height: 100%;
     animation: fadeIn 0.3s ease;
 }
 
@@ -170,175 +197,173 @@ h1 {
     display: block;
 }
 
-@keyframes fadeIn {
-    from { opacity: 0; transform: translateY(10px); }
-    to { opacity: 1; transform: translateY(0); }
-}
-
-/* Stats */
+/* DASHBOARD CARDS */
 .stats-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
     gap: 1.5rem;
     margin-bottom: 2rem;
 }
 
 .stat-card {
-    background-color: var(--bg-panel);
-    border: 1px solid var(--border);
+    background: var(--card-bg);
+    border: 1px solid var(--border-color);
     padding: 1.5rem;
-    border-radius: 12px;
+    border-radius: var(--radius);
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
 }
 
-.stat-card h3 {
-    color: var(--text-muted);
-    font-size: 0.9rem;
-    margin-bottom: 0.5rem;
+.stat-value {
+    font-size: 3rem;
+    font-weight: 800;
+    color: var(--text-primary);
+    line-height: 1;
+    letter-spacing: -2px;
 }
 
-.stat-card p {
-    font-size: 2rem;
+.stat-label {
+    color: var(--text-secondary);
+    font-size: 0.85rem;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    font-weight: 600;
+}
+
+/* BUTTONS */
+.btn {
+    padding: 0.6rem 1.2rem;
+    border-radius: var(--pill);
+    border: none;
     font-weight: 700;
+    cursor: pointer;
+    font-family: var(--font-heading);
+    transition: all 0.2s;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 0.9rem;
 }
 
-.text-danger { color: var(--danger); }
-.text-success { color: var(--success); }
-
-/* Glass Panel */
-.glass-panel {
-    background-color: rgba(20, 21, 34, 0.7);
-    backdrop-filter: blur(10px);
-    border: 1px solid var(--border);
-    border-radius: 12px;
-    padding: 1.5rem;
-    margin-bottom: 2rem;
+.btn-primary {
+    background: var(--accent);
+    color: #000;
 }
 
-/* Inventory Table */
+.btn-primary:hover {
+    background: var(--accent);
+    box-shadow: 0 0 15px rgba(161, 255, 98, 0.4);
+}
+
+.btn-danger {
+    background: transparent;
+    border: 1px solid var(--danger);
+    color: var(--danger);
+}
+
+.btn-danger:hover {
+    background: var(--danger);
+    color: white;
+}
+
+.btn.sm {
+    padding: 0.4rem 0.8rem;
+    font-size: 0.8rem;
+}
+
+/* TABLES / ALERTS same as before but ensure background contrast */
 table {
     width: 100%;
     border-collapse: collapse;
+    margin-top: 1rem;
 }
 
 th {
     text-align: left;
-    color: var(--text-muted);
     padding: 1rem;
-    border-bottom: 1px solid var(--border);
+    color: var(--text-secondary);
+    border-bottom: 1px solid var(--border-color);
 }
 
 td {
     padding: 1rem;
-    border-bottom: 1px solid rgba(255,255,255,0.05);
+    border-bottom: 1px solid #111;
 }
 
 .status-badge {
-    padding: 0.25rem 0.75rem;
-    border-radius: 20px;
-    font-size: 0.8rem;
-    font-weight: 600;
+    padding: 4px 10px;
+    border-radius: var(--pill);
+    font-size: 0.75rem;
+    font-weight: 700;
+    text-transform: uppercase;
 }
 
-.status-up { background-color: rgba(16, 185, 129, 0.2); color: var(--success); }
-.status-down { background-color: rgba(239, 68, 68, 0.2); color: var(--danger); }
+.status-up {
+    background: rgba(161, 255, 98, 0.1);
+    color: var(--accent);
+    border: 1px solid var(--accent);
+}
 
-/* Alerts */
-.alerts-grid {
-    display: grid;
-    gap: 1rem;
+.status-down {
+    background: rgba(255, 71, 71, 0.1);
+    color: var(--danger);
+    border: 1px solid var(--danger);
 }
 
 .alert-card {
-    background-color: var(--bg-panel);
-    border-left: 4px solid var(--primary);
+    background: #0d0d0d;
     padding: 1rem;
-    border-radius: 4px;
+    margin-bottom: 10px;
+    border-radius: 8px;
     display: flex;
     justify-content: space-between;
     align-items: center;
+    border: 1px solid var(--border-color);
 }
 
-.alert-card.critical { border-left-color: var(--danger); }
-.alert-card.warning { border-left-color: var(--warning); }
+.alert-card.critical {
+    border-color: var(--danger);
+    border-left-width: 4px;
+}
 
-.alert-info h4 { margin-bottom: 0.25rem; font-size: 1rem; }
-.alert-info p { color: var(--text-muted); font-size: 0.9rem; }
-.alert-time { font-family: var(--font-mono); font-size: 0.8rem; color: var(--text-muted); }
-
-/* Chat */
-.chat-interface {
+/* EXPLORER / CHAT fix */
+.chat-container {
+    height: 100%;
     display: flex;
     flex-direction: column;
-    height: 70vh;
 }
 
 .chat-history {
     flex: 1;
     overflow-y: auto;
-    padding-right: 1rem;
-    margin-bottom: 1rem;
-}
-
-.message {
-    display: flex;
-    gap: 1rem;
-    margin-bottom: 1.5rem;
-}
-
-.message.user { flex-direction: row-reverse; }
-
-.message i {
-    width: 35px;
-    height: 35px;
-    background-color: var(--border);
-    border-radius: 50%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 0.9rem;
-}
-
-.message.ai i { background-color: var(--primary); color: white; }
-.message.user i { background-color: var(--success); color: white; }
-
-.bubble {
-    background-color: var(--bg-panel);
     padding: 1rem;
-    border-radius: 12px;
-    max-width: 70%;
-    line-height: 1.5;
-    font-size: 0.95rem;
-}
-
-.message.user .bubble {
-    background-color: var(--success);
-    color: #fff;
 }
 
 .chat-input-area {
-    display: flex;
-    gap: 1rem;
-}
-
-input[type="text"] {
-    flex: 1;
-    background-color: var(--bg-dark);
-    border: 1px solid var(--border);
+    background: var(--card-bg);
     padding: 1rem;
-    border-radius: 8px;
+}
+
+.chat-input-area input {
+    background: #000;
     color: white;
-    font-size: 1rem;
-    outline: none;
+    border: 1px solid #333;
 }
 
-input[type="text"]:focus {
-    border-color: var(--primary);
+.explorer-layout {
+    display: flex;
+    height: 100%;
+    border-top: 1px solid var(--border-color);
 }
 
-button {
-    background: none;
-    border: none;
-    cursor: pointer;
-    color: var(--primary);
-    font-size: 1.2rem;
+.explorer-list {
+    width: 300px;
+    background: #080808;
+    border-right: 1px solid var(--border-color);
+}
+
+.explorer-detail {
+    flex: 1;
+    background: #050505;
 }

@@ -6,147 +6,231 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Nexi AI CMDB</title>
     <link rel="stylesheet" href="style.css">
-    <link
-        href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600&family=JetBrains+Mono:wght@400;700&display=swap"
-        rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
 
 <body>
-    <div class="app-container">
-        <!-- Sidebar -->
-        <aside class="sidebar">
-            <div class="brand">
-                <i class="fa-solid fa-brain brand-icon"></i>
-                <span>NEXI<span class="highlight">AI</span></span>
+
+    <!-- HORIZONTAL NAVBAR -->
+    <nav class="navbar">
+        <div class="logo">
+            <span>//</span> NEXI AI
+        </div>
+
+        <div class="nav-links">
+            <button class="nav-btn active" onclick="showSection('dashboard')">
+                <i class="fa-solid fa-chart-line"></i> Dashboard
+            </button>
+            <button class="nav-btn" onclick="showSection('inventory')">
+                <i class="fa-solid fa-server"></i> Inventory
+            </button>
+            <button class="nav-btn" onclick="showSection('alerts')">
+                <i class="fa-solid fa-triangle-exclamation"></i> Alerts
+            </button>
+            <button class="nav-btn" onclick="showSection('chat')">
+                <i class="fa-solid fa-robot"></i> AI Assistant
+            </button>
+            <button class="nav-btn" onclick="showSection('mailbox')">
+                <i class="fa-solid fa-envelope"></i> Mailbox
+            </button>
+            <button class="nav-btn" onclick="showSection('data')">
+                <i class="fa-solid fa-database"></i> Data/Graph
+            </button>
+            <button class="nav-btn" onclick="showSection('settings')">
+                <i class="fa-solid fa-gear"></i> Settings
+            </button>
+            <div style="width: 1px; height: 24px; background: #333; margin: 0 10px;"></div>
+            <button class="nav-btn" onclick="toggleSystem()" id="btn-system-toggle" style="color: var(--warning)">
+                <i class="fa-solid fa-pause"></i> Pause System
+            </button>
+        </div>
+
+        <div class="status-indicator">
+            <span class="dot"></span> SYSTEM ONLINE
+        </div>
+    </nav>
+
+    <!-- YELLOW MARQUEE -->
+    <div class="marquee-container">
+        <div class="marquee-content">
+            NEXI AI CMDB SYSTEM OPTIMAL • AGENT SCOUT ONLINE • CRITICAL ALERT MONITORING ACTIVE • DATABASE INVENTORY
+            SYNCED • LLM ORCHESTRATOR READY •
+            NEXI AI CMDB SYSTEM OPTIMAL • AGENT SCOUT ONLINE • CRITICAL ALERT MONITORING ACTIVE • DATABASE INVENTORY
+            SYNCED • LLM ORCHESTRATOR READY •
+        </div>
+    </div>
+
+    <!-- MAIN CONTENT -->
+    <main class="main-content">
+
+        <!-- SUB HEADER (Page Title + Actions) -->
+        <div class="sub-header">
+            <div class="page-title" id="page-title">Dashboard Overview</div>
+
+            <!-- Global Actions (Visible on Dashboard, hidden on others via JS? Or just always visible?) -->
+            <!-- For simplified UX, let's keep them here. Or show only on specific pages. 
+                 But user liked the top availability. Let's keep them. -->
+            <div class="actions" style="display:flex; gap:10px;">
+                <button class="btn btn-primary sm" onclick="triggerAction('scan')"><i
+                        class="fa-solid fa-satellite-dish"></i> Auto-Discovery</button>
+                <button class="btn btn-danger sm" onclick="triggerAction('check')"><i
+                        class="fa-solid fa-heart-pulse"></i> Agent Check</button>
             </div>
-            <nav>
-                <button class="nav-btn active" onclick="showSection('dashboard')"><i class="fa-solid fa-chart-line"></i>
-                    Dashboard</button>
-                <button class="nav-btn" onclick="showSection('inventory')"><i class="fa-solid fa-server"></i>
-                    Inventory</button>
-                <button class="nav-btn" onclick="showSection('alerts')"><i class="fa-solid fa-triangle-exclamation"></i>
-                    Alerts</button>
-                <button class="nav-btn" onclick="showSection('chat')"><i class="fa-solid fa-robot"></i> AI
-                    Assistant</button>
-                <button class="nav-btn" onclick="showSection('settings')"><i class="fa-solid fa-gear"></i>
-                    Settings</button>
-            </nav>
-            <div class="status-indicator">
-                <span class="dot"></span> System Online
+        </div>
+
+        <!-- SECTIONS -->
+
+        <!-- Dashboard -->
+        <section id="dashboard" class="page-section active">
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-value" id="stat-total-db">--</div>
+                    <div class="stat-label">Total Databases</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value" id="stat-critical" style="color: var(--danger)">--</div>
+                    <div class="stat-label">Critical Alerts</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value" id="stat-healthy" style="color: var(--success)">--</div>
+                    <div class="stat-label">Healthy Assets</div>
+                </div>
             </div>
-        </aside>
 
-        <!-- Main Content -->
-        <main class="main-content">
-            <!-- Header -->
-            <header>
-                <h1 id="page-title">Dashboard Overview</h1>
-                <div class="actions">
-                    <button class="btn primary" onclick="triggerAction('scan')"><i
-                            class="fa-solid fa-satellite-dish"></i> Auto-Discovery</button>
-                    <button class="btn danger" onclick="triggerAction('check')"><i class="fa-solid fa-heart-pulse"></i>
-                        Agent Check</button>
-                </div>
-            </header>
+            <!-- Sub-Dashboards or Panels can go here -->
+            <div
+                style="background: var(--card-bg); border: 1px solid var(--border-color); border-radius:12px; padding:2rem; text-align:center; color: var(--text-secondary);">
+                <i class="fa-solid fa-wave-square" style="font-size:3rem; margin-bottom:1rem; opacity:0.2;"></i>
+                <p>Real-time telemetry streaming...</p>
+            </div>
+        </section>
 
-            <!-- Dashboard View -->
-            <section id="dashboard" class="page-section active">
-                <div class="stats-grid">
-                    <div class="stat-card">
-                        <h3>Total Databases</h3>
-                        <p id="stat-total-db">--</p>
-                    </div>
-                    <div class="stat-card">
-                        <h3>Critical Alerts</h3>
-                        <p id="stat-critical" class="text-danger">--</p>
-                    </div>
-                    <div class="stat-card">
-                        <h3>Healthy Assets</h3>
-                        <p id="stat-healthy" class="text-success">--</p>
-                    </div>
-                </div>
-                <div class="glass-panel">
-                    <h2><i class="fa-solid fa-clock-rotate-left"></i> Recent Activity</h2>
-                    <ul id="refresh-log" class="activity-list">
-                        <li>System Initialized...</li>
-                    </ul>
-                </div>
-            </section>
+        <!-- Inventory -->
+        <section id="inventory" class="page-section">
+            <div class="card-panel">
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th>Status</th>
+                            <th>Name</th>
+                            <th>Engine</th>
+                            <th>Host</th>
+                            <th>Port</th>
+                            <th>Env</th>
+                            <th>Access</th>
+                        </tr>
+                    </thead>
+                    <tbody id="inventory-list"></tbody>
+                </table>
+            </div>
+        </section>
 
-            <!-- Inventory View -->
-            <section id="inventory" class="page-section">
-                <div class="glass-panel">
-                    <div class="table-container">
-                        <table>
-                            <thead>
-                                <tr>
-                                    <th>Status</th>
-                                    <th>Name</th>
-                                    <th>Engine</th>
-                                    <th>Host</th>
-                                    <th>Port</th>
-                                    <th>Env</th>
-                                </tr>
-                            </thead>
-                            <tbody id="inventory-list">
-                                <!-- JS Populated -->
-                            </tbody>
-                        </table>
+        <!-- Alerts -->
+        <section id="alerts" class="page-section">
+            <div style="display:flex; justify-content:flex-end; margin-bottom:1rem;">
+                <button class="btn btn-primary sm" onclick="loadAlerts()">Refresh</button>
+            </div>
+            <div id="alerts-container"></div>
+        </section>
+
+        <!-- Chat -->
+        <section id="chat" class="page-section" style="padding:0; height:100%;">
+            <div class="chat-container">
+                <div class="chat-history" id="chat-history">
+                    <div class="message ai">
+                        <i class="fa-solid fa-robot"></i>
+                        <div class="bubble">Hello, I am Nexi. How can I assist you with the infrastructure today?</div>
                     </div>
                 </div>
-            </section>
-
-            <!-- Alerts View -->
-            <section id="alerts" class="page-section">
-                <div id="alerts-container" class="alerts-grid">
-                    <!-- JS Populated -->
+                <div class="chat-input-area">
+                    <input type="text" id="chat-input" placeholder="Ask about databases, alerts, or system status..."
+                        onkeypress="handleChatKey(event)">
+                    <button class="btn btn-primary" onclick="sendMessage()"><i
+                            class="fa-solid fa-paper-plane"></i></button>
                 </div>
-            </section>
+            </div>
+        </section>
 
-            <!-- AI Chat View -->
-            <section id="chat" class="page-section">
-                <div class="chat-interface glass-panel">
-                    <div id="chat-history" class="chat-history">
-                        <div class="message ai">
-                            <i class="fa-solid fa-robot"></i>
-                            <div class="bubble">Hello Mohamed. I am the Nexi AI. How can I assist you with the database
-                                infrastructure today?</div>
+        <!-- Mailbox -->
+        <section id="mailbox" class="page-section">
+            <div style="display:flex; gap:20px; height:100%;">
+                <div
+                    style="width:300px; background: var(--card-bg); border:1px solid var(--border-color); border-radius:12px; overflow:hidden; display:flex; flex-direction:column;">
+                    <div style="padding:1rem; border-bottom:1px solid #222; font-weight:bold;">Inbox</div>
+                    <ul class="email-list" id="email-list" style="list-style:none; overflow-y:auto; flex:1;"></ul>
+                </div>
+                <div
+                    style="flex:1; background: var(--card-bg); border:1px solid var(--border-color); border-radius:12px; overflow:hidden;">
+                    <iframe id="email-preview" style="width:100%; height:100%; border:none; background:white;"></iframe>
+                </div>
+            </div>
+        </section>
+
+        <!-- Data Explorer -->
+        <section id="data" class="page-section" style="padding:0; height:100%;">
+            <div class="explorer-layout">
+                <div class="explorer-list" id="explorer-list">
+                    <!-- List Items -->
+                </div>
+                <div class="explorer-detail">
+                    <div
+                        style="padding:1rem; border-bottom:1px solid #222; display:flex; justify-content:space-between; align-items:center;">
+                        <div>
+                            <h2 id="item-title" style="font-size:1.2rem;">Select Item</h2>
+                            <p id="item-meta" style="color:#666; font-size:0.8rem;">--</p>
+                        </div>
+                        <div class="tabs">
+                            <button class="tab-btn active" onclick="switchExplorerTab('json')">JSON</button>
+                            <button class="tab-btn" onclick="switchExplorerTab('graph')">Graph</button>
                         </div>
                     </div>
-                    <div class="chat-input-area">
-                        <input type="text" id="chat-input" placeholder="Ask AI to check connectivity, analyze logs..."
-                            onkeypress="handleChatKey(event)">
-                        <button onclick="sendMessage()"><i class="fa-solid fa-paper-plane"></i></button>
+
+                    <div id="detail-content" style="flex:1; display:flex; overflow:hidden;">
+                        <div id="detail-empty" style="padding:2rem; color:#444; text-align:center; width:100%;">Select
+                            an item from the list</div>
+
+                        <div id="tab-json" class="tab-pane active" style="width:100%;">
+                            <div class="json-viewer" id="json-viewer"></div>
+                        </div>
+                        <div id="tab-graph" class="tab-pane" style="width:100%; height:100%;">
+                            <canvas id="detail-canvas"></canvas>
+                        </div>
                     </div>
                 </div>
-            </section>
+            </div>
+        </section>
 
-            <!-- Settings View -->
-            <section id="settings" class="page-section">
-                <div class="glass-panel" style="max-width: 600px;">
-                    <h2>Agent Configuration</h2>
-                    <p style="color: var(--text-muted); margin-bottom: 2rem;">Adjust the scanning intervals for your
-                        agents.</p>
+        <!-- Settings -->
+        <section id="settings" class="page-section">
+            <div style="max-width:600px; margin:0 auto;">
+                <div class="stat-card">
+                    <h3 style="margin-bottom:1.5rem;">System Configuration</h3>
 
-                    <div class="form-group" style="margin-bottom: 1.5rem;">
-                        <label style="display:block; margin-bottom: 0.5rem;">Scout Discovery Interval (seconds)</label>
-                        <input type="number" id="setting-scout" value="60"
-                            style="width: 100%; padding: 0.8rem; background: var(--bg-dark); border: 1px solid var(--border); color: white; border-radius: 6px;">
+                    <div class="form-group">
+                        <label>Auto-Discovery Interval (seconds)</label>
+                        <input type="number" id="setting-scout" value="60">
                     </div>
 
-                    <div class="form-group" style="margin-bottom: 2rem;">
-                        <label style="display:block; margin-bottom: 0.5rem;">Critical Alert Check Interval
-                            (seconds)</label>
-                        <input type="number" id="setting-check" value="10"
-                            style="width: 100%; padding: 0.8rem; background: var(--bg-dark); border: 1px solid var(--border); color: white; border-radius: 6px;">
+                    <div class="form-group">
+                        <label>Agent Check Interval (seconds)</label>
+                        <input type="number" id="setting-check" value="30">
                     </div>
 
-                    <button class="btn primary" onclick="saveSettings()">Save Configuration</button>
+                    <button class="btn btn-primary" onclick="saveSettings()">Save Configuration</button>
+
+                    <hr style="margin: 2rem 0; border-color:#222;">
+
+                    <button class="btn btn-danger" onclick="triggerAction('clear_alerts')">
+                        <i class="fa-solid fa-trash"></i> Clear Pending Alerts Queue
+                    </button>
+                    <p style="margin-top:10px; font-size:0.8rem; color:#666;">Use this if GPU usage is high due to
+                        backlog.</p>
                 </div>
-            </section>
-        </main>
-    </div>
+            </div>
+        </section>
+
+    </main>
+
     <script src="app.js"></script>
 </body>
 

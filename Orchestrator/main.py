@@ -43,24 +43,55 @@ class AIOrchestrator:
         print(f"   🧠 LLM Analysis: {analysis.get('action', 'UNKNOWN')}")
         
         # 2. Execute Action
-        if "EMAIL" in str(analysis.get('action', '')).upper() or "DOWN" in alert.get('output', ''):
-            subject = analysis.get('email_subject', f"CRITICAL: {alert.get('host_name')} is DOWN")
-            body = analysis.get('email_body', alert.get('output'))
+        # Force email for CRITICAL alerts regardless of LLM output
+        should_email = "EMAIL" in str(analysis.get('action', '')).upper() or \
+                       "DOWN" in alert.get('output', '') or \
+                       alert.get('state') == 'CRITICAL' or \
+                       alert.get('severity') == 'CRITICAL'
+
+        if should_email:
+            # Construct subject/body with fallbacks
+            default_subj = f"🔥 CRITICAL ALERT: {alert.get('host_name')} - {alert.get('type')}"
+            default_body = f"The system detected a critical issue:\n\nService: {alert.get('service')}\nMessage: {alert.get('message')}\nOutput: {alert.get('output')}\n\nPlease investigate immediately."
+            
+            subject = analysis.get('email_subject', default_subj)
+            if not subject or subject == "Unknown": subject = default_subj
+            
+            body = analysis.get('email_body', default_body)
+            if not body: body = default_body
             
             print(f"   📨 Sending Email to Mohamed...")
-            self.emailer.send_alert(
-                "mohamed.d.n.2002@gmail.com",
-                subject,
-                body
-            )
+            try:
+                self.emailer.send_alert(
+                    "mohamed.d.n.2002@gmail.com",
+                    subject,
+                    body
+                )
+            except Exception as e:
+                print(f"   ❌ Email Send Failed: {e}")
             
             # Mark as processed
             alert_id = alert["_id"]
             self.mongo_proxy.mark_as_processed(alert_id, analysis)
 
+    def check_pause(self):
+        """Check if system is globally paused"""
+        try:
+            doc = self.mongo_proxy.execute_eval("db.system_config.findOne({key: 'global_status'})")
+            if doc and doc.get('value') == 'PAUSED':
+                return True
+        except:
+            pass
+        return False
+
     def run_loop(self):
         print("🧠 AI Orchestrator Started - Waiting for disasters...")
         while True:
+            if self.check_pause():
+                print("⏸️ System Global Pause Active. Orchestrator sleeping...")
+                time.sleep(10)
+                continue
+
             alerts = self.check_new_alerts()
             if alerts:
                 print(f"⚠️ Detected {len(alerts)} new critical alerts!")

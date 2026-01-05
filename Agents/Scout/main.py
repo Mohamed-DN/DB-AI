@@ -8,6 +8,9 @@ import subprocess
 import datetime
 import time
 
+# Force UTF-8 for Windows Console
+sys.stdout.reconfigure(encoding='utf-8')
+
 # Add path for shared modules
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '../../')))
 from Orchestrator.src.mongo_proxy import MongoProxy
@@ -163,11 +166,26 @@ class ScoutAgent:
             pass
         return 60 # Default 60s
 
+    def check_pause(self):
+        """Check if system is globally paused"""
+        try:
+            doc = self.mongo.execute_eval("db.system_config.findOne({key: 'global_status'})")
+            if doc and doc.get('value') == 'PAUSED':
+                return True
+        except:
+            pass
+        return False
+
     def run_continuous(self):
         """Run loop"""
         print("🛰️ Scout Agent starting continuous monitoring...")
         while True:
             try:
+                if self.check_pause():
+                    print("⏸️ System Global Pause Active. Scout sleeping...")
+                    time.sleep(10)
+                    continue
+
                 interval = self.get_interval()
                 self.run()
                 print(f"💤 Sleeping for {interval}s...")

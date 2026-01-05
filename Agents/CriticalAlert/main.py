@@ -248,38 +248,74 @@ class CriticalAlertAgent:
         
         return alerts
     
+    def check_for_active_alert(self, db_name: str, alert_type: str) -> bool:
+        """Check if an unprocessed alert already exists for this db and type"""
+        if not self.mongo_proxy: return False
+        try:
+            # Look for CRITICAL alerts that are NOT processed
+            query = f"db.monitoring_alerts.findOne({{database: '{db_name}', type: '{alert_type}', processed: false, state: 'CRITICAL'}})"
+            res = self.mongo_proxy.execute_eval(query)
+            return res is not None
+        except:
+            return False
+
+    def resolve_alerts(self, db_name: str):
+        """Mark alerts as processed when issue is resolved"""
+        if not self.mongo_proxy: return
+        try:
+            # Find unprocessed CRITICAL alerts for this DB
+            query = f"db.monitoring_alerts.updateMany({{database: '{db_name}', processed: false, state: 'CRITICAL'}}, {{$set: {{processed: true, resolved_at: new Date()}}}})"
+            self.mongo_proxy.execute_eval(query)
+            print(f"    ✅ Resolved active alerts for {db_name}")
+        except Exception as e:
+            print(f"    ❌ Failed to resolve alerts: {e}")
+
     def run_once(self):
         """Run one check cycle and send alerts"""
         print(f"\n{'='*60}")
         print(f"🔍 CriticalAlert Agent Check - {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
         print(f"{'='*60}")
         
-        alerts = self.check_all()
+        # Check all databases
+        current_status = self.check_all()
+        # alerts list contains only NEW problems detected this cycle
         
-        if alerts:
-            print(f"\n🚨 Found {len(alerts)} alert(s)!")
-            for alert in alerts:
-                print(f"  [{alert['severity']}] {alert['database']}: {alert['type']}")
-                
-                # Save to MongoDB
-                if self.mongo_proxy is not None:
-                    try:
-                        self.mongo_proxy.insert_alert(alert)
-                        print("    💾 Alert saved to MongoDB")
-                    except Exception as e:
-                        print(f"    ❌ Failed to save to MongoDB: {e}")
+        # Logic: 
+        # 1. Iterate over all monitored databases (self.databases)
+        # 2. If DB is DOWN in current_status -> Check if already alerted. 
+        #    If YES -> Skip email. 
+        #    If NO -> Send Email + Insert.
+        # 3. If DB is OK -> Check if there are pending alerts. If YES -> Resolve them.
 
-                # Send email for CRITICAL alerts (Directly OR handled by Orchestrator? 
-                # User asked for Orchestrator to do it. But agent also has logic. 
-                # I'll disable direct email here if Orchestrator is supposed to do it, 
-                # OR keep it as redundant backup. I'll comment it out to let Orchestrator demonstrate.)
-                
-                # if alert['severity'] == 'CRITICAL':
-                #     self.email_sender.send_alert(...)
-        else:
-            print("✅ All databases OK")
+        # Transform alerts list to map for easy lookup
+        current_problems = {alert['database']: alert for alert in current_status}
         
-        return alerts
+        for db in self.databases:
+            if db.name in current_problems:
+                # PROBLEM DETECTED
+                problem = current_problems[db.name]
+                if problem['severity'] == 'CRITICAL':
+                    # Check duplication
+                    if self.check_for_active_alert(db.name, problem['type']):
+                        print(f"  ⚠️  [SUPPRESSED] Alert already active for {db.name}. No email sent.")
+                    else:
+                        print(f"  🚨 [NEW] {db.name}: {problem['type']}")
+                        # Send Email
+                        self.email_sender.send_alert(
+                            self.alert_email, 
+                            f"{problem['type']} - {db.name}", 
+                            problem['message']
+                        )
+                        # Insert into DB
+                        if self.mongo_proxy:
+                            self.mongo_proxy.insert_alert(problem)
+            else:
+                # DB IS OK (or at least not in critical list)
+                # Try to resolve any pending critical alerts
+                self.resolve_alerts(db.name)
+        
+        print("✅ Check cycle complete.")
+        return current_status
     
     def get_interval(self):
         try:
@@ -291,12 +327,28 @@ class CriticalAlertAgent:
              pass
         return 30
 
+    def check_pause(self):
+        """Check if system is globally paused"""
+        try:
+            if not self.mongo_proxy: return False
+            doc = self.mongo_proxy.execute_eval("db.system_config.findOne({key: 'global_status'})")
+            if doc and doc.get('value') == 'PAUSED':
+                return True
+        except:
+            pass
+        return False
+
     def run_continuous(self, interval_seconds: int = 30):
         """Run continuous monitoring"""
         print(f"🚀 Starting CriticalAlert Agent")
         
         while True:
             try:
+                if self.check_pause():
+                    print("⏸️ System Global Pause Active. Alert Agent sleeping...")
+                    time.sleep(10)
+                    continue
+
                 # Reload targets dynamically
                 self.load_targets_from_inventory()
                 
