@@ -193,40 +193,62 @@ body {
 
 /* --- TOP HEADER (Nexi Corporate) --- */
 .top-header {
-    height: 60px;
+    height: 70px;
     background: linear-gradient(135deg, var(--nexi-purple) 0%, var(--nexi-blue-dark) 100%);
-    display: flex;
-    justify-content: space-between;
+    display: grid;
+    grid-template-columns: 1fr auto 1fr;
+    /* Left (empty), Center (Logo), Right (Controls) */
     align-items: center;
     padding: 0 2rem;
     border-bottom: 1px solid var(--nexi-blue);
     flex-shrink: 0;
+    border-bottom-left-radius: var(--radius);
+    border-bottom-right-radius: var(--radius);
+    margin-bottom: 1rem;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+    z-index: 100;
 }
 
 .logo-container {
+    grid-column: 2;
     display: flex;
     align-items: center;
-    gap: 12px;
+    gap: 15px;
+    justify-content: center;
+}
+
+/* Move controls to the right */
+.top-header>div:last-child {
+    grid-column: 3;
+    justify-self: end;
 }
 
 .robot-icon {
-    width: 42px;
-    height: 42px;
+    width: 48px;
+    height: 48px;
     background: rgba(255, 255, 255, 0.15);
-    border-radius: 10px;
+    border-radius: 50%;
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 20px;
+    font-size: 22px;
     color: #fff;
     border: 1px solid rgba(255, 255, 255, 0.2);
+    transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.logo-container:hover .robot-icon {
+    transform: rotate(15deg) scale(1.1);
+    background: var(--nexi-blue);
 }
 
 .brand-text {
-    font-size: 1.3rem;
-    font-weight: 800;
+    font-size: 1.8rem;
+    font-weight: 900;
     color: #fff;
     letter-spacing: 2px;
+    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+    font-family: 'JetBrains Mono', monospace;
 }
 
 /* Theme Toggle Button */
@@ -453,6 +475,10 @@ body {
     overflow-y: auto;
     height: 100%;
     animation: fadeIn 0.3s ease;
+    /* Auto Center Content */
+    max-width: 1600px;
+    margin: 0 auto;
+    width: 100%;
 }
 
 .page-section.active {
@@ -739,20 +765,12 @@ tr:hover td {
 
 .explorer-list {
     width: 300px;
-    background: #080808;
+    background: var(--bg-secondary);
+    /* Use var */
     border-right: 1px solid var(--border-color);
     overflow-y: auto;
 }
 
-.explorer-detail {
-    flex: 1;
-    background: #050505;
-    display: flex;
-    flex-direction: column;
-    overflow: hidden;
-}
-
-/* Explorer List (Navigation) */
 .explorer-list ul {
     list-style: none;
     padding: 1rem;
@@ -769,17 +787,18 @@ tr:hover td {
     border-radius: var(--radius);
     margin-bottom: 8px;
     position: relative;
-    background: transparent;
+    background: var(--card-bg-solid);
+    /* Use solid var for opacity */
 }
 
 .explorer-list li:hover {
-    background: var(--bg-secondary);
+    background: var(--card-bg);
     /* Contrast background on hover */
     color: var(--text-primary);
     transform: translateX(12px) scale(1.02);
     /* Move right and scale up */
     border-color: var(--nexi-blue);
-    box-shadow: -4px 4px 15px rgba(0, 0, 0, 0.2);
+    box-shadow: -4px 4px 15px rgba(0, 0, 0, 0.1);
     /* Lifted shadow */
     z-index: 10;
 }
@@ -794,13 +813,15 @@ tr:hover td {
 
 .explorer-detail {
     flex: 1;
-    background: #050505;
+    background: var(--bg-color);
+    /* Use var */
     display: flex;
     flex-direction: column;
     overflow: hidden;
     border-bottom-left-radius: var(--radius);
     /* Rounded bottom */
     border-bottom-right-radius: var(--radius);
+    color: var(--text-primary);
 }
 
 /* Tab Panes - Proper Visibility */
