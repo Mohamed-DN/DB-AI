@@ -453,6 +453,9 @@ tr:last-child td:last-child {
     border-radius: var(--radius);
     padding: 1.5rem;
     overflow-x: auto;
+    overflow-y: auto;
+    max-height: 60vh;
+    /* Ensure it doesn't overflow screen, forcing scroll */
 }
 
 .explorer-layout {

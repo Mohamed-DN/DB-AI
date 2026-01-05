@@ -47,10 +47,11 @@ class DailyAuditAgent:
             # Run all audit checks
             audit = {
                 'db_unique_name': db_name,
-                'audit_date': datetime.now(),
+                'audit_date': datetime.now().isoformat(),
                 'census': self._check_census(db),
                 'performance': self._check_performance(db),
                 'capacity': self._check_capacity(db),
+                'replication': self._check_replication(db),
                 'best_practices': self._check_best_practices(db),
                 'overall_status': 'PASS'
             }
@@ -184,6 +185,31 @@ class DailyAuditAgent:
             'issues': issues
         }
     
+    def _check_replication(self, db: Dict) -> Dict[str, Any]:
+        """Check replication status (DataGuard / GoldenGate)."""
+        issues = []
+        repl = db.get('replication', {})
+        
+        if repl.get('enabled'):
+            # Check lag
+            lag = repl.get('lag_seconds', 0)
+            threshold = 300 # 5 mins
+            
+            if repl.get('type') == 'GOLDENGATE':
+                threshold = 60 # Stricter for GG
+                
+            if lag > threshold:
+                issues.append(f"Replication Lag High: {lag}s (Threshold: {threshold}s)")
+            
+            # Check status
+            if repl.get('status', 'UP') != 'UP':
+                 issues.append(f"Replication Stream DOWN")
+
+        return {
+            'status': 'WARNING' if issues else 'PASS',
+            'issues': issues
+        }
+
     def _check_best_practices(self, db: Dict) -> Dict[str, Any]:
         """Check best practices: partitioning, stats, indexes."""
         issues = []
