@@ -45,6 +45,9 @@
             <button class="nav-pill" onclick="showSection('data')">
                 <i class="fa-solid fa-diagram-project"></i> Explorer
             </button>
+            <button class="nav-pill" onclick="showSection('agents')">
+                <i class="fa-solid fa-robot"></i> Agents
+            </button>
             <button class="nav-pill" onclick="showSection('settings')">
                 <i class="fa-solid fa-gear"></i> Settings
             </button>
@@ -238,6 +241,50 @@
                     </button>
                     <p style="margin-top:10px; font-size:0.8rem; color:#666;">Use this if GPU usage is high due to
                         backlog.</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- Agents Control Panel -->
+        <section id="agents" class="page-section">
+            <div class="card-panel">
+                <h3 style="margin-bottom:1.5rem;"><i class="fa-solid fa-robot"></i> Agent Control Panel</h3>
+
+                <!-- RAG Status -->
+                <div style="display:flex; gap:10px; margin-bottom:1.5rem;">
+                    <div class="stat-card" style="flex:1; padding:1rem;">
+                        <div class="stat-label">Ollama LLM</div>
+                        <div id="rag-ollama-status" class="stat-value" style="font-size:1rem;">--</div>
+                    </div>
+                    <div class="stat-card" style="flex:1; padding:1rem;">
+                        <div class="stat-label">Qdrant Vector DB</div>
+                        <div id="rag-qdrant-status" class="stat-value" style="font-size:1rem;">--</div>
+                    </div>
+                </div>
+
+                <!-- Agent Grid -->
+                <div id="agents-grid"
+                    style="display:grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap:1rem;">
+                    <!-- Agents will be populated by JS -->
+                </div>
+
+                <hr style="margin: 2rem 0; border-color:#222;">
+
+                <!-- Quick Actions -->
+                <h4 style="margin-bottom:1rem;">Quick Actions</h4>
+                <div style="display:flex; gap:10px; flex-wrap:wrap;">
+                    <button class="btn btn-primary" onclick="triggerAgentAction('checkmk')">
+                        <i class="fa-solid fa-sync"></i> Sync CheckMK
+                    </button>
+                    <button class="btn btn-primary" onclick="triggerAgentAction('forensic')">
+                        <i class="fa-solid fa-brain"></i> Run AI Analysis
+                    </button>
+                    <button class="btn btn-primary" onclick="triggerAgentAction('watcher')">
+                        <i class="fa-solid fa-eye"></i> Start Watcher
+                    </button>
+                    <button class="btn btn-primary" onclick="loadAgentsStatus()">
+                        <i class="fa-solid fa-refresh"></i> Refresh Status
+                    </button>
                 </div>
             </div>
         </section>

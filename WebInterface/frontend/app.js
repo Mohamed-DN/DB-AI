@@ -15,6 +15,7 @@ function showSection(id) {
         'chat': 'AI Assistant',
         'mailbox': 'Communications',
         'data': 'Data Explorer',
+        'agents': 'Agent Control Panel',
         'settings': 'Configuration'
     };
     document.getElementById('page-title').innerText = titles[id] || 'Nexi CMDB';
@@ -26,6 +27,7 @@ function showSection(id) {
     if (id === 'data') loadExplorer('inventory_databases');
     if (id === 'settings') loadSettings();
     if (id === 'chat') { loadCurrentModel(); loadGpuStatus(); }
+    if (id === 'agents') { loadAgentsStatus(); loadRagStatus(); }
 }
 
 // Open MongoDB Express
@@ -623,4 +625,96 @@ function showModal(title, message, onConfirm) {
 
 function closeModal() {
     document.getElementById('custom-modal-overlay').classList.remove('active');
+}
+
+// =============================================================================
+// AGENT CONTROL FUNCTIONS
+// =============================================================================
+
+async function loadAgentsStatus() {
+    try {
+        const response = await fetch(`${API_URL}/agents/status`);
+        const data = await response.json();
+
+        const grid = document.getElementById('agents-grid');
+        grid.innerHTML = '';
+
+        for (const [name, info] of Object.entries(data.agents)) {
+            const card = document.createElement('div');
+            card.className = 'stat-card';
+            card.style.padding = '1rem';
+            card.innerHTML = `
+                <div style="display:flex; justify-content:space-between; align-items:center;">
+                    <div>
+                        <div style="font-weight:bold; margin-bottom:0.5rem;">${name}</div>
+                        <div style="font-size:0.8rem; color:#666;">${info.script}</div>
+                    </div>
+                    <div style="display:flex; flex-direction:column; align-items:flex-end; gap:5px;">
+                        <span class="status-badge ${info.running ? 'running' : 'stopped'}">
+                            ${info.running ? '● Running' : '○ Stopped'}
+                        </span>
+                        <button class="btn btn-primary sm" onclick="startAgent('${name}')" ${info.running ? 'disabled' : ''}>
+                            <i class="fa-solid fa-play"></i> Start
+                        </button>
+                    </div>
+                </div>
+            `;
+            grid.appendChild(card);
+        }
+    } catch (e) {
+        console.error('Error loading agents:', e);
+    }
+}
+
+async function loadRagStatus() {
+    try {
+        const response = await fetch(`${API_URL}/rag/status`);
+        const data = await response.json();
+
+        const ollamaEl = document.getElementById('rag-ollama-status');
+        const qdrantEl = document.getElementById('rag-qdrant-status');
+
+        if (data.ollama.connected) {
+            ollamaEl.innerHTML = `<span style="color:var(--success)">● Connected</span><br><small>${data.ollama.models.length} models</small>`;
+        } else {
+            ollamaEl.innerHTML = `<span style="color:var(--danger)">● Offline</span>`;
+        }
+
+        if (data.qdrant.connected) {
+            qdrantEl.innerHTML = `<span style="color:var(--success)">● Connected</span><br><small>${data.qdrant.collections} collections</small>`;
+        } else {
+            qdrantEl.innerHTML = `<span style="color:var(--danger)">● Offline</span>`;
+        }
+    } catch (e) {
+        console.error('Error loading RAG status:', e);
+    }
+}
+
+async function startAgent(name) {
+    try {
+        const response = await fetch(`${API_URL}/agents/start/${name}`, { method: 'POST' });
+        const data = await response.json();
+        alert(`Agent ${name} started: ${data.status}`);
+        setTimeout(loadAgentsStatus, 2000);
+    } catch (e) {
+        alert(`Error starting agent: ${e}`);
+    }
+}
+
+async function triggerAgentAction(action) {
+    try {
+        let endpoint = '';
+        switch (action) {
+            case 'checkmk': endpoint = '/agents/trigger/checkmk'; break;
+            case 'forensic': endpoint = '/agents/trigger/forensic'; break;
+            case 'watcher': endpoint = '/agents/trigger/watcher'; break;
+            default: return;
+        }
+
+        const response = await fetch(`${API_URL}${endpoint}`, { method: 'POST' });
+        const data = await response.json();
+        alert(data.status);
+    } catch (e) {
+        alert(`Error: ${e}`);
+    }
 }

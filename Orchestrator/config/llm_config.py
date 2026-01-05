@@ -5,48 +5,39 @@ Optimized for RTX 5070 Ti (16GB VRAM)
 
 # Available models optimized for 16GB VRAM
 LLM_MODELS = {
-    # Primary - Best balance of performance and quality
+    # Primary - Best all-rounder for 16GB VRAM
     "qwen2.5:14b": {
         "name": "Qwen 2.5 14B",
         "vram_gb": 12,
-        "description": "Ottimo per italiano, reasoning avanzato",
+        "description": "Bilanciamento perfetto velocità/intelligenza. Ottimo in italiano.",
         "use_case": "chat",
         "recommended": True
     },
     
-    # Coding - Specialized for SQL and scripts
-    "codellama:13b": {
-        "name": "CodeLlama 13B",
-        "vram_gb": 11,
-        "description": "SQL generation, script development",
-        "use_case": "coding",
+    # Coding/Reasoning - The "Thinking" Model
+    "deepseek-coder-v2:16b": {
+        "name": "DeepSeek Coder V2 16B",
+        "vram_gb": 14,
+        "description": "Modello 'Thinking' avanzato. Eccellente per codice e logica complessa.",
+        "use_case": "reasoning",
         "recommended": True
     },
     
-    # Reasoning - Deep analysis
-    "deepseek-r1:14b": {
-        "name": "DeepSeek R1 14B",
+    # Pure Coding Alternative
+    "qwen2.5-coder:14b": {
+        "name": "Qwen 2.5 Coder 14B",
         "vram_gb": 12,
-        "description": "Analisi complesse, troubleshooting",
-        "use_case": "reasoning",
+        "description": "Specializzato in generazione codice e SQL.",
+        "use_case": "coding",
         "recommended": False
     },
     
     # Lightweight - Fast responses
-    "llama3:8b": {
-        "name": "Llama 3 8B",
+    "llama3.1:8b": {
+        "name": "Llama 3.1 8B",
         "vram_gb": 7,
-        "description": "Risposte rapide, basso consumo",
+        "description": "Risposte immediate, basso consumo risorse.",
         "use_case": "fast",
-        "recommended": False
-    },
-    
-    # Max Performance - Full GPU utilization
-    "llama3.1:70b-q4_K_M": {
-        "name": "Llama 3.1 70B (Quantized)",
-        "vram_gb": 15,
-        "description": "Massime prestazioni, richiede tutta la VRAM",
-        "use_case": "max",
         "recommended": False
     }
 }
@@ -55,7 +46,7 @@ LLM_MODELS = {
 DEFAULT_MODEL = "qwen2.5:14b"
 
 # Fallback if primary fails
-FALLBACK_MODEL = "llama3:8b"
+FALLBACK_MODEL = "llama3.1:8b"
 
 # Ollama configuration
 OLLAMA_CONFIG = {

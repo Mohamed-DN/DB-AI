@@ -106,7 +106,8 @@ class CriticalAlertAgent:
             self._process_alert(alert)
         
         if alerts:
-            print(f"⚠️ {len(alerts)} active alerts at {datetime.now().strftime('%H:%M:%S')}")
+            types = [a['type'] for a in alerts]
+            print(f"⚠️ {len(alerts)} active alerts: {types}")
         
         return alerts
     
@@ -122,7 +123,7 @@ class CriticalAlertAgent:
         state = db.get('state', {})
         status = state.get('status', 'UNKNOWN')
         
-        if status == 'DOWN':
+        if status in ['DOWN', 'MISSING']:
             return {
                 'type': 'DB_DOWN',
                 'severity': 'CRITICAL',
@@ -194,14 +195,21 @@ class CriticalAlertAgent:
         try:
             # Get unprocessed critical alerts
             raw_alerts = self.mongo.execute_eval(
-                "db.monitoring_alerts.find({processed: false, state: 'CRITICAL'}).toArray()"
+                "db.monitoring_alerts.find({processed: false, state: {$in: ['CRITICAL', 'RESOLVED']}}).toArray()"
             )
             for a in raw_alerts:
+                # Preserve original type for RECOVERY
+                alert_type = a.get('type', 'EXTERNAL_ALERT')
+                if alert_type == 'DB_RECOVERY':
+                    severity = 'RESOLVED'
+                else:
+                    severity = a.get('state', 'UNKNOWN')
+
                 alerts.append({
-                    'type': 'EXTERNAL_ALERT',
-                    'severity': a.get('state', 'UNKNOWN'),
+                    'type': alert_type,
+                    'severity': severity,
                     'db_unique_name': a.get('db_unique_name', 'UNKNOWN'),
-                    'message': a.get('summary', 'No summary'),
+                    'message': a.get('message', a.get('summary', 'No summary')),
                     'source': 'Checkmk',
                     'timestamp': datetime.now(),
                     'action': 'Email BAO + DL'
@@ -219,7 +227,15 @@ class CriticalAlertAgent:
             return
         
         # Log alert
-        severity_icon = '🔴' if alert['severity'] == 'CRITICAL' else '🟠' if alert['severity'] == 'HIGH' else '🟡'
+        if alert['severity'] == 'CRITICAL':
+            severity_icon = '🔴'
+        elif alert['severity'] == 'RESOLVED':
+            severity_icon = '🟢'
+        elif alert['severity'] == 'HIGH':
+            severity_icon = '🟠'
+        else:
+            severity_icon = '🟡'
+        
         print(f"{severity_icon} {alert['type']}: {alert.get('db_unique_name')} - {alert['message']}")
         
         # Save to MongoDB
@@ -228,8 +244,26 @@ class CriticalAlertAgent:
         # Send notification
         self._send_notification(alert)
         
-        # Track sent alert
+        # Track sent alert AND Toggle Clearing for Flapping
         self.alerts_sent.add(alert_key)
+        
+        if alert['type'] == 'DB_RECOVERY':
+            # Remove corresponding DOWN alerts to allow future notifications
+            to_remove = []
+            for k in self.alerts_sent:
+                if 'DB_DOWN' in k and alert.get('db_unique_name') in k:
+                    to_remove.append(k)
+            for k in to_remove:
+                self.alerts_sent.remove(k)
+                
+        if alert['type'] == 'DB_DOWN':
+             # Remove corresponding RECOVERY alerts
+            to_remove = []
+            for k in self.alerts_sent:
+                if 'DB_RECOVERY' in k and alert.get('db_unique_name') in k:
+                    to_remove.append(k)
+            for k in to_remove:
+                self.alerts_sent.remove(k)
     
     def _save_alert(self, alert: Dict):
         """Save alert to MongoDB."""
@@ -239,9 +273,12 @@ class CriticalAlertAgent:
                 'timestamp': alert['timestamp'].isoformat(),
                 'processed': False
             }
-            self.mongo.execute_eval(f"db.critical_alerts.insertOne({alert_doc})")
-        except:
-            pass
+            # Fix JSON boolean for JS
+            import json
+            json_doc = json.dumps(alert_doc)
+            self.mongo.execute_eval(f"db.critical_alerts.insertOne({json_doc})")
+        except Exception as e:
+            print(f"   ❌ Error saving alert to Mongo: {e}")
     
     def _send_notification(self, alert: Dict):
         """Send email notification for alert."""
@@ -273,11 +310,56 @@ class CriticalAlertAgent:
             print(f"   Error getting contacts: {e}")
     
     def _send_email(self, alert: Dict, recipients: List[str]):
-        """Send email to recipients (stub - implement with SMTP)."""
-        print(f"   📧 Would send email to: {', '.join(recipients)}")
-        # Real implementation would use smtplib
+        """Send email to recipients via SMTP (Real + File Backup)."""
+        subject = f"{'✅' if alert['severity'] == 'RESOLVED' else '⚠️'} {alert['severity']}: {alert['type']} - {alert.get('db_unique_name', 'N/A')}"
         
-        # Save to emails folder for testing
+        # HTML Body
+        html = f"""
+        <html>
+        <body style="font-family: Arial, sans-serif; padding: 20px;">
+            <div style="background-color: {'#4CAF50' if alert['severity'] == 'RESOLVED' else '#f44336' if alert['severity'] == 'CRITICAL' else '#ff9800'}; color: white; padding: 15px; border-radius: 5px;">
+                 <h2 style="margin:0;">{subject}</h2>
+            </div>
+            <div style="padding: 20px; border: 1px solid #ddd; border-radius: 5px; margin-top: 20px;">
+                <p><strong>Database:</strong> {alert.get('db_unique_name', 'N/A')}</p>
+                <p><strong>Message:</strong> {alert.get('message', 'N/A')}</p>
+                <p><strong>Time:</strong> {alert['timestamp']}</p>
+                <p><strong>Source:</strong> Nexi AI Sentinel</p>
+                <p style="font-size: 12px; color: #666;">This is an automated alert from the Nexi DB AI Monitoring System.</p>
+            </div>
+        </body>
+        </html>
+        """
+
+        # 1. Try SMTP Sending
+        sent_success = False
+        smtp_user = os.getenv("SMTP_USER")
+        smtp_pass = os.getenv("SMTP_PASSWORD")
+        smtp_server = os.getenv("SMTP_SERVER", "smtp.gmail.com")
+        smtp_port = int(os.getenv("SMTP_PORT", "587"))
+
+        if smtp_user and smtp_pass:
+            try:
+                print(f"   📧 Connecting to SMTP {smtp_server}:{smtp_port}...")
+                msg = MIMEMultipart()
+                msg['From'] = smtp_user
+                msg['To'] = ", ".join(recipients)
+                msg['Subject'] = subject
+                msg.attach(MIMEText(html, 'html'))
+
+                with smtplib.SMTP(smtp_server, smtp_port) as server:
+                    server.starttls()
+                    server.login(smtp_user, smtp_pass)
+                    server.send_message(msg)
+                
+                print(f"   ✅ [SMTP] Email sent successfully to {len(recipients)} recipients.")
+                sent_success = True
+            except Exception as e:
+                print(f"   ❌ [SMTP] Failed to send email: {e}")
+        else:
+            print("   ⚠️ [SMTP] Check skipped: SMTP_USER/SMTP_PASSWORD not set.")
+
+        # 2. Always save to file (Backup/Audit)
         try:
             email_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), '../../emails'))
             os.makedirs(email_dir, exist_ok=True)
@@ -285,24 +367,13 @@ class CriticalAlertAgent:
             filename = f"alert_{datetime.now().strftime('%Y%m%d_%H%M%S')}_{alert['type']}.html"
             filepath = os.path.join(email_dir, filename)
             
-            html = f"""
-            <html>
-            <body style="font-family: Arial, sans-serif; padding: 20px;">
-                <h2 style="color: {'red' if alert['severity'] == 'CRITICAL' else 'orange'};">
-                    ⚠️ {alert['severity']} ALERT: {alert['type']}
-                </h2>
-                <p><strong>Database:</strong> {alert.get('db_unique_name', 'N/A')}</p>
-                <p><strong>Message:</strong> {alert.get('message', 'N/A')}</p>
-                <p><strong>Time:</strong> {alert['timestamp']}</p>
-                <p><strong>Recipients:</strong> {', '.join(recipients)}</p>
-            </body>
-            </html>
-            """
-            
-            with open(filepath, 'w') as f:
+            with open(filepath, 'w', encoding='utf-8') as f:
                 f.write(html)
+                f.flush()
+                os.fsync(f.fileno())
+            print(f"   💾 [FILE] Saved email to {filename}")
         except Exception as e:
-            print(f"   Error saving email: {e}")
+            print(f"   ❌ [FILE] Error saving email: {e}")
 
 
 def main():

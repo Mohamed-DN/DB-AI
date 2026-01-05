@@ -27,9 +27,27 @@ class ScoutAgent:
             cmd = ["docker", "ps", "--format", "{{.Names}}|{{.Ports}}|{{.Image}}"]
             output = subprocess.check_output(cmd).decode('utf-8').strip()
             
+            # Pass 1: Identify Active Gateways
+            active_gateways = set()
+            lines = output.split('\n')
+            for line in lines:
+                if not line: continue
+                name, _, _ = line.split('|')
+                if "gw" in name or "gateway" in name:
+                    active_gateways.add(name)
+            
+            print(f"🌉 Active Gateways: {active_gateways}")
+
             found_dbs = []
             
-            for line in output.split('\n'):
+            # Pass 2: Identify Databases and check Gateway dependency
+            gateway_map = {
+                "MILANO": "nexi-gw-milano",
+                "BRATISLAVA": "nexi-gw-bratislava",
+                "CAIRO": "nexi-gw-cairo"
+            }
+
+            for line in lines:
                 if not line: continue
                 name, ports_str, image = line.split('|')
                 
@@ -43,6 +61,37 @@ class ScoutAgent:
                     pass 
                 
                 if engine and "gateway" not in name:
+                    # CHECK GATEWAY DEPENDENCY
+                    region_found = False
+                    for region, gw_name in gateway_map.items():
+                        if region in name.upper():
+                            region_found = True
+                            if gw_name not in active_gateways:
+                                print(f"🚫 BLOCKED: {name} is unreachable (Gateway {gw_name} is DOWN)")
+                                continue # Skip adding this DB -> becomes MISSING
+                    
+                    # If not belonging to a known region, assume accessible (or strict mode?)
+                    # For now, allow others (like mongo) that don't match specific region keywords if needed, 
+                    # but our focus is the main regional DBs.
+                    
+                    # Check if blocked by the continue above? No, continue jumps to next loop iteration.
+                    # We need to restructure slightly to handle the "continue" cleanly.
+                    
+                    is_reachable = True
+                    for region, gw_name in gateway_map.items():
+                        if region in name.upper():
+                            region_found = True
+                            if gw_name not in active_gateways:
+                                is_reachable = False
+                                print(f"🛑 BLOCKED: {name} (Gateway {gw_name} is MISSING from {active_gateways})")
+                                break
+                            else:
+                                print(f"✅ ALLOWED: {name} (Gateway {gw_name} is UP)")
+                    
+                    if not is_reachable:
+                        print(f"⏩ SKIPPING {name} due to Gateway Failure")
+                        continue
+
                     # Extract external port
                     port = 5432 # Default
                     if "->" in ports_str:
@@ -78,13 +127,21 @@ class ScoutAgent:
         """Update MongoDB Inventory"""
         print(f"💾 Updating Inventory with {len(dbs)} databases...")
         
-        # Get existing DBs
-        existing_docs = self.mongo.execute_eval("db.inventory_databases.find({}, {'identity.db_unique_name': 1}).toArray()")
+        # Get existing DBs with status
+        existing_docs = self.mongo.execute_eval("db.inventory_databases.find({}, {'identity.db_unique_name': 1, 'state.status': 1}).toArray()")
         existing_names = set()
+        existing_status = {}
         if existing_docs:
             for doc in existing_docs:
                 if 'identity' in doc and 'db_unique_name' in doc['identity']:
-                    existing_names.add(doc['identity']['db_unique_name'])
+                    name = doc['identity']['db_unique_name']
+                    existing_names.add(name)
+                    # Safe get status
+                    try:
+                        status = doc.get('state', {}).get('status', 'UNKNOWN')
+                        existing_status[name] = status
+                    except:
+                        existing_status[name] = 'UNKNOWN'
         
         found_names = set()
         for db in dbs:
@@ -107,44 +164,77 @@ class ScoutAgent:
                 }
                 self.mongo.insert_alert(alert)
 
-            # Upsert (Always update status to UP)
-            db_json = json.dumps(db)
-            db_json = db_json.replace('"NOW"', 'new Date()')
-            
-            js_cmd = f"""
-            db.inventory_databases.updateOne(
-                {{ "identity.db_unique_name": "{name}" }},
-                {{ $set: {db_json}, $set: {{"state.status": "UP", "state.last_seen": new Date()}} }},
-                {{ upsert: true }}
-            )
-            """
+            # Check if NEW or EXISTING for Update Logic
+            if name in existing_names:
+                # EXISTING: Check for RECOVERY
+                prev_status = existing_status.get(name, 'UNKNOWN')
+                if prev_status in ['MISSING', 'DOWN']:
+                    print(f"🎉 RECOVERY DETECTED: {name} is back UP (was {prev_status})")
+                    alert = {
+                        "severity": "RESOLVED",
+                        "state": "RESOLVED", 
+                        "type": "DB_RECOVERY",
+                        "db_unique_name": name,
+                        "host_name": db['identity']['host'],
+                        "service": f"{db['identity']['engine']}-{name}",
+                        "message": f"Database {name} has recovered and is back ONLINE.",
+                        "output": "Service Restored",
+                        "timestamp": "NOW",
+                        "processed": False
+                    }
+                    self.mongo.insert_alert(alert)
+
+                # Only update state/status, preserve manual metadata
+                js_cmd = f"""
+                db.inventory_databases.updateOne(
+                    {{ "identity.db_unique_name": "{name}" }},
+                    {{ $set: {{ "state.status": "UP", "state.last_seen": new Date() }} }}
+                )
+                """
+            else:
+                # NEW: Full Upsert
+                db_json = json.dumps(db)
+                db_json = db_json.replace('"NOW"', 'new Date()')
+                
+                js_cmd = f"""
+                db.inventory_databases.updateOne(
+                    {{ "identity.db_unique_name": "{name}" }},
+                    {{ $set: {db_json}, $set: {{ "state.status": "UP", "state.last_seen": new Date() }} }},
+                    {{ upsert: true }}
+                )
+                """
             self.mongo.execute_eval(js_cmd)
         
         # Check MISSING
         missing_names = existing_names - found_names
+        # print(f"📉 Missing Candidates: {missing_names}") # verbose
         for missing in missing_names:
-            print(f"⚠️ DETECTED MISSING ASSET: {missing}")
-            js_cmd = f"""
-            db.inventory_databases.updateOne(
-                {{ "identity.db_unique_name": "{missing}" }},
-                {{ $set: {{"state.status": "MISSING", "state.last_seen": new Date()}} }}
-            )
-            """
+            prev_status = existing_status.get(missing, 'UNKNOWN')
+            
+            # Update status to MISSING
+            js_cmd = f"db.inventory_databases.updateOne({{ 'identity.db_unique_name': '{missing}' }}, {{ $set: {{ 'state.status': 'MISSING', 'state.last_seen': new Date() }} }})"
             self.mongo.execute_eval(js_cmd)
             
-            # Create Alert
-            alert = {
-                "severity": "CRITICAL",
-                "state": "CRITICAL",
-                "type": "ASSET_MISSING",
-                "host_name": "Docker",
-                "service": f"DB-{missing}",
-                "message": f"Database {missing} was not found in Docker scan.",
-                "output": "Container Missing",
-                "timestamp": "NOW",
-                "processed": False
-            }
-            self.mongo.insert_alert(alert)
+            # Anti-Spam: Only alert if it's a NEW incident
+            if prev_status != 'MISSING':
+                print(f"⚠️ DETECTED MISSING ASSET: {missing} (Prev: {prev_status})")
+                
+                # Create Alert
+                alert = {
+                    "severity": "CRITICAL",
+                    "state": "CRITICAL",
+                    "type": "ASSET_MISSING",
+                    "db_unique_name": missing,
+                    "host_name": "Docker",
+                    "service": f"DB-{missing}",
+                    "message": f"Database {missing} was not found in Docker scan.",
+                    "output": "Container Missing",
+                    "timestamp": "NOW",
+                    "processed": False
+                }
+                self.mongo.insert_alert(alert)
+            else:
+                pass # Already known missing, silent update
         
         print(f"✅ Inventory Sync Complete. Found: {len(found_names)}, Missing: {len(missing_names)}")
 

@@ -300,11 +300,14 @@ def set_system_status(item: dict):
         "nexi-mongodb",
         "nexi-redis", 
         "nexi-ollama",
+        "nexi-open-webui",
         "nexi-qdrant",
         "nexi-gw-milano",
         "nexi-gw-bratislava",
         "nexi-pg-milano-prod",
         "nexi-pg-milano-stg",
+        "nexi-pg-milano-dev",
+        "nexi-mongo-express",
         "nexi-pg-bratislava-prod",
         "nexi-pg-bratislava-dev",
         "nexi-gw-cairo",
@@ -458,6 +461,172 @@ def get_gpu_status():
         return {"error": "nvidia-smi failed"}
     except Exception as e:
         return {"error": str(e)}
+
+# =============================================================================
+# DEEP OBSERVABILITY ENDPOINTS
+# =============================================================================
+
+@app.get("/api/database/{db_name}/deep")
+def get_deep_observability(db_name: str):
+    """Get deep observability data for a specific database"""
+    try:
+        if not mongo: raise Exception("MongoProxy not initialized")
+        
+        db_info = mongo.execute_eval(f"db.inventory_databases.findOne({{'identity.db_unique_name': '{db_name}'}})")
+        if not db_info:
+            raise HTTPException(status_code=404, detail="Database not found")
+        
+        deep_obs = db_info.get('deep_observability', {})
+        
+        return {
+            "db_name": db_name,
+            "engine": db_info.get('identity', {}).get('engine', 'UNKNOWN'),
+            "status": db_info.get('state', {}).get('status', 'UNKNOWN'),
+            "deep_observability": deep_obs,
+            "has_oracle_internals": 'oracle_internals' in deep_obs,
+            "has_checkmk_metrics": 'external_metrics' in deep_obs and 'checkmk' in deep_obs.get('external_metrics', {}),
+            "last_update": deep_obs.get('last_update', 'Never')
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.get("/api/alerts/ai")
+def get_alerts_with_ai_analysis():
+    """Get alerts that have AI analysis attached"""
+    try:
+        if not mongo: raise Exception("MongoProxy not initialized")
+        
+        alerts = mongo.execute_eval("""
+            db.monitoring_alerts.find({ai_analysis: {$exists: true}})
+            .sort({timestamp: -1})
+            .limit(20)
+            .toArray()
+        """)
+        
+        for a in alerts:
+            if "_id" in a:
+                a["_id"] = str(a["_id"])
+        
+        return alerts or []
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.get("/api/agents/status")
+def get_agents_status():
+    """Get status of all agents (checks for running Python processes)"""
+    import subprocess
+    
+    agents = {
+        "Scout": {"script": "Agents/Scout/main.py", "running": False},
+        "CriticalAlert": {"script": "Agents/CriticalAlert/critical_alert.py", "running": False},
+        "Watcher": {"script": "Agents/Watcher/main.py", "running": False},
+        "ForensicAnalyzer": {"script": "Agents/Watcher/ai_analyzer.py", "running": False},
+        "CheckMK_Bridge": {"script": "Agents/CheckMK_Bridge/main.py", "running": False},
+        "Collector": {"script": "Agents/Collector/main.py", "running": False}
+    }
+    
+    try:
+        # Get list of running Python processes
+        result = subprocess.run(
+            ["wmic", "process", "where", "name='python.exe'", "get", "commandline"],
+            capture_output=True, text=True, timeout=10
+        )
+        
+        running_processes = result.stdout.lower()
+        
+        for name, info in agents.items():
+            script_name = info["script"].lower().replace("/", "\\\\")
+            if script_name in running_processes or info["script"].lower() in running_processes:
+                agents[name]["running"] = True
+                
+    except Exception as e:
+        print(f"Error checking agents: {e}")
+    
+    return {"agents": agents}
+
+@app.post("/api/agents/start/{agent_name}")
+def start_agent(agent_name: str):
+    """Start a specific agent"""
+    agent_scripts = {
+        "scout": "Agents/Scout/main.py",
+        "criticalalert": "Agents/CriticalAlert/critical_alert.py",
+        "watcher": "Agents/Watcher/main.py",
+        "forensicanalyzer": "Agents/Watcher/ai_analyzer.py",
+        "checkmk_bridge": "Agents/CheckMK_Bridge/main.py",
+        "collector": "Agents/Collector/main.py"
+    }
+    
+    script = agent_scripts.get(agent_name.lower())
+    if not script:
+        raise HTTPException(status_code=404, detail=f"Agent {agent_name} not found")
+    
+    try:
+        script_path = os.path.abspath(os.path.join(os.path.dirname(__file__), '../../', script))
+        subprocess.Popen([sys.executable, script_path], creationflags=subprocess.CREATE_NEW_CONSOLE)
+        return {"status": f"Agent {agent_name} started", "script": script}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.post("/api/agents/trigger/watcher")
+def trigger_watcher_once():
+    """Trigger Watcher agent for a single scan"""
+    try:
+        script_path = os.path.abspath(os.path.join(os.path.dirname(__file__), '../../Agents/Watcher/main.py'))
+        subprocess.Popen([sys.executable, script_path])
+        return {"status": "Watcher triggered"}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.post("/api/agents/trigger/checkmk")
+def trigger_checkmk_sync():
+    """Trigger CheckMK Bridge for a single sync"""
+    try:
+        script_path = os.path.abspath(os.path.join(os.path.dirname(__file__), '../../Agents/CheckMK_Bridge/main.py'))
+        subprocess.Popen([sys.executable, script_path, "--once"])
+        return {"status": "CheckMK sync triggered"}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.post("/api/agents/trigger/forensic")
+def trigger_forensic_analysis():
+    """Trigger Forensic AI Analyzer for a single run"""
+    try:
+        script_path = os.path.abspath(os.path.join(os.path.dirname(__file__), '../../Agents/Watcher/ai_analyzer.py'))
+        subprocess.Popen([sys.executable, script_path, "--once"])
+        return {"status": "Forensic Analyzer triggered"}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.get("/api/rag/status")
+def get_rag_status():
+    """Get RAG pipeline status (Ollama + Qdrant)"""
+    import requests
+    
+    status = {
+        "ollama": {"connected": False, "models": []},
+        "qdrant": {"connected": False, "collections": 0}
+    }
+    
+    # Check Ollama
+    try:
+        resp = requests.get("http://localhost:11434/api/tags", timeout=5)
+        if resp.status_code == 200:
+            status["ollama"]["connected"] = True
+            status["ollama"]["models"] = [m["name"] for m in resp.json().get("models", [])]
+    except:
+        pass
+    
+    # Check Qdrant
+    try:
+        resp = requests.get("http://localhost:6333/collections", timeout=5)
+        if resp.status_code == 200:
+            collections = resp.json().get("result", {}).get("collections", [])
+            status["qdrant"]["connected"] = True
+            status["qdrant"]["collections"] = len(collections)
+    except:
+        pass
+    
+    return status
 
 if __name__ == "__main__":
     import sys

@@ -37,6 +37,26 @@ services:
         ipv4_address: 172.20.0.10
     restart: unless-stopped
 
+  # Mongo Express - Web UI for MongoDB
+  mongo-express:
+    image: mongo-express:latest
+    container_name: nexi-mongo-express
+    hostname: mongo-express.nexi.lab
+    ports:
+      - "8081:8081"
+    environment:
+      ME_CONFIG_MONGODB_ADMINUSERNAME: admin
+      ME_CONFIG_MONGODB_ADMINPASSWORD: nexi2024
+      ME_CONFIG_MONGODB_URL: mongodb://admin:nexi2024@mongodb:27017/
+      ME_CONFIG_BASICAUTH_USERNAME: admin
+      ME_CONFIG_BASICAUTH_PASSWORD: nexi2024
+    networks:
+      nexi-lab:
+        ipv4_address: 172.20.0.15
+    depends_on:
+      - mongodb
+    restart: unless-stopped
+
   # Redis - Message Queue
   redis:
     image: redis:7-alpine
@@ -69,6 +89,24 @@ services:
             - driver: nvidia
               count: all
               capabilities: [ gpu ]
+
+  # Open WebUI - ChatGPT-like interface for Ollama
+  open-webui:
+    image: ghcr.io/open-webui/open-webui:main
+    container_name: nexi-open-webui
+    hostname: open-webui.nexi.lab
+    ports:
+      - "3001:8080"
+    environment:
+      - OLLAMA_BASE_URL=http://ollama:11434
+    volumes:
+      - open_webui_data:/app/backend/data
+    networks:
+      nexi-lab:
+        ipv4_address: 172.20.0.16
+    depends_on:
+      - ollama
+    restart: unless-stopped
 
   # Qdrant - Vector Database
   qdrant:
@@ -134,6 +172,24 @@ services:
     networks:
       nexi-lab:
         ipv4_address: 172.20.1.11
+    restart: unless-stopped
+
+  # PostgreSQL Milano - STAGING
+  pg-milano-stg:
+    image: postgres:15
+    container_name: nexi-pg-milano-stg
+    hostname: pg-milano-stg.nexi.lab
+    ports:
+      - "5435:5432"
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: nexi2024
+      POSTGRES_DB: payments_stg
+    volumes:
+      - pg_milano_stg_data:/var/lib/postgresql/data
+    networks:
+      nexi-lab:
+        ipv4_address: 172.20.1.12
     restart: unless-stopped
 
   # ===========================================================================
@@ -247,9 +303,11 @@ services:
 volumes:
   mongodb_data:
   ollama_data:
+  open_webui_data:
   qdrant_data:
   pg_milano_prod_data:
   pg_milano_dev_data:
+  pg_milano_stg_data:
   pg_bratislava_prod_data:
   pg_bratislava_dev_data:
   oracle_cairo_prim_data:

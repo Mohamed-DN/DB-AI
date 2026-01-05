@@ -11,6 +11,11 @@ Start-Process -FilePath "python" -ArgumentList "-m uvicorn main:app --host 127.0
 Write-Host "Frontend: Starting Server on port 3000..."
 Start-Process -FilePath "python" -ArgumentList "-m http.server 3000" -WorkingDirectory "c:\AI-Nexi\Nexi_DB_AI\WebInterface\frontend" -WindowStyle Minimized
 
+# 3. Start Agents (Monitoring & Alerts)
+Write-Host "Agents: Starting Scout & CriticalAlert..."
+Start-Process -FilePath "python" -ArgumentList "Agents\Scout\main.py" -WorkingDirectory "c:\AI-Nexi\Nexi_DB_AI" -WindowStyle Minimized
+Start-Process -FilePath "python" -ArgumentList "Agents\CriticalAlert\critical_alert.py" -WorkingDirectory "c:\AI-Nexi\Nexi_DB_AI" -WindowStyle Minimized
+
 # 3. Wait a bit
 Start-Sleep -Seconds 5
 
