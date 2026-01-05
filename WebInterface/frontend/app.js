@@ -35,6 +35,38 @@ function openMongoDB() {
     window.open('http://localhost:8081', '_blank');
 }
 
+// Theme Toggle (Dark/Light Mode)
+function toggleTheme() {
+    const body = document.body;
+    const icon = document.getElementById('theme-icon');
+
+    if (body.classList.contains('light-mode')) {
+        body.classList.remove('light-mode');
+        icon.className = 'fa-solid fa-moon';
+        localStorage.setItem('nexi-theme', 'dark');
+    } else {
+        body.classList.add('light-mode');
+        icon.className = 'fa-solid fa-sun';
+        localStorage.setItem('nexi-theme', 'light');
+    }
+}
+
+// Apply saved theme on load
+function applyStoredTheme() {
+    const savedTheme = localStorage.getItem('nexi-theme');
+    const icon = document.getElementById('theme-icon');
+    if (savedTheme === 'light') {
+        document.body.classList.add('light-mode');
+        if (icon) icon.className = 'fa-solid fa-sun';
+    }
+}
+
+// Init on page load
+document.addEventListener('DOMContentLoaded', () => {
+    applyStoredTheme();
+    loadStats();
+});
+
 // --- LLM MODEL MANAGEMENT ---
 async function loadCurrentModel() {
     try {

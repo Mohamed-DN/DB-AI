@@ -11,16 +11,21 @@
 
 <body>
 
-    <!-- TOP HEADER - Minimal with Robot Logo -->
+    <!-- TOP HEADER - Nexi Corporate -->
     <header class="top-header">
         <div class="logo-container">
             <div class="robot-icon">
-                <i class="fa-solid fa-robot"></i>
+                <i class="fa-solid fa-shield-halved"></i>
             </div>
-            <span class="brand-text">NEXI AI</span>
+            <span class="brand-text">NEXI SENTINEL</span>
         </div>
-        <div class="status-indicator">
-            <span class="dot"></span> SYSTEM ONLINE
+        <div style="display:flex; align-items:center; gap:1rem;">
+            <button class="theme-toggle" onclick="toggleTheme()" id="theme-toggle-btn" title="Toggle Dark/Light Mode">
+                <i class="fa-solid fa-moon" id="theme-icon"></i>
+            </button>
+            <div class="status-indicator">
+                <span class="dot"></span> SYSTEM ONLINE
+            </div>
         </div>
     </header>
 

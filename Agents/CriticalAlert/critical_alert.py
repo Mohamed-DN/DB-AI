@@ -342,7 +342,7 @@ class CriticalAlertAgent:
             try:
                 print(f"   📧 Connecting to SMTP {smtp_server}:{smtp_port}...")
                 msg = MIMEMultipart()
-                msg['From'] = smtp_user
+                msg['From'] = f"Big Brother <{smtp_user}>"
                 msg['To'] = ", ".join(recipients)
                 msg['Subject'] = subject
                 msg.attach(MIMEText(html, 'html'))
