@@ -1,0 +1,46 @@
+{
+    "_id": "ObjectId",
+    "service_info": {
+        "name": "Gestione Carte di Credito",
+        "service_now_id": "SN_APP_00912",
+        "snow_group": "DBA_OPERATIONS_NEXI",
+        "status": "ACTIVE | INACTIVE | DEPRECATED",
+        "criticality": "HIGH | MEDIUM | LOW",
+        "business_unit": "Pagamenti Digitali"
+    },
+    "contacts": {
+        "bao": {
+            "name": "Mario Rossi",
+            "email": "mario.rossi@nexi.it",
+            "uigp_id": "UIGP_12345"
+        },
+        "bao_backup": {
+            "name": "Luigi Verdi",
+            "email": "luigi.verdi@nexi.it"
+        },
+        "dl_team": "dl_carte_ops@nexi.it",
+        "reperibilita_number": "+39 335 9988776",
+        "escalation_manager": "anna.bianchi@nexi.it"
+    },
+    "technical_mapping": [
+        {
+            "db_unique_name": "NZSEP",
+            "gateway_ref": "dbgec2",
+            "schemas": [
+                {
+                    "schema_name": "CRD_OWNER",
+                    "type": "OWNER | USER | READER",
+                    "size_gb": 150
+                }
+            ]
+        }
+    ],
+    "compliance": {
+        "data_classification": "CONFIDENTIAL | INTERNAL | PUBLIC",
+        "gdpr_relevant": true,
+        "pci_dss_scope": true,
+        "last_audit_date": "ISODate"
+    },
+    "created_at": "ISODate",
+    "updated_at": "ISODate"
+}

@@ -9,13 +9,17 @@ Start-Process -FilePath "python" -ArgumentList "c:\AI-Nexi\Nexi_DB_AI\Agents\Sco
 
 # 2. Critical Alert Agent (Continuous)
 Write-Host "Starting CriticalAlert Agent..."
-Start-Process -FilePath "python" -ArgumentList "c:\AI-Nexi\Nexi_DB_AI\Agents\CriticalAlert\main.py" -WindowStyle Minimized
+Start-Process -FilePath "python" -ArgumentList "c:\AI-Nexi\Nexi_DB_AI\Agents\CriticalAlert\main.py" -WindowStyle Hidden
 
-# 3. AI Orchestrator (Continuous)
+# 3. Collector Agent (Continuous)
+Write-Host "Starting Collector Agent (Metrics)..."
+Start-Process -FilePath "python" -ArgumentList "c:\AI-Nexi\Nexi_DB_AI\Agents\Collector\main.py" -WindowStyle Hidden
+
+# 4. AI Orchestrator (Continuous)
 Write-Host "Starting AI Orchestrator..."
 Start-Process -FilePath "python" -ArgumentList "c:\AI-Nexi\Nexi_DB_AI\Orchestrator\main.py" -WindowStyle Minimized
 
-# 4. Web Dashboard (Backend + Frontend)
+# 5. Web Dashboard (Backend + Frontend)
 Write-Host "Starting Dashboard Components..."
 Start-Process -FilePath "powershell" -ArgumentList "-ExecutionPolicy Bypass -File c:\AI-Nexi\Nexi_DB_AI\WebInterface\run_dashboard.ps1"
 

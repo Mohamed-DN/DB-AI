@@ -84,6 +84,45 @@ def create_indexes():
         name="idx_issues_db"
     )
 
+    # gateways indexes
+    print("Creating gateways indexes...")
+    db.gateways.create_index(
+        [("info.hostname", 1)],
+        unique=True,
+        name="idx_gw_hostname"
+    )
+    db.gateways.create_index(
+        [("location.datacenter", 1)],
+        name="idx_gw_datacenter"
+    )
+
+    # agent_runs indexes
+    print("Creating agent_runs indexes...")
+    db.agent_runs.create_index(
+        [("agent_type", 1), ("started_at", -1)],
+        name="idx_agent_history"
+    )
+    db.agent_runs.create_index(
+        [("status", 1)],
+        name="idx_run_status"
+    )
+
+    # rag_knowledge_base indexes
+    print("Creating rag_knowledge_base indexes...")
+    db.rag_knowledge_base.create_index(
+        [("text_chunk", "text")],
+        name="idx_text_search"
+    )
+    db.rag_knowledge_base.create_index(
+        [("metadata.db_engines", 1), ("metadata.tags", 1)],
+        name="idx_metadata_filter"
+    )
+    db.rag_knowledge_base.create_index(
+        [("source_path", 1), ("chunk_index", 1)],
+        unique=True,
+        name="idx_unique_chunk"
+    )
+
     print("All indexes created successfully!")
 
 

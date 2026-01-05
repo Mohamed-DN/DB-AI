@@ -1,0 +1,38 @@
+{
+    "_id": "dbgec2",
+    "location": {
+        "country": "Italy",
+        "city": "Milan",
+        "datacenter": "pero"
+    },
+    "info": {
+        "hostname": "mew1.gpa.local",
+        "ip_address": "10.102.14.60",
+        "os_version": "Red Hat Enterprise Linux 8.9",
+        "cpu_cores": 8,
+        "ram_gb": 32,
+        "disk_total_gb": 100
+    },
+    "network": {
+        "open_ports": [
+            22,
+            1521,
+            5432,
+            8080
+        ],
+        "status": "UP | DOWN"
+    },
+    "reachability": {
+        "accessible_hosts": [],
+        "accessible_dbs": [],
+        "total_hosts_count": 0,
+        "total_dbs_count": 0
+    },
+    "ssh_config": {
+        "user": "service_audit",
+        "auth_method": "KEY | PASSWORD",
+        "key_path": "/home/service_audit/.ssh/id_rsa"
+    },
+    "created_at": "ISODate",
+    "updated_at": "ISODate"
+}

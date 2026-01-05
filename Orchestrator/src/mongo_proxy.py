@@ -52,3 +52,12 @@ class MongoProxy:
         analysis_json = json.dumps(analysis)
         js_cmd = f"db.monitoring_alerts.updateOne({{_id: ObjectId('{alert_id}')}}, {{$set: {{processed: true, ai_analysis: {analysis_json}}}}})"
         return self.execute_eval(js_cmd)
+
+    def get_inventory(self):
+        js = "db.inventory_databases.find().toArray()"
+        return self.execute_eval(js) or []
+
+    def update_metrics(self, db_name, metrics):
+        m_json = json.dumps(metrics)
+        js = f"db.inventory_databases.updateOne({{ 'identity.db_unique_name': '{db_name}' }}, {{ $set: {{ 'state.metrics': {m_json}, 'state.last_metric_update': new Date() }} }})"
+        return self.execute_eval(js)

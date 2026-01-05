@@ -4,8 +4,9 @@ const API_URL = "http://localhost:8000/api";
 function showSection(id) {
     document.querySelectorAll('.page-section').forEach(s => s.classList.remove('active'));
     document.getElementById(id).classList.add('active');
-    document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
-    event.currentTarget.classList.add('active');
+    // Update nav pills - only buttons in nav-buttons div
+    document.querySelectorAll('.nav-buttons .nav-pill').forEach(b => b.classList.remove('active'));
+    if (event && event.currentTarget) event.currentTarget.classList.add('active');
 
     const titles = {
         'dashboard': 'Dashboard Overview',
@@ -13,7 +14,7 @@ function showSection(id) {
         'alerts': 'System Alerts',
         'chat': 'AI Assistant',
         'mailbox': 'Communications',
-        'data': 'Knowledge Graph Explorer',
+        'data': 'Data Explorer',
         'settings': 'Configuration'
     };
     document.getElementById('page-title').innerText = titles[id] || 'Nexi CMDB';
@@ -24,6 +25,55 @@ function showSection(id) {
     if (id === 'mailbox') loadEmails();
     if (id === 'data') loadExplorer('inventory_databases');
     if (id === 'settings') loadSettings();
+    if (id === 'chat') { loadCurrentModel(); loadGpuStatus(); }
+}
+
+// Open MongoDB Express
+function openMongoDB() {
+    window.open('http://localhost:8081', '_blank');
+}
+
+// --- LLM MODEL MANAGEMENT ---
+async function loadCurrentModel() {
+    try {
+        const res = await fetch(`${API_URL}/llm/current`).then(r => r.json());
+        const select = document.getElementById('model-selector');
+        if (select && res.model) {
+            select.value = res.model;
+        }
+    } catch (e) { console.error('Failed to load model:', e); }
+}
+
+async function switchModel() {
+    const select = document.getElementById('model-selector');
+    const newModel = select.value;
+    try {
+        const res = await fetch(`${API_URL}/llm/switch`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ model: newModel })
+        });
+        if (res.ok) {
+            const data = await res.json();
+            console.log('Model switched to:', data.model);
+            // Update GPU status after switch
+            setTimeout(loadGpuStatus, 2000);
+        }
+    } catch (e) { alert('Failed to switch model: ' + e); }
+}
+
+async function loadGpuStatus() {
+    try {
+        const res = await fetch(`${API_URL}/gpu/status`).then(r => r.json());
+        const el = document.getElementById('gpu-status');
+        if (el && !res.error) {
+            const usedGB = (res.memory_used_mb / 1024).toFixed(1);
+            const totalGB = (res.memory_total_mb / 1024).toFixed(1);
+            el.innerHTML = `GPU: ${usedGB}/${totalGB}GB (${res.utilization_pct}%)`;
+        } else if (el && res.error) {
+            el.innerHTML = 'GPU: N/A';
+        }
+    } catch (e) { console.error('GPU status error:', e); }
 }
 
 async function loadStats() {
@@ -65,6 +115,7 @@ async function loadInventory() {
                     <div style="display:flex; gap:5px;">
                         <button class="btn sm" onclick="connectDB('${name}', 'sql')" title="SQL Console"><i class="fa-solid fa-terminal"></i> psql</button>
                         <button class="btn sm" onclick="connectDB('${name}', 'bash')" title="Linux Shell" style="background:#4e5d6c;"><i class="fa-brands fa-linux"></i> bash</button>
+                        ${status !== 'UP' ? `<button class="btn sm btn-danger" onclick="deleteDB('${name}')" title="Delete from Inventory"><i class="fa-solid fa-trash"></i></button>` : ''}
                     </div>
                 </td>
             `;
@@ -79,6 +130,26 @@ async function connectDB(name, mode = 'sql') {
     } catch (e) {
         alert("Impossibile aprire il terminale: " + e);
     }
+}
+
+async function deleteDB(name) {
+    showModal(
+        'Delete Database?',
+        `Are you sure you want to remove ${name} from the inventory? This will NOT delete the Docker container.`,
+        async () => {
+            try {
+                const res = await fetch(`${API_URL}/inventory/${name}`, { method: 'DELETE' });
+                const data = await res.json();
+                if (res.ok) {
+                    loadInventory(); // Refresh list
+                } else {
+                    alert("Error: " + data.detail);
+                }
+            } catch (e) {
+                alert("Delete failed: " + e);
+            }
+        }
+    );
 }
 
 async function loadAlerts() {
@@ -161,13 +232,17 @@ async function saveSettings() {
 }
 
 async function triggerAction(action) {
-    if (confirm(`Eseguire ${action}?`)) {
-        try {
-            await fetch(`${API_URL}/action/${action}`, { method: 'POST' });
-            setTimeout(loadStats, 2000);
-            alert(`✅ ${action} eseguito!`);
-        } catch (e) { alert(`❌ Errore durante ${action}: ${e.message}`); }
-    }
+    showModal(
+        'Confirm Action',
+        `Are you sure you want to execute: ${action}?`,
+        async () => {
+            try {
+                await fetch(`${API_URL}/action/${action}`, { method: 'POST' });
+                setTimeout(loadStats, 2000);
+                alert(`✅ ${action} executed!`);
+            } catch (e) { alert(`❌ Error executing ${action}: ${e.message}`); }
+        }
+    );
 }
 
 async function loadEmails() {
@@ -354,16 +429,53 @@ function drawGraph() {
     ctx.save();
     ctx.translate(transform.x, transform.y);
     ctx.scale(transform.scale, transform.scale);
-    ctx.strokeStyle = '#555'; ctx.lineWidth = 2;
+
+    // Draw edges with gradient
     edges.forEach(e => {
         const f = nodes[e.from]; const t = nodes[e.to];
-        ctx.beginPath(); const startX = f.x + 160; const startY = f.y + 20; const endX = t.x; const endY = t.y + 20;
-        ctx.moveTo(startX, startY); ctx.bezierCurveTo(startX + 50, startY, endX - 50, endY, endX, endY); ctx.stroke();
+        ctx.beginPath();
+        ctx.strokeStyle = '#4a5568';
+        ctx.lineWidth = 2;
+        const startX = f.x + 140; const startY = f.y + 18;
+        const endX = t.x; const endY = t.y + 18;
+        ctx.moveTo(startX, startY);
+        ctx.bezierCurveTo(startX + 40, startY, endX - 40, endY, endX, endY);
+        ctx.stroke();
     });
+
+    // Draw rounded rectangle nodes
     nodes.forEach(n => {
-        ctx.fillStyle = '#222'; ctx.fillRect(n.x, n.y, 160, 40); ctx.strokeStyle = '#3b82f6'; ctx.lineWidth = 1; ctx.strokeRect(n.x, n.y, 160, 40);
-        ctx.fillStyle = '#e06c75'; ctx.font = 'bold 12px Inter'; let k = n.key.length > 12 ? n.key.substring(0, 12) + '..' : n.key; ctx.fillText(k, n.x + 10, n.y + 25);
-        ctx.fillStyle = '#98c379'; let v = n.value.length > 10 ? n.value.substring(0, 10) + '..' : n.value; ctx.fillText(v, n.x + 90, n.y + 25);
+        const nodeWidth = 140;
+        const nodeHeight = 36;
+        const radius = 12; // Corner radius
+
+        // Rounded rectangle shape
+        ctx.beginPath();
+        ctx.roundRect(n.x, n.y, nodeWidth, nodeHeight, radius);
+
+        // Fill with gradient
+        const gradient = ctx.createLinearGradient(n.x, n.y, n.x + nodeWidth, n.y + nodeHeight);
+        gradient.addColorStop(0, '#1a1a2e');
+        gradient.addColorStop(1, '#0f1724');
+        ctx.fillStyle = gradient;
+        ctx.fill();
+
+        // Border
+        ctx.strokeStyle = '#4ade80';
+        ctx.lineWidth = 1.5;
+        ctx.stroke();
+
+        // Key text (pink)
+        ctx.fillStyle = '#f472b6';
+        ctx.font = 'bold 10px Inter';
+        let k = n.key.length > 12 ? n.key.substring(0, 12) + '..' : n.key;
+        ctx.fillText(k, n.x + 8, n.y + 22);
+
+        // Value text (green)
+        ctx.fillStyle = '#a7f3d0';
+        ctx.font = '10px Inter';
+        let v = n.value.length > 10 ? n.value.substring(0, 10) + '..' : n.value;
+        ctx.fillText(v, n.x + 75, n.y + 22);
     });
     ctx.restore();
 }
@@ -394,15 +506,116 @@ async function toggleSystem() {
     const btn = document.getElementById('btn-system-toggle');
     const isPaused = btn.innerText.includes('Resume');
     const newStatus = isPaused ? 'RUNNING' : 'PAUSED';
+    const action = isPaused ? 'Starting' : 'Stopping';
 
-    if (confirm(`Confirm: ${newStatus} System?`)) {
-        try {
-            await fetch(`${API_URL}/system/status`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ status: newStatus })
-            });
-            updateSystemButton(newStatus);
-        } catch (e) { alert("Error toggling system"); }
-    }
+    showModal(
+        'System Status Change',
+        `Do you want to ${action.toLowerCase()} all Docker containers?`,
+        async () => {
+            // Show process log
+            showProcessLog(action + ' Docker Containers...');
+
+            try {
+                const res = await fetch(`${API_URL}/system/status`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ status: newStatus })
+                });
+                const data = await res.json();
+
+                // Display results
+                if (data.results) {
+                    displayProcessResults(data.results);
+                }
+
+                updateSystemButton(newStatus);
+            } catch (e) {
+                addProcessLogEntry('Error', false, e.message);
+            }
+        }
+    );
+}
+
+// --- PROCESS LOG FUNCTIONS ---
+function showProcessLog(title) {
+    const overlay = document.getElementById('process-log-overlay');
+    const titleEl = document.getElementById('process-log-title');
+    const content = document.getElementById('process-log-content');
+
+    titleEl.innerText = title;
+    content.innerHTML = '<div class="process-log-entry pending"><span class="icon"><i class="fa-solid fa-spinner fa-spin"></i></span><span class="name">Initializing...</span><span class="status">PENDING</span></div>';
+
+    overlay.style.display = 'flex';
+    overlay.style.opacity = '1';
+    overlay.style.visibility = 'visible';
+}
+
+function displayProcessResults(results) {
+    const content = document.getElementById('process-log-content');
+    content.innerHTML = '';
+
+    results.forEach(r => {
+        const entry = document.createElement('div');
+        entry.className = `process-log-entry ${r.success ? 'success' : 'error'}`;
+        entry.innerHTML = `
+            <span class="icon"><i class="fa-solid ${r.success ? 'fa-check' : 'fa-xmark'}"></i></span>
+            <span class="name">${r.container}</span>
+            <span class="status">${r.success ? (r.action === 'start' ? 'STARTED' : 'STOPPED') : 'FAILED'}</span>
+        `;
+        content.appendChild(entry);
+    });
+}
+
+function addProcessLogEntry(name, success, message) {
+    const content = document.getElementById('process-log-content');
+    const entry = document.createElement('div');
+    entry.className = `process-log-entry ${success ? 'success' : 'error'}`;
+    entry.innerHTML = `
+        <span class="icon"><i class="fa-solid ${success ? 'fa-check' : 'fa-xmark'}"></i></span>
+        <span class="name">${name}</span>
+        <span class="status">${message || (success ? 'OK' : 'ERROR')}</span>
+    `;
+    content.appendChild(entry);
+}
+
+function closeProcessLog() {
+    const overlay = document.getElementById('process-log-overlay');
+    overlay.style.opacity = '0';
+    overlay.style.visibility = 'hidden';
+    setTimeout(() => { overlay.style.display = 'none'; }, 300);
+}
+
+// --- CUSTOM MODAL ---
+function showModal(title, message, onConfirm) {
+    const overlay = document.getElementById('custom-modal-overlay');
+    const titleEl = document.getElementById('modal-title');
+    const msgEl = document.getElementById('modal-message');
+    const btnConfirm = document.getElementById('modal-btn-confirm');
+    const btnCancel = document.getElementById('modal-btn-cancel');
+
+    titleEl.innerText = title;
+    msgEl.innerText = message;
+
+    // Clear old listeners
+    const newConfirm = btnConfirm.cloneNode(true);
+    const newCancel = btnCancel.cloneNode(true);
+    btnConfirm.parentNode.replaceChild(newConfirm, btnConfirm);
+    btnCancel.parentNode.replaceChild(newCancel, btnCancel);
+
+    // Add new listeners
+    newConfirm.addEventListener('click', () => {
+        closeModal();
+        onConfirm();
+    });
+
+    newCancel.addEventListener('click', closeModal);
+    overlay.addEventListener('click', (e) => {
+        if (e.target === overlay) closeModal();
+    });
+
+    overlay.classList.add('active');
+}
+
+function closeModal() {
+    document.getElementById('custom-modal-overlay').classList.remove('active');
 }

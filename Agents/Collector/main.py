@@ -1,104 +1,91 @@
 """
-SADA Collector Agent
-Main entry point for the Collector agent.
+SADA Collector Agent - Docker Edition
+Collects deep metrics (CPU, RAM, IO) from Docker containers
 """
-import argparse
-import logging
-from typing import List, Dict
+import sys
+import os
+import time
+import json
+import subprocess
+from datetime import datetime
 
-from src.ssh_connection import GatewayConnection, DirectConnection
-from src.extractors import OracleDataCollector, SystemDataCollector
-from src.cmdb_updater import CMDBUpdater
+# Force UTF-8 for Windows Console
+sys.stdout.reconfigure(encoding='utf-8')
 
-logging.basicConfig(
-    level=logging.INFO,
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
-)
-logger = logging.getLogger("collector")
-
+# Link to Shared Modules
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '../../')))
+from Orchestrator.src.mongo_proxy import MongoProxy
 
 class CollectorAgent:
-    """SADA Collector Agent"""
-
-    def __init__(self, gateway_config: Dict = None):
-        self.gateway_config = gateway_config
-        self.cmdb = CMDBUpdater()
-        self.errors = []
-
-    def collect_oracle_database(self, target_host: str, gateway_ref: str, use_gateway: bool = True) -> Dict:
-        """Collect data from a single Oracle database host"""
-        logger.info(f"Collecting from {target_host}...")
+    def __init__(self):
+        self.mongo = MongoProxy()
         
+    def collect_docker_metrics(self, container_name):
+        """Collect real-time metrics from Docker"""
         try:
-            # Setup SSH connection
-            if use_gateway and self.gateway_config:
-                conn = GatewayConnection(**self.gateway_config)
-                executor = lambda cmd: conn.execute_on_target(target_host, cmd)
-            else:
-                conn = DirectConnection(target_host, user="oracle")
-                executor = conn.execute
-
-            # Collect system data
-            system_collector = SystemDataCollector(executor)
-            system_data = system_collector.collect_all()
-            logger.info(f"  System: {system_data.get('hostname')}")
-
-            # Collect Oracle data
-            oracle_collector = OracleDataCollector(executor)
-            oracle_data = oracle_collector.collect_all()
-            logger.info(f"  Oracle: {oracle_data.get('db_info', [{}])[0].get('DB_UNIQUE_NAME', 'N/A')}")
-
-            # Transform and update CMDB
-            cmdb_doc = self.cmdb.transform_oracle_data(oracle_data, system_data, gateway_ref)
-            db_name = self.cmdb.upsert_database(cmdb_doc)
-            logger.info(f"  Updated CMDB: {db_name}")
-
-            conn.close()
-            return {"status": "success", "db_unique_name": db_name}
-
+            # Stats command
+            cmd = ["docker", "stats", container_name, "--no-stream", "--format", "{{.CPUPerc}}|{{.MemUsage}}|{{.MemPerc}}|{{.NetIO}}|{{.BlockIO}}"]
+            output = subprocess.check_output(cmd).decode('utf-8').strip()
+            
+            if not output: return None
+            
+            # Docker might return multiple lines if ambiguous, but usually one.
+            lines = output.split('\n')
+            parts = lines[0].split('|')
+            
+            return {
+                "cpu_usage": parts[0],      # e.g. "0.05%"
+                "ram_usage": parts[1],      # e.g. "50MiB / 1GiB"
+                "ram_percent": parts[2],    # e.g. "5.00%"
+                "net_io": parts[3],         # e.g. "1kB / 2kB"
+                "disk_io": parts[4],        # e.g. "0B / 0B"
+                "captured_at": datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+            }
         except Exception as e:
-            logger.error(f"  Error: {e}")
-            self.errors.append({"target": target_host, "error": str(e)})
-            return {"status": "error", "error": str(e)}
+            # Container might be down
+            return None
 
-    def collect_from_discovery_queue(self):
-        """Process targets from discovery queue"""
-        # TODO: Read from discovery_queue collection
-        pass
+    def run_once(self):
+        print("📊 Collector: Starting metrics gathering cycle...")
+        inventory = self.mongo.get_inventory()
+        if not inventory:
+            print("   Inventory empty. Skipping.")
+            return
 
-    def run(self, targets: List[str], gateway_ref: str = "dbgec2"):
-        """Run collection for multiple targets"""
-        logger.info(f"Starting collection for {len(targets)} targets...")
+        count = 0
+        for db in inventory:
+            # Identity
+            name = db.get('identity', {}).get('db_unique_name')
+            # Check if likely a container (we use name as container name in this setup)
+            # In Scout we set db_unique_name = Container Name.upper()
+            # Container Name needed lower usually?
+            container_name = db.get('identity', {}).get('db_name') # Added db_name in Scout earlier?
+            
+            # Fallback if db_name missing (old inventory items)
+            if not container_name:
+                container_name = name.lower() if name else None
+            
+            if container_name:
+                metrics = self.collect_docker_metrics(container_name)
+                if metrics:
+                    print(f"   📈 Metrics for {name}: CPU={metrics['cpu_usage']}, RAM={metrics['ram_usage']}")
+                    self.mongo.update_metrics(name, metrics)
+                    count += 1
+                else:
+                    print(f"   ⚠️ Could not collect metrics for {name} (Down?)")
         
-        results = []
-        for target in targets:
-            result = self.collect_oracle_database(target, gateway_ref)
-            results.append(result)
+        print(f"✅ Metric Sync Complete. Updated {count} assets.")
 
-        # Log agent run
-        success_count = sum(1 for r in results if r.get("status") == "success")
-        status = "SUCCESS" if not self.errors else "PARTIAL"
-        self.cmdb.log_agent_run("COLLECTOR", len(targets), status, self.errors)
-
-        logger.info(f"Collection complete: {success_count}/{len(targets)} successful")
-        return results
-
-
-def main():
-    parser = argparse.ArgumentParser(description="SADA Collector Agent")
-    parser.add_argument("--targets", nargs="+", help="Target hosts to collect from")
-    parser.add_argument("--gateway", default="dbgec2", help="Gateway reference")
-    parser.add_argument("--no-gateway", action="store_true", help="Direct connection (no gateway)")
-    
-    args = parser.parse_args()
-
-    if args.targets:
-        agent = CollectorAgent()
-        agent.run(args.targets, args.gateway)
-    else:
-        print("No targets specified. Use --targets to specify hosts.")
-        print("Example: python main.py --targets host1.local host2.local")
-
+    def run_continuous(self, interval=30):
+        print(f"🔄 Collector Agent running continuously (Interval: {interval}s)...")
+        while True:
+            self.run_once()
+            time.sleep(interval)
 
 if __name__ == "__main__":
-    main()
+    agent = CollectorAgent()
+    # Check if run once
+    if "--once" in sys.argv:
+        agent.run_once()
+    else:
+        agent.run_continuous()

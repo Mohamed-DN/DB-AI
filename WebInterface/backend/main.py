@@ -13,8 +13,15 @@ load_dotenv()
 # Import MongoProxy
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '../../')))
 from Orchestrator.src.mongo_proxy import MongoProxy
+from Orchestrator.config.llm_config import (
+    LLM_MODELS, DEFAULT_MODEL, FALLBACK_MODEL, OLLAMA_CONFIG,
+    get_model_info, get_recommended_models, get_all_models
+)
 
-app = FastAPI(title="Nexi AI CMDB", version="1.0.0")
+app = FastAPI(title="Nexi AI CMDB", version="2.0.0", description="AI-Powered Database Management")
+
+# Current LLM model state
+current_llm_model = DEFAULT_MODEL
 
 # CORS
 app.add_middleware(
@@ -36,6 +43,10 @@ except Exception as e:
 # Models
 class ChatRequest(BaseModel):
     message: str
+    model: str = None  # Optional: override current model
+
+class ModelSwitchRequest(BaseModel):
+    model: str
 
 @app.get("/")
 def read_root():
@@ -107,14 +118,18 @@ def chat_with_ai(request: ChatRequest):
     - If the user asks to send an email, output ONLY the JSON object.
     - If no action is needed, just reply as a helpful assistant in the user's language.
     """
-    
     try:
-        # Call Ollama
-        response = requests.post("http://localhost:11434/api/generate", json={
-            "model": "llama3:8b",
+        # Determine which model to use
+        global current_llm_model
+        model_to_use = request.model if request.model else current_llm_model
+        
+        # Call Ollama with selected model
+        response = requests.post(f"{OLLAMA_CONFIG['base_url']}/api/generate", json={
+            "model": model_to_use,
             "prompt": f"System: {system_prompt}\nUser: {prompt}\nAssistant:",
-            "stream": False
-        })
+            "stream": False,
+            "options": OLLAMA_CONFIG.get("options", {})
+        }, timeout=OLLAMA_CONFIG.get("timeout", 120))
         
         reply = response.json().get("response", "")
         
@@ -236,6 +251,23 @@ def connect_db(db_name: str, mode: str = "sql"):
     except Exception as e:
          raise HTTPException(status_code=500, detail=str(e))
 
+@app.delete("/api/inventory/{db_name}")
+def delete_database(db_name: str):
+    """Delete a database from inventory (does not stop container)"""
+    try:
+        if not mongo: raise Exception("MongoProxy not initialized")
+        
+        # Check if exists
+        exists = mongo.execute_eval(f"db.inventory_databases.findOne({{'identity.db_unique_name': '{db_name}'}})")
+        if not exists:
+            raise HTTPException(status_code=404, detail="Database not found")
+            
+        # Delete
+        mongo.execute_eval(f"db.inventory_databases.deleteOne({{'identity.db_unique_name': '{db_name}'}})")
+        return {"status": f"Database {db_name} removed from inventory"}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
 @app.get("/api/system/status")
 def get_system_status():
     """Get global system status (RUNNING/PAUSED)"""
@@ -249,14 +281,68 @@ def get_system_status():
 
 @app.post("/api/system/status")
 def set_system_status(item: dict):
-    """Set global system status (RUNNING/PAUSED)"""
+    """Set global system status (RUNNING/PAUSED) - Controls Docker Lab containers"""
+    import subprocess
+    
     status = item.get("status", "RUNNING").upper()
     if status not in ["RUNNING", "PAUSED"]:
         raise HTTPException(status_code=400, detail="Invalid status")
     
+    # Containers to control (exclude frontend services)
+    lab_containers = [
+        "nexi-mongodb",
+        "nexi-redis", 
+        "nexi-ollama",
+        "nexi-qdrant",
+        "nexi-gw-milano",
+        "nexi-gw-bratislava",
+        "nexi-pg-milano-prod",
+        "nexi-pg-milano-stg",
+        "nexi-pg-bratislava-prod",
+        "nexi-pg-bratislava-dev",
+        "nexi-gw-cairo",
+        "nexi-oracle-cairo-primary",
+        "nexi-oracle-cairo-replica"
+    ]
+    
+    results = []
+    action = "stop" if status == "PAUSED" else "start"
+    
     try:
-        mongo.execute_eval(f"db.system_config.updateOne({{key: 'global_status'}}, {{$set: {{value: '{status}'}}}}, {{upsert: true}})")
-        return {"status": status}
+        for container in lab_containers:
+            try:
+                result = subprocess.run(
+                    ["docker", action, container], 
+                    capture_output=True, 
+                    timeout=30,
+                    text=True
+                )
+                success = result.returncode == 0
+                results.append({
+                    "container": container,
+                    "action": action,
+                    "success": success,
+                    "message": result.stdout.strip() if success else result.stderr.strip()
+                })
+            except Exception as e:
+                results.append({
+                    "container": container,
+                    "action": action,
+                    "success": False,
+                    "message": str(e)
+                })
+        
+        # Update MongoDB status (if available)
+        try:
+            mongo.execute_eval(f"db.system_config.updateOne({{key: 'global_status'}}, {{$set: {{value: '{status}'}}}}, {{upsert: true}})")
+        except:
+            pass  # MongoDB might be stopped
+        
+        return {
+            "status": status, 
+            "containers_affected": len(lab_containers),
+            "results": results
+        }
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
@@ -304,6 +390,67 @@ def get_email_content(filename: str):
             return {"content": f.read()}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+
+# =============================================================================
+# LLM MANAGEMENT ENDPOINTS
+# =============================================================================
+
+@app.get("/api/llm/models")
+def get_llm_models():
+    """List all available LLM models"""
+    return {
+        "models": LLM_MODELS,
+        "current": current_llm_model,
+        "default": DEFAULT_MODEL,
+        "recommended": get_recommended_models()
+    }
+
+@app.get("/api/llm/current")
+def get_current_model():
+    """Get current LLM model in use"""
+    global current_llm_model
+    info = get_model_info(current_llm_model)
+    return {
+        "model": current_llm_model,
+        "info": info
+    }
+
+@app.post("/api/llm/switch")
+def switch_llm_model(req: ModelSwitchRequest):
+    """Switch to a different LLM model"""
+    global current_llm_model
+    if req.model not in LLM_MODELS:
+        raise HTTPException(status_code=400, detail=f"Model {req.model} not available. Use /api/llm/models to see options.")
+    
+    current_llm_model = req.model
+    info = get_model_info(req.model)
+    print(f"🔄 LLM Model switched to: {req.model}")
+    return {
+        "status": "switched",
+        "model": req.model,
+        "info": info
+    }
+
+@app.get("/api/gpu/status")
+def get_gpu_status():
+    """Get GPU status (VRAM usage)"""
+    try:
+        import subprocess
+        result = subprocess.run(
+            ["nvidia-smi", "--query-gpu=name,memory.used,memory.total,utilization.gpu", "--format=csv,noheader,nounits"],
+            capture_output=True, text=True, timeout=5
+        )
+        if result.returncode == 0:
+            parts = result.stdout.strip().split(", ")
+            return {
+                "gpu_name": parts[0] if len(parts) > 0 else "Unknown",
+                "memory_used_mb": int(parts[1]) if len(parts) > 1 else 0,
+                "memory_total_mb": int(parts[2]) if len(parts) > 2 else 0,
+                "utilization_pct": int(parts[3]) if len(parts) > 3 else 0
+            }
+        return {"error": "nvidia-smi failed"}
+    except Exception as e:
+        return {"error": str(e)}
 
 if __name__ == "__main__":
     import sys

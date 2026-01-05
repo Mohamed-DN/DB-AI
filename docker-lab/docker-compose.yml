@@ -188,6 +188,62 @@ services:
         ipv4_address: 172.20.2.11
     restart: unless-stopped
 
+  # ===========================================================================
+  # GATEWAY 3 - Cairo (North Africa Region)
+  # ===========================================================================
+
+  gateway-cairo:
+    build: ./gateway-ssh
+    container_name: nexi-gw-cairo
+    hostname: gw-cairo.nexi.lab
+    ports:
+      - "2223:22"
+    networks:
+      nexi-lab:
+        ipv4_address: 172.20.3.1
+    depends_on:
+      - oracle-cairo-primary
+      - oracle-cairo-replica
+    restart: unless-stopped
+
+  # Oracle Cairo - PRIMARY
+  oracle-cairo-primary:
+    image: gvenzl/oracle-free:23-slim
+    container_name: nexi-oracle-cairo-primary
+    hostname: oracle-cairo-primary.nexi.lab
+    ports:
+      - "1521:1521"
+    environment:
+      ORACLE_PASSWORD: nexi2024
+      ORACLE_DATABASE: JUPITER
+      APP_USER: nexi_app
+      APP_USER_PASSWORD: app2024
+    volumes:
+      - oracle_cairo_prim_data:/opt/oracle/oradata
+    networks:
+      nexi-lab:
+        ipv4_address: 172.20.3.10
+    restart: unless-stopped
+
+  # Oracle Cairo - REPLICA (GoldenGate Target)
+  oracle-cairo-replica:
+    image: gvenzl/oracle-free:23-slim
+    container_name: nexi-oracle-cairo-replica
+    hostname: oracle-cairo-replica.nexi.lab
+    ports:
+      - "1522:1521"
+    environment:
+      ORACLE_PASSWORD: nexi2024
+      ORACLE_DATABASE: JUPITER
+      APP_USER: nexi_app
+      APP_USER_PASSWORD: app2024
+    volumes:
+      - oracle_cairo_repl_data:/opt/oracle/oradata
+    networks:
+      nexi-lab:
+        ipv4_address: 172.20.3.11
+    restart: unless-stopped
+
 volumes:
   mongodb_data:
   ollama_data:
@@ -196,3 +252,5 @@ volumes:
   pg_milano_dev_data:
   pg_bratislava_prod_data:
   pg_bratislava_dev_data:
+  oracle_cairo_prim_data:
+  oracle_cairo_repl_data:

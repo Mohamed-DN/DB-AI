@@ -5,60 +5,59 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Nexi AI CMDB</title>
-    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="style.css?v=2.1">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
 
 <body>
 
-    <!-- HORIZONTAL NAVBAR -->
-    <nav class="navbar">
-        <div class="logo">
-            <span>//</span> NEXI AI
+    <!-- TOP HEADER - Minimal with Robot Logo -->
+    <header class="top-header">
+        <div class="logo-container">
+            <div class="robot-icon">
+                <i class="fa-solid fa-robot"></i>
+            </div>
+            <span class="brand-text">NEXI AI</span>
         </div>
-
-        <div class="nav-links">
-            <button class="nav-btn active" onclick="showSection('dashboard')">
-                <i class="fa-solid fa-chart-line"></i> Dashboard
-            </button>
-            <button class="nav-btn" onclick="showSection('inventory')">
-                <i class="fa-solid fa-server"></i> Inventory
-            </button>
-            <button class="nav-btn" onclick="showSection('alerts')">
-                <i class="fa-solid fa-triangle-exclamation"></i> Alerts
-            </button>
-            <button class="nav-btn" onclick="showSection('chat')">
-                <i class="fa-solid fa-robot"></i> AI Assistant
-            </button>
-            <button class="nav-btn" onclick="showSection('mailbox')">
-                <i class="fa-solid fa-envelope"></i> Mailbox
-            </button>
-            <button class="nav-btn" onclick="showSection('data')">
-                <i class="fa-solid fa-database"></i> Data/Graph
-            </button>
-            <button class="nav-btn" onclick="showSection('settings')">
-                <i class="fa-solid fa-gear"></i> Settings
-            </button>
-            <div style="width: 1px; height: 24px; background: #333; margin: 0 10px;"></div>
-            <button class="nav-btn" onclick="toggleSystem()" id="btn-system-toggle" style="color: var(--warning)">
-                <i class="fa-solid fa-pause"></i> Pause System
-            </button>
-        </div>
-
         <div class="status-indicator">
             <span class="dot"></span> SYSTEM ONLINE
         </div>
-    </nav>
+    </header>
 
-    <!-- YELLOW MARQUEE -->
-    <div class="marquee-container">
-        <div class="marquee-content">
-            NEXI AI CMDB SYSTEM OPTIMAL • AGENT SCOUT ONLINE • CRITICAL ALERT MONITORING ACTIVE • DATABASE INVENTORY
-            SYNCED • LLM ORCHESTRATOR READY •
-            NEXI AI CMDB SYSTEM OPTIMAL • AGENT SCOUT ONLINE • CRITICAL ALERT MONITORING ACTIVE • DATABASE INVENTORY
-            SYNCED • LLM ORCHESTRATOR READY •
+    <!-- NAVIGATION BAR (Green Gradient) -->
+    <nav class="nav-bar">
+        <div class="nav-buttons">
+            <button class="nav-pill active" onclick="showSection('dashboard')">
+                <i class="fa-solid fa-chart-line"></i> Dashboard
+            </button>
+            <button class="nav-pill" onclick="showSection('inventory')">
+                <i class="fa-solid fa-server"></i> Inventory
+            </button>
+            <button class="nav-pill" onclick="showSection('alerts')">
+                <i class="fa-solid fa-triangle-exclamation"></i> Alerts
+            </button>
+            <button class="nav-pill" onclick="showSection('chat')">
+                <i class="fa-solid fa-message"></i> AI Chat
+            </button>
+            <button class="nav-pill" onclick="showSection('mailbox')">
+                <i class="fa-solid fa-envelope"></i> Mailbox
+            </button>
+            <button class="nav-pill" onclick="showSection('data')">
+                <i class="fa-solid fa-diagram-project"></i> Explorer
+            </button>
+            <button class="nav-pill" onclick="showSection('settings')">
+                <i class="fa-solid fa-gear"></i> Settings
+            </button>
         </div>
-    </div>
+        <div class="nav-actions">
+            <button class="nav-pill mongo-btn" onclick="openMongoDB()">
+                <i class="fa-solid fa-database"></i> MongoDB
+            </button>
+            <button class="nav-pill system-toggle" onclick="toggleSystem()" id="btn-system-toggle">
+                <i class="fa-solid fa-pause"></i> Pause
+            </button>
+        </div>
+    </nav>
 
     <!-- MAIN CONTENT -->
     <main class="main-content">
@@ -136,6 +135,20 @@
         <!-- Chat -->
         <section id="chat" class="page-section" style="padding:0; height:100%;">
             <div class="chat-container">
+                <!-- Model Selector Header -->
+                <div class="chat-model-bar">
+                    <div class="model-info">
+                        <i class="fa-solid fa-microchip"></i>
+                        <span>Model:</span>
+                        <select id="model-selector" onchange="switchModel()">
+                            <option value="qwen2.5:14b">Qwen 2.5 14B (Recommended)</option>
+                            <option value="llama3:8b" selected>Llama 3 8B (Fast)</option>
+                            <option value="codellama:13b">CodeLlama 13B (SQL)</option>
+                            <option value="deepseek-r1:14b">DeepSeek R1 14B (Reasoning)</option>
+                        </select>
+                    </div>
+                    <div class="gpu-status" id="gpu-status">GPU: --</div>
+                </div>
                 <div class="chat-history" id="chat-history">
                     <div class="message ai">
                         <i class="fa-solid fa-robot"></i>
@@ -231,7 +244,38 @@
 
     </main>
 
-    <script src="app.js"></script>
+    <!-- CUSTOM MODAL -->
+    <div id="custom-modal-overlay" class="modal-overlay">
+        <div class="modal-box">
+            <div class="modal-icon">
+                <i class="fa-solid fa-robot"></i>
+            </div>
+            <h3 id="modal-title">Confirm Action</h3>
+            <p id="modal-message">Are you sure you want to proceed?</p>
+            <div class="modal-actions">
+                <button id="modal-btn-cancel" class="btn btn-ghost">Cancel</button>
+                <button id="modal-btn-confirm" class="btn btn-primary">Confirm</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- PROCESS LOG MODAL -->
+    <div id="process-log-overlay" class="modal-overlay" style="display:none;">
+        <div class="modal-box process-log-box">
+            <div class="process-log-header">
+                <i class="fa-solid fa-terminal"></i>
+                <span id="process-log-title">Docker Operations</span>
+            </div>
+            <div id="process-log-content" class="process-log-content">
+                <!-- Logs will be inserted here -->
+            </div>
+            <div class="process-log-footer">
+                <button id="process-log-close" class="btn btn-primary" onclick="closeProcessLog()">Close</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="app.js?v=2.3"></script>
 </body>
 
 </html>
