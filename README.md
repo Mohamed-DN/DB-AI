@@ -49,8 +49,8 @@ Sistema enterprise per la gestione intelligente di database Oracle, PostgreSQL, 
 
 ```
 ┌─────────────────────────────────────────────────────────────────────────┐
-│                         FRONTEND (localhost:3000)                        │
-│                    Dashboard React/Vanilla JS                            │
+│                         FRONTEND (localhost:3002)                        │
+│                    Dashboard React Modern UI                             │
 ├─────────────────────────────────────────────────────────────────────────┤
 │                         BACKEND (localhost:8000)                         │
 │                         FastAPI REST API                                 │
@@ -77,7 +77,7 @@ Sistema enterprise per la gestione intelligente di database Oracle, PostgreSQL, 
 │  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐  ┌─────────────┐ │
 │  │   MongoDB    │  │    Qdrant    │  │    Redis     │  │   Ollama    │ │
 │  │   (CMDB)     │  │  (Vectors)   │  │   (Queue)    │  │   (LLM)     │ │
-│  │ :27017       │  │   :6333      │  │   :6379      │  │  :11434     │ │
+│  │   :27017     │  │   :6333      │  │   :6379      │  │  :11434     │ │
 │  └──────────────┘  └──────────────┘  └──────────────┘  └─────────────┘ │
 └─────────────────────────────────────────────────────────────────────────┘
 ```
@@ -92,14 +92,14 @@ Sistema enterprise per la gestione intelligente di database Oracle, PostgreSQL, 
 |----------|-----------------|-------|
 | **Docker Desktop** | 4.0+ | Containers per servizi |
 | **Python** | 3.10+ | Agenti e backend |
-| **Node.js** | 18+ | Frontend (opzionale per dev) |
+| **Node.js** | 18+ | Frontend React |
 | **Git** | 2.30+ | Version control |
 
 ### Porte Richieste
 
 | Porta | Servizio |
 |-------|----------|
-| 3000 | Frontend Dashboard |
+| 3002 | Frontend Dashboard (React) |
 | 8000 | Backend API |
 | 27017 | MongoDB |
 | 8081 | Mongo Express |
@@ -113,7 +113,7 @@ Sistema enterprise per la gestione intelligente di database Oracle, PostgreSQL, 
 |------------|--------|-------------|
 | RAM | 16 GB | 32 GB |
 | CPU | 4 cores | 8+ cores |
-| GPU | - | NVIDIA con 8GB+ VRAM (per Ollama) |
+| GPU | - | NVIDIA 8GB+ VRAM (per Ollama) |
 | Disco | 50 GB | 100+ GB SSD |
 
 ---
@@ -150,29 +150,23 @@ pip install fastapi uvicorn pymongo requests python-dotenv pydantic
 ### Step 4: Scaricare Modelli LLM
 
 ```powershell
-.\pull_models.ps1
-```
-
-Oppure manualmente:
-```powershell
-docker exec nexi-ollama ollama pull llama3:8b
-docker exec nexi-ollama ollama pull qwen2.5:14b
+.\scripts\pull_models.ps1
 ```
 
 ### Step 5: Avviare il Sistema
 
 ```powershell
-.\WebInterface\run_dashboard.ps1
+.\scripts\start-all.ps1
 ```
 
 Questo avvia:
 - ✅ Backend FastAPI (porta 8000)
-- ✅ Frontend Dashboard (porta 3000)
-- ✅ Agenti Scout e CriticalAlert
+- ✅ Frontend React (porta 3002)
+- ✅ Agenti di Monitoraggio
 
 ### Step 6: Aprire la Dashboard
 
-Vai a: **http://localhost:3000**
+Vai a: **http://localhost:3002**
 
 ---
 
@@ -181,49 +175,33 @@ Vai a: **http://localhost:3000**
 ```
 Nexi_DB_AI/
 ├── Agents/                      # 🤖 Agenti di monitoraggio
-│   ├── Scout/                   # Auto-discovery database
-│   │   └── main.py             
-│   ├── CriticalAlert/           # Alerting via email
-│   │   └── critical_alert.py   
-│   ├── Watcher/                 # Log streaming e forensics
-│   │   ├── main.py              # Streaming log container
-│   │   └── ai_analyzer.py       # Analisi AI degli errori
-│   ├── CheckMK_Bridge/          # Importa metriche esterne
-│   │   └── main.py             
-│   └── Collector/               # Metriche performance
-│       └── main.py             
+│   ├── Scout/                   # Auto-discovery
+│   ├── CriticalAlert/           # Alerting
+│   ├── Watcher/                 # Log streaming
+│   ├── CheckMK_Bridge/          # Sync metriche
+│   └── Collector/               # Performance
 │
-├── Orchestrator/                # 🧠 Core AI
-│   ├── src/
-│   │   └── mongo_proxy.py       # Interfaccia MongoDB
-│   ├── llm/
-│   │   └── ollama_client.py     # Client Ollama LLM
-│   ├── vector_db/
-│   │   └── qdrant_client.py     # Client Qdrant
-│   ├── rag/
-│   │   └── rag_pipeline.py      # RAG per diagnosi
-│   └── config/
-│       └── llm_config.py        # Configurazione modelli
+├── Orchestrator/                # 🧠 Core AI (RAG, LLM)
+│   ├── src/                     # Mongo Proxy
+│   ├── llm/                     # Ollama Client
+│   ├── vector_db/               # Qdrant Client
+│   └── rag/                     # RAG Pipeline
 │
-├── WebInterface/                # 🌐 Dashboard
-│   ├── frontend/
-│   │   ├── index.html           # UI principale
-│   │   ├── app.js               # Logica frontend
-│   │   └── style.css            # Stili
-│   ├── backend/
-│   │   └── main.py              # API FastAPI
-│   └── run_dashboard.ps1        # Script avvio
+├── WebInterface/                # 🌐 Full Stack Dashboard
+│   ├── frontend-react/          # ✨ React UI (Porta 3002)
+│   │   ├── src/                 # Componenti, Hooks, Pages
+│   │   └── package.json         # Dipendenze Node
+│   └── backend/                 # 🚀 FastAPI (Porta 8000)
+│       └── main.py              # Main Entrypoint
+│
+├── scripts/                     # 🛠️ Script di Utilità
+│   ├── start-all.ps1            # Avvio completo
+│   ├── stop-all.ps1             # Stop servizi
+│   └── ...                      # Altri tool
 │
 ├── MongoDB/                     # 📊 Schema CMDB
-│   ├── schemas/                 # Definizioni JSON Schema
-│   └── scripts/                 # Script di utilità
-│
 ├── docker-lab/                  # 🐳 Ambiente Docker
-│   └── docker-compose.yaml      # Tutti i servizi
-│
-├── emails/                      # 📧 Archivio email inviate
-│
-└── docs/                        # 📚 Documentazione aggiuntiva
+└── docs/                        # 📚 Documentazione
 ```
 
 ---

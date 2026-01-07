@@ -1,10 +1,9 @@
 import { useState, useRef, useEffect } from 'react';
-import { Send, Bot, User, Loader2 } from 'lucide-react';
-import { useMutation } from '@tanstack/react-query';
+import { Send, Bot, User, Cpu } from 'lucide-react';
+import { useMutation, useQuery } from '@tanstack/react-query';
 import * as api from '../../services/api';
 
 interface Message {
-    id: string;
     role: 'user' | 'assistant';
     content: string;
     timestamp: Date;
@@ -13,48 +12,58 @@ interface Message {
 export default function AIChat() {
     const [messages, setMessages] = useState<Message[]>([
         {
-            id: '1',
             role: 'assistant',
-            content: 'Ciao! Sono l\'assistente AI di Nexi CMDB. Posso aiutarti a:\n\n• Cercare database per nome o stato\n• Analizzare metriche e performance\n• Generare report sullo stato dei sistemi\n• Rispondere a domande sui tuoi database\n\nCosa vuoi sapere?',
+            content: 'Ciao! Sono l\'assistente AI di Nexi CMDB. Posso aiutarti con informazioni sui database, alert di sistema, o qualsiasi domanda sull\'infrastruttura.',
             timestamp: new Date(),
         },
     ]);
     const [input, setInput] = useState('');
     const messagesEndRef = useRef<HTMLDivElement>(null);
 
-    const chatMutation = useMutation({
+    const { data: currentModel } = useQuery({
+        queryKey: ['currentModel'],
+        queryFn: api.getCurrentModel,
+    });
+
+    const { data: gpuStatus } = useQuery({
+        queryKey: ['gpuStatus'],
+        queryFn: api.getGpuStatus,
+        refetchInterval: 5000,
+    });
+
+    const sendMessageMutation = useMutation({
         mutationFn: api.sendChatMessage,
-        onSuccess: (data) => {
-            const assistantMessage: Message = {
-                id: Date.now().toString(),
-                role: 'assistant',
-                content: data.response,
-                timestamp: new Date(),
-            };
-            setMessages((prev) => [...prev, assistantMessage]);
+        onSuccess: (response) => {
+            setMessages((prev) => [
+                ...prev,
+                {
+                    role: 'assistant',
+                    content: typeof response === 'string' ? response : JSON.stringify(response),
+                    timestamp: new Date(),
+                },
+            ]);
         },
-        onError: () => {
-            const errorMessage: Message = {
-                id: Date.now().toString(),
-                role: 'assistant',
-                content: 'Errore nella comunicazione con il server AI. Verifica che LangChain sia attivo.',
-                timestamp: new Date(),
-            };
-            setMessages((prev) => [...prev, errorMessage]);
+        onError: (error) => {
+            setMessages((prev) => [
+                ...prev,
+                {
+                    role: 'assistant',
+                    content: `Errore: ${error}`,
+                    timestamp: new Date(),
+                },
+            ]);
         },
     });
 
     const handleSend = () => {
         if (!input.trim()) return;
 
-        const userMessage: Message = {
-            id: Date.now().toString(),
-            role: 'user',
-            content: input,
-            timestamp: new Date(),
-        };
-        setMessages((prev) => [...prev, userMessage]);
-        chatMutation.mutate(input);
+        setMessages((prev) => [
+            ...prev,
+            { role: 'user', content: input, timestamp: new Date() },
+        ]);
+
+        sendMessageMutation.mutate(input);
         setInput('');
     };
 
@@ -69,74 +78,93 @@ export default function AIChat() {
         messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
     }, [messages]);
 
+    const gpuInfo = gpuStatus && !gpuStatus.error
+        ? `GPU: ${(gpuStatus.memory_used_mb / 1024).toFixed(1)}/${(gpuStatus.memory_total_mb / 1024).toFixed(1)}GB`
+        : 'GPU: N/A';
+
     return (
-        <div className="glass h-[600px] flex flex-col">
-            <div className="p-4 border-b border-gray-700/50 flex items-center gap-3">
-                <div className="w-10 h-10 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center">
-                    <Bot className="w-6 h-6 text-white" />
+        <div className="glass flex flex-col h-[600px]">
+            {/* Model Bar */}
+            <div className="flex items-center justify-between p-4 border-b border-gray-700">
+                <div className="flex items-center gap-3">
+                    <Cpu className="w-5 h-5 text-purple-400" />
+                    <span className="text-gray-400">Model:</span>
+                    <select
+                        className="bg-gray-800 border border-gray-600 rounded px-3 py-1 text-sm"
+                        defaultValue={currentModel?.model || 'deepseek-r1:14b'}
+                    >
+                        <option value="qwen3:30b-a3b">Qwen3 30B-A3B (Best)</option>
+                        <option value="mistral-small3.1:24b">Mistral-Small 24B</option>
+                        <option value="deepseek-r1:14b">DeepSeek R1 14B (Coding)</option>
+                        <option value="qwen3:14b">Qwen3 14B</option>
+                        <option value="llama3.2:8b">Llama 3.2 8B (Fast)</option>
+                    </select>
                 </div>
-                <div>
-                    <h3 className="font-semibold">Nexi AI Assistant</h3>
-                    <p className="text-xs text-gray-400">Powered by LangChain + Ollama</p>
-                </div>
+                <span className="text-sm text-gray-500">{gpuInfo}</span>
             </div>
 
+            {/* Messages */}
             <div className="flex-1 overflow-y-auto p-4 space-y-4">
-                {messages.map((message) => (
+                {messages.map((msg, index) => (
                     <div
-                        key={message.id}
-                        className={`flex gap-3 ${message.role === 'user' ? 'justify-end' : 'justify-start'}`}
+                        key={index}
+                        className={`flex gap-3 ${msg.role === 'user' ? 'justify-end' : ''}`}
                     >
-                        {message.role === 'assistant' && (
-                            <div className="w-8 h-8 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center flex-shrink-0">
-                                <Bot className="w-4 h-4 text-white" />
+                        {msg.role === 'assistant' && (
+                            <div className="w-8 h-8 rounded-full bg-purple-600/30 flex items-center justify-center">
+                                <Bot className="w-4 h-4 text-purple-400" />
                             </div>
                         )}
                         <div
-                            className={`max-w-[80%] rounded-2xl px-4 py-3 ${message.role === 'user'
-                                    ? 'bg-[--nexi-primary] text-white'
-                                    : 'bg-gray-800 text-gray-100'
+                            className={`max-w-[70%] p-3 rounded-lg ${msg.role === 'user'
+                                    ? 'bg-blue-600/30 text-white'
+                                    : 'bg-gray-700/50 text-gray-200'
                                 }`}
                         >
-                            <p className="whitespace-pre-wrap">{message.content}</p>
-                            <p className="text-xs opacity-50 mt-1">
-                                {message.timestamp.toLocaleTimeString()}
-                            </p>
+                            <p className="whitespace-pre-wrap">{msg.content}</p>
+                            <span className="text-xs text-gray-500 mt-1 block">
+                                {msg.timestamp.toLocaleTimeString()}
+                            </span>
                         </div>
-                        {message.role === 'user' && (
-                            <div className="w-8 h-8 rounded-full bg-gray-700 flex items-center justify-center flex-shrink-0">
-                                <User className="w-4 h-4 text-gray-300" />
+                        {msg.role === 'user' && (
+                            <div className="w-8 h-8 rounded-full bg-blue-600/30 flex items-center justify-center">
+                                <User className="w-4 h-4 text-blue-400" />
                             </div>
                         )}
                     </div>
                 ))}
-                {chatMutation.isPending && (
+                {sendMessageMutation.isPending && (
                     <div className="flex gap-3">
-                        <div className="w-8 h-8 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center">
-                            <Bot className="w-4 h-4 text-white" />
+                        <div className="w-8 h-8 rounded-full bg-purple-600/30 flex items-center justify-center">
+                            <Bot className="w-4 h-4 text-purple-400" />
                         </div>
-                        <div className="bg-gray-800 rounded-2xl px-4 py-3">
-                            <Loader2 className="w-5 h-5 animate-spin text-gray-400" />
+                        <div className="bg-gray-700/50 p-3 rounded-lg">
+                            <div className="flex gap-1">
+                                <span className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" />
+                                <span className="w-2 h-2 bg-gray-400 rounded-full animate-bounce delay-100" />
+                                <span className="w-2 h-2 bg-gray-400 rounded-full animate-bounce delay-200" />
+                            </div>
                         </div>
                     </div>
                 )}
                 <div ref={messagesEndRef} />
             </div>
 
-            <div className="p-4 border-t border-gray-700/50">
+            {/* Input */}
+            <div className="p-4 border-t border-gray-700">
                 <div className="flex gap-2">
                     <input
                         type="text"
                         value={input}
                         onChange={(e) => setInput(e.target.value)}
                         onKeyPress={handleKeyPress}
-                        placeholder="Chiedi qualcosa sui tuoi database..."
-                        className="flex-1 bg-gray-800 border border-gray-700 rounded-xl px-4 py-3 focus:outline-none focus:border-[--nexi-primary] transition-colors"
+                        placeholder="Chiedi informazioni sui database, alert, o stato del sistema..."
+                        className="flex-1 bg-gray-800 border border-gray-600 rounded-lg px-4 py-3 focus:outline-none focus:border-purple-500"
                     />
                     <button
                         onClick={handleSend}
-                        disabled={chatMutation.isPending || !input.trim()}
-                        className="btn-primary disabled:opacity-50 disabled:cursor-not-allowed"
+                        disabled={sendMessageMutation.isPending || !input.trim()}
+                        className="btn-primary px-4"
                     >
                         <Send className="w-5 h-5" />
                     </button>

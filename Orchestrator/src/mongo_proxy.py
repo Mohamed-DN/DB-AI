@@ -6,8 +6,8 @@ class MongoProxy:
     """Proxy to interact with MongoDB via Docker CLI when PyMongo fails"""
     
     def __init__(self):
-        self.container = "nexi-mongodb"
-        self.auth_args = ["--username", "admin", "--password", "nexi2024", "--authenticationDatabase", "admin"]
+        self.container = "nexi-cmdb-mongo"
+        self.auth_args = ["--username", "admin", "--password", "admin123", "--authenticationDatabase", "admin"]
     
     def execute_eval(self, eval_js):
         cmd = [

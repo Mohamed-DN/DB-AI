@@ -1,13 +1,13 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import * as api from '../services/api';
-import type { Database, DashboardStats } from '../types/database';
+import type { Database } from '../types/database';
 
 // Dashboard stats hook
 export function useDashboardStats() {
-    return useQuery<DashboardStats>({
+    return useQuery({
         queryKey: ['dashboardStats'],
         queryFn: api.getDashboardStats,
-        refetchInterval: 30000, // Refresh every 30 seconds
+        refetchInterval: 30000,
     });
 }
 
@@ -16,6 +16,15 @@ export function useDatabases() {
     return useQuery<Database[]>({
         queryKey: ['databases'],
         queryFn: api.getDatabases,
+        refetchInterval: 30000,
+    });
+}
+
+// Alerts hook
+export function useAlerts() {
+    return useQuery({
+        queryKey: ['alerts'],
+        queryFn: api.getAlerts,
         refetchInterval: 30000,
     });
 }
@@ -29,18 +38,6 @@ export function useDeleteDatabase() {
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['databases'] });
             queryClient.invalidateQueries({ queryKey: ['dashboardStats'] });
-        },
-    });
-}
-
-// Refresh database mutation
-export function useRefreshDatabase() {
-    const queryClient = useQueryClient();
-
-    return useMutation({
-        mutationFn: api.refreshDatabase,
-        onSuccess: () => {
-            queryClient.invalidateQueries({ queryKey: ['databases'] });
         },
     });
 }
@@ -63,5 +60,59 @@ export function useAutoDiscovery() {
             queryClient.invalidateQueries({ queryKey: ['databases'] });
             queryClient.invalidateQueries({ queryKey: ['dashboardStats'] });
         },
+    });
+}
+
+// System status
+export function useSystemStatus() {
+    return useQuery({
+        queryKey: ['systemStatus'],
+        queryFn: api.getSystemStatus,
+        refetchInterval: 10000,
+    });
+}
+
+export function useSetSystemStatus() {
+    const queryClient = useQueryClient();
+
+    return useMutation({
+        mutationFn: api.setSystemStatus,
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ['systemStatus'] });
+        },
+    });
+}
+
+// Emails
+export function useEmails() {
+    return useQuery({
+        queryKey: ['emails'],
+        queryFn: api.getEmails,
+    });
+}
+
+// Agents
+export function useAgentsStatus() {
+    return useQuery({
+        queryKey: ['agentsStatus'],
+        queryFn: api.getAgentsStatus,
+        refetchInterval: 10000,
+    });
+}
+
+// LLM
+export function useCurrentModel() {
+    return useQuery({
+        queryKey: ['currentModel'],
+        queryFn: api.getCurrentModel,
+    });
+}
+
+// GPU
+export function useGpuStatus() {
+    return useQuery({
+        queryKey: ['gpuStatus'],
+        queryFn: api.getGpuStatus,
+        refetchInterval: 5000,
     });
 }

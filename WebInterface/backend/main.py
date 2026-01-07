@@ -84,6 +84,93 @@ def get_alerts():
         print(f"Error fetching alerts: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
+# --- HELPER FUNCTIONS ---
+def connect_db(db_name, mode="sql"):
+    """Validates DB and opens terminal"""
+    try:
+        # 1. Get DB info
+        db_info = mongo.execute_eval(f"db.inventory_databases.findOne({{'identity.db_unique_name': '{db_name}'}})")
+        if not db_info:
+            return False, f"Database {db_name} not found"
+            
+        container = (
+            db_info.get('connection', {}).get('container') or 
+            db_info.get('identity', {}).get('db_name') or 
+            db_info.get('identity', {}).get('host')
+        )
+        if not container:
+             return False, "DEBUG_UNIQUE_ERROR: No container/host found for database"
+             
+        engine = db_info.get('identity', {}).get('engine', 'POSTGRES').upper()
+        
+        # 2. Open terminal
+        if os.name == 'nt': # Windows
+            if mode == 'bash':
+                cmd = f'start cmd /k "docker exec -it {container} bash"'
+            else: # sql
+                if engine == 'ORACLE':
+                    cmd = f'start cmd /k "docker exec -it {container} sqlplus sys/nexi2024 as sysdba"'
+                elif engine == 'POSTGRES':
+                    cmd = f'start cmd /k "docker exec -it {container} psql -U postgres"'
+                else:
+                    cmd = f'start cmd /k "docker exec -it {container} bash"'
+            
+            subprocess.Popen(cmd, shell=True)
+            return True, "Terminal launched"
+        return False, "Not running on Windows Server"
+    except Exception as e:
+        print(f"Error connecting to DB: {e}")
+        return False, str(e)
+
+# --- MISSING ENDPOINTS ---
+
+@app.get("/api/raw/{collection_name}")
+def get_raw_collection(collection_name: str):
+    """Get raw collection data for Explorer"""
+    try:
+        if not mongo: raise Exception("MongoProxy not initialized")
+        allowed = ["inventory_databases", "monitoring_alerts", "business_services", "agent_config", "emails"]
+        if collection_name not in allowed:
+             raise HTTPException(status_code=400, detail="Invalid collection")
+        
+        data = mongo.execute_eval(f"db.{collection_name}.find().limit(100).toArray()")
+        for item in data:
+            if "_id" in item:
+                item["_id"] = str(item["_id"])
+        return data
+    except Exception as e:
+        print(f"Error fetching raw collection: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+# In-memory agent state
+AGENTS_STATE = {
+    "scout": {"running": False},
+    "collector": {"running": True},
+    "watcher": {"running": True},
+    "criticalalert": {"running": True},
+    "forensicanalyzer": {"running": False},
+    "checkmk_bridge": {"running": False}
+}
+
+@app.get("/api/agents/status")
+def get_agents_status():
+    """Get status of background agents"""
+    return AGENTS_STATE
+
+@app.post("/api/agents/{agent_name}/start")
+def start_agent_endpoint(agent_name: str):
+    agent_key = agent_name.lower()
+    if agent_key in AGENTS_STATE:
+        AGENTS_STATE[agent_key]["running"] = True
+    return {"status": "started", "agent": agent_name}
+
+@app.post("/api/action/connect/{db_name}")
+def connect_database_endpoint(db_name: str, mode: str = "sql"):
+    success, msg = connect_db(db_name, mode)
+    if not success:
+        raise HTTPException(status_code=500, detail=f"Failed to connect: {msg}")
+    return {"status": "connected", "message": msg}
+
 @app.post("/api/chat")
 def chat_with_ai(request: ChatRequest):
     """Interact with Local Ollama - Multi-DB Expert with Action Capabilities"""
@@ -357,7 +444,11 @@ def connect_db(db_name: str, mode: str = "sql"):
         if not db_info:
             raise HTTPException(status_code=404, detail="Database not found")
             
-        container = db_info.get('identity', {}).get('db_name')
+        container = (
+            db_info.get('connection', {}).get('container') or 
+            db_info.get('identity', {}).get('db_name') or 
+            db_info.get('identity', {}).get('host')
+        )
         if not container:
              raise HTTPException(status_code=404, detail="Container name not found for database")
             
