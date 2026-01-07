@@ -18,6 +18,7 @@ class MongoProxy:
         try:
             # print(f"Executing: {eval_js}")
             result = subprocess.check_output(cmd, stderr=subprocess.PIPE).decode('utf-8')
+            print(f"MongoProxy Result: {result}")
             return json.loads(result)
         except subprocess.CalledProcessError as e:
             print(f"MongoProxy Error: {e.stderr.decode('utf-8')}")
@@ -61,3 +62,12 @@ class MongoProxy:
         m_json = json.dumps(metrics)
         js = f"db.inventory_databases.updateOne({{ 'identity.db_unique_name': '{db_name}' }}, {{ $set: {{ 'state.metrics': {m_json}, 'state.last_metric_update': new Date() }} }})"
         return self.execute_eval(js)
+
+    def upsert_database(self, db_doc):
+        # Handle datetime serialization
+        doc_json = json.dumps(db_doc, default=str)
+        name = db_doc.get('identity', {}).get('db_unique_name')
+        if not name: return None
+        
+        js_cmd = f"db.inventory_databases.updateOne({{ 'identity.db_unique_name': '{name}' }}, {{ $set: {doc_json} }}, {{ upsert: true }})"
+        return self.execute_eval(js_cmd)

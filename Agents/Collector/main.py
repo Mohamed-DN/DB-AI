@@ -1,6 +1,7 @@
 """
-SADA Collector Agent - Docker Edition
+SADA Collector Agent - Docker & VirtualBox Edition
 Collects deep metrics (CPU, RAM, IO) from Docker containers
+AND supports Remote Oracle Databases (VirtualBox/External)
 """
 import sys
 import os
@@ -8,17 +9,43 @@ import time
 import json
 import subprocess
 from datetime import datetime
+from dotenv import load_dotenv
 
 # Force UTF-8 for Windows Console
 sys.stdout.reconfigure(encoding='utf-8')
 
-# Link to Shared Modules
+# Load MongoDB Environment Variables
+env_path = os.path.abspath(os.path.join(os.path.dirname(__file__), '../../MongoDB/.env'))
+load_dotenv(env_path)
+print(f"DEBUG: MONGO_URI Loaded: {os.getenv('MONGO_URI')}")
+
+# Add source path
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), 'src')))
+
+# Link to Shared Modules (ROOT)
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '../../')))
 from Orchestrator.src.mongo_proxy import MongoProxy
+
+# Local Imports
+try:
+    from src.extractors import RemoteOracleExtractor
+    from src.cmdb_updater import CMDBUpdater
+except ImportError:
+    # Handle running from root or subfolder
+    sys.path.append(os.path.dirname(__file__))
+    from src.extractors import RemoteOracleExtractor
+    from src.cmdb_updater import CMDBUpdater
 
 class CollectorAgent:
     def __init__(self):
         self.mongo = MongoProxy()
+        # Initialize CMDB Updater (uses direct PyMongo)
+        try:
+            self.cmdb_updater = CMDBUpdater(self.mongo)
+            print("✅ CMDB Updater initialized")
+        except Exception as e:
+            print(f"⚠️ CMDB Updater failed (will skip deep updates): {e}")
+            self.cmdb_updater = None
         
     def collect_docker_metrics(self, container_name):
         """Collect real-time metrics from Docker"""
@@ -45,6 +72,64 @@ class CollectorAgent:
             # Container might be down
             return None
 
+    def collect_remote_oracle(self, db_doc):
+        """Collect deep metrics from Remote Oracle"""
+        if not self.cmdb_updater: return
+        
+        identity = db_doc.get('identity', {})
+        conn = db_doc.get('connection', {})
+        
+        host = conn.get('host')
+        port = conn.get('port', 1521)
+        service = conn.get('service_name') or identity.get('db_unique_name')
+        user = conn.get('user')
+        password = conn.get('password')
+        
+        if not (host and user and password):
+            print(f"   ⚠️ Missing connection details for {identity.get('db_unique_name')}")
+            return
+
+        print(f"   🔌 Connecting to Remote Oracle: {host}:{port}/{service}...")
+        try:
+            extractor = RemoteOracleExtractor(host, port, service, user, password)
+            data = extractor.collect_all()
+            
+            if data:
+                # Transform and Upsert
+                # Mock system data as we don't have SSH to VBox host yet
+                system_data = {
+                    "hostname": host,
+                    "os": {"name": "VirtualBox/Remote"},
+                    "cpu": {"cores": "Unknown"},
+                    "memory": {"total_gb": 0}
+                }
+                
+                cmdb_doc = self.cmdb_updater.transform_oracle_data(data, system_data, "REMOTE_VBOX")
+                
+                # Force preserve the original inventory name (NEXI-ORACLE-RAC1/2)
+                original_name = identity.get('db_unique_name')
+                if original_name:
+                    cmdb_doc['identity']['db_unique_name'] = original_name
+
+                # Preserve original connection info as transform might overwrite identity
+                if 'connection' not in cmdb_doc:
+                    cmdb_doc['connection'] = conn
+                
+                # Ensure status is UP
+                if 'state' not in cmdb_doc: cmdb_doc['state'] = {}
+                cmdb_doc['state']['status'] = 'UP'
+                
+                self.cmdb_updater.upsert_database(cmdb_doc)
+                print(f"   ✅ Deep Oracle Data updated for {identity.get('db_unique_name')}")
+                return True
+            else:
+                print(f"   ⚠️ No data collected from {host}")
+                return False
+                
+        except Exception as e:
+            print(f"   ❌ Remote Collection Error: {e}")
+            return False
+
     def run_once(self):
         print("📊 Collector: Starting metrics gathering cycle...")
         inventory = self.mongo.get_inventory()
@@ -54,12 +139,19 @@ class CollectorAgent:
 
         count = 0
         for db in inventory:
-            # Identity
-            name = db.get('identity', {}).get('db_unique_name')
-            # Check if likely a container (we use name as container name in this setup)
-            # In Scout we set db_unique_name = Container Name.upper()
-            # Container Name needed lower usually?
-            container_name = db.get('identity', {}).get('db_name') # Added db_name in Scout earlier?
+            identity = db.get('identity', {})
+            name = identity.get('db_unique_name')
+            engine = identity.get('engine', 'UNKNOWN')
+            is_remote = db.get('connection', {}).get('type') == 'REMOTE' or 'vbox' in name.lower()
+            
+            # 1. Handle Remote Oracle
+            if engine == 'ORACLE' and is_remote:
+                if self.collect_remote_oracle(db):
+                    count += 1
+                continue
+
+            # 2. Handle Docker Containers
+            container_name = identity.get('db_name')
             
             # Fallback if db_name missing (old inventory items)
             if not container_name:
@@ -72,7 +164,9 @@ class CollectorAgent:
                     self.mongo.update_metrics(name, metrics)
                     count += 1
                 else:
-                    print(f"   ⚠️ Could not collect metrics for {name} (Down?)")
+                    # Only warn if NOT remote (don't expect docker stats for remote)
+                    if not is_remote:
+                        print(f"   ⚠️ Could not collect metrics for {name} (Down?)")
         
         print(f"✅ Metric Sync Complete. Updated {count} assets.")
 

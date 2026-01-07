@@ -61,37 +61,28 @@ class ScoutAgent:
                     pass 
                 
                 if engine and "gateway" not in name:
-                    # CHECK GATEWAY DEPENDENCY
+                    # CHECK GATEWAY DEPENDENCY (mandatory)
                     region_found = False
-                    for region, gw_name in gateway_map.items():
-                        if region in name.upper():
-                            region_found = True
-                            if gw_name not in active_gateways:
-                                print(f"🚫 BLOCKED: {name} is unreachable (Gateway {gw_name} is DOWN)")
-                                continue # Skip adding this DB -> becomes MISSING
-                    
-                    # If not belonging to a known region, assume accessible (or strict mode?)
-                    # For now, allow others (like mongo) that don't match specific region keywords if needed, 
-                    # but our focus is the main regional DBs.
-                    
-                    # Check if blocked by the continue above? No, continue jumps to next loop iteration.
-                    # We need to restructure slightly to handle the "continue" cleanly.
-                    
+                    gateway_ref = None
                     is_reachable = True
                     for region, gw_name in gateway_map.items():
                         if region in name.upper():
                             region_found = True
+                            gateway_ref = gw_name
                             if gw_name not in active_gateways:
                                 is_reachable = False
-                                print(f"🛑 BLOCKED: {name} (Gateway {gw_name} is MISSING from {active_gateways})")
+                                print(f"BLOCKED: {name} (Gateway {gw_name} is MISSING from {active_gateways})")
                                 break
                             else:
-                                print(f"✅ ALLOWED: {name} (Gateway {gw_name} is UP)")
-                    
-                    if not is_reachable:
-                        print(f"⏩ SKIPPING {name} due to Gateway Failure")
+                                print(f"ALLOWED: {name} (Gateway {gw_name} is UP)")
+
+                    if not region_found:
+                        print(f"BLOCKED: {name} missing gateway mapping (mandatory)")
                         continue
 
+                    if not is_reachable:
+                        print(f"SKIPPING: {name} due to Gateway Failure")
+                        continue
                     # Extract external port
                     port = 5432 # Default
                     if "->" in ports_str:
@@ -107,7 +98,8 @@ class ScoutAgent:
                             "db_name": name,
                             "engine": engine,
                             "environment": "DEV" if "dev" in name.lower() else "PROD",
-                            "host": "127.0.0.1"
+                            "host": "127.0.0.1",
+                            "gateway_ref": gateway_ref
                         },
                         "configuration": {
                             "port": port,
@@ -205,8 +197,17 @@ class ScoutAgent:
                 """
             self.mongo.execute_eval(js_cmd)
         
-        # Check MISSING
-        missing_names = existing_names - found_names
+        # Check MISSING - but exclude REMOTE databases (e.g. VirtualBox Oracle RAC)
+        # Get remote DBs to exclude
+        remote_dbs_result = self.mongo.execute_eval("db.inventory_databases.find({'connection.type': 'REMOTE'}, {'identity.db_unique_name': 1}).toArray()")
+        remote_names = set()
+        if remote_dbs_result:
+            for doc in remote_dbs_result:
+                name = doc.get('identity', {}).get('db_unique_name')
+                if name:
+                    remote_names.add(name)
+        
+        missing_names = existing_names - found_names - remote_names
         # print(f"📉 Missing Candidates: {missing_names}") # verbose
         for missing in missing_names:
             prev_status = existing_status.get(missing, 'UNKNOWN')
@@ -236,7 +237,7 @@ class ScoutAgent:
             else:
                 pass # Already known missing, silent update
         
-        print(f"✅ Inventory Sync Complete. Found: {len(found_names)}, Missing: {len(missing_names)}")
+        print(f"✅ Inventory Sync Complete. Found: {len(found_names)}, Missing: {len(missing_names)}, Remote (Excluded): {len(remote_names)}")
 
     def run(self):
         dbs = self.scan_docker()

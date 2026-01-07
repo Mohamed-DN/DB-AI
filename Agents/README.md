@@ -22,8 +22,9 @@ Questa directory contiene gli **agenti autonomi** che eseguono le operazioni di 
 1. Esegue `docker ps` per trovare container
 2. Filtra per label `db.type` (ORACLE, POSTGRES, etc.)
 3. Verifica che il gateway del datacenter sia UP
-4. Aggiorna `inventory_databases` in MongoDB
-5. Genera alert `DB_DOWN` / `DB_RECOVERY` per cambi di stato
+4. Blocca i DB senza gateway_ref (obbligatorio)
+5. Aggiorna `inventory_databases` in MongoDB
+6. Genera alert `DB_DOWN` / `DB_RECOVERY` per cambi di stato
 
 **Esecuzione**:
 ```powershell

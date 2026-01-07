@@ -9,6 +9,7 @@ Collezione principale che rappresenta il "digital twin" di ogni database gestito
 - **Configurazione**: versione, parametri, opzioni licenza
 - **Data Protection**: backup status, replica Data Guard/Patroni
 - **Metriche**: snapshot dinamici da Collector Agent
+- **Gateway obbligatorio**: ogni DB deve avere identity.gateway_ref
 
 ## Relazioni
 

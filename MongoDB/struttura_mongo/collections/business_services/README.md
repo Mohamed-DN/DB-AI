@@ -17,6 +17,7 @@ Mapping business-to-technical: collega servizi aziendali ai database.
 | `contacts.dl_team` | Distribution list operativa |
 | `contacts.reperibilita_number` | Numero emergenze |
 | `technical_mapping` | Array di `{db_unique_name, schemas[]}` |
+| `technical_mapping.gateway_ref` | Gateway obbligatorio per raggiungere il DB |
 
 ## Relazioni
 

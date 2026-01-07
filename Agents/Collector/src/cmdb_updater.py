@@ -6,15 +6,21 @@ import sys
 from datetime import datetime
 from typing import Dict, List, Optional
 
-# Add MongoDB src to path
-sys.path.insert(0, '../../../MongoDB')
-from src.connection import get_collection
+import os
+
+# Add MongoDB src to path (pointing directly to src to avoid namespace collision)
+mongo_src_path = os.path.abspath(os.path.join(os.path.dirname(__file__), '../../../MongoDB/src'))
+if mongo_src_path not in sys.path:
+    sys.path.insert(0, mongo_src_path)
+
+from connection import get_collection
 
 
 class CMDBUpdater:
     """Updates CMDB with collected data"""
 
-    def __init__(self):
+    def __init__(self, mongo_proxy=None):
+        self.mongo_proxy = mongo_proxy
         self.inventory = get_collection("inventory_databases")
         self.agent_runs = get_collection("agent_runs")
 
@@ -65,7 +71,10 @@ class CMDBUpdater:
             "oracle_specific": {
                 "architecture": "CDB" if oracle_data.get("pdbs") else "NON-CDB",
                 "pdbs": [
-                    {"name": p.get("PDB_NAME", ""), "open_mode": p.get("OPEN_MODE", "")}
+                    {
+                        "name": p.get("PDB_NAME", ""), 
+                        "status": p.get("STATUS", "UNKNOWN")
+                    }
                     for p in oracle_data.get("pdbs", [])
                 ]
             }
@@ -128,20 +137,40 @@ class CMDBUpdater:
             "configuration": configuration,
             "licensing": licensing,
             "storage": storage,
-            "data_protection": data_protection
+            "data_protection": data_protection,
+            "state": {
+                "status": "UP",
+                "metrics": {
+                    "hostname": system_data.get("hostname"),
+                    "os": system_data.get("os"),
+                    "cpu": system_data.get("cpu"),
+                    "memory": system_data.get("memory")
+                },
+                "last_check": datetime.utcnow()
+            }
         }
 
-    def upsert_database(self, cmdb_doc: Dict) -> str:
-        """Upsert database into CMDB"""
-        db_unique_name = cmdb_doc["identity"]["db_unique_name"]
+    def upsert_database(self, data: Dict):
+        """Insert or Update database asset"""
+        if self.mongo_proxy:
+            # Use Proxy
+            return self.mongo_proxy.upsert_database(data)
         
-        result = self.inventory.update_one(
-            {"identity.db_unique_name": db_unique_name},
-            {"$set": cmdb_doc},
+        # Fallback to PyMongo
+        coll = get_collection("inventory_databases")
+        unique_name = data.get("identity", {}).get("db_unique_name")
+        
+        if not unique_name:
+            print("❌ Skipping upsert: No db_unique_name")
+            return
+
+        coll.update_one(
+            {"identity.db_unique_name": unique_name},
+            {"$set": data},
             upsert=True
         )
         
-        return db_unique_name
+        return unique_name
 
     def log_agent_run(self, agent_type: str, targets_processed: int, status: str, errors: List = None):
         """Log agent execution"""

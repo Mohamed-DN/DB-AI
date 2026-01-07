@@ -25,7 +25,7 @@
     "technical_mapping": [
         {
             "db_unique_name": "NZSEP",
-            "gateway_ref": "dbgec2",
+            "gateway_ref": "gw-milano (required)",
             "schemas": [
                 {
                     "schema_name": "CRD_OWNER",

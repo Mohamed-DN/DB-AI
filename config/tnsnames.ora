@@ -1,0 +1,104 @@
+# TNS Names Configuration for Nexi AI CMDB
+# Location: Copy to $TNS_ADMIN/tnsnames.ora on Cairo container
+
+# =============================================================================
+# VirtualBox RAC - CDB (Oracle 19c)
+# =============================================================================
+
+# RAC Node 1 - CDB Root
+CDBRAC_RAC1 =
+  (DESCRIPTION =
+    (ADDRESS = (PROTOCOL = TCP)(HOST = 192.168.56.101)(PORT = 1521))
+    (CONNECT_DATA =
+      (SERVICE_NAME = cdbrac)
+    )
+  )
+
+# RAC Node 2 - CDB Root
+CDBRAC_RAC2 =
+  (DESCRIPTION =
+    (ADDRESS = (PROTOCOL = TCP)(HOST = 192.168.56.102)(PORT = 1521))
+    (CONNECT_DATA =
+      (SERVICE_NAME = cdbrac)
+    )
+  )
+
+# =============================================================================
+# VirtualBox RAC - PDBs (Oracle 19c)
+# =============================================================================
+
+# PDB1 on RAC Node 1
+PDB1_RAC1 =
+  (DESCRIPTION =
+    (ADDRESS = (PROTOCOL = TCP)(HOST = 192.168.56.101)(PORT = 1521))
+    (CONNECT_DATA =
+      (SERVICE_NAME = pdb1)
+    )
+  )
+
+# PDB1 on RAC Node 2
+PDB1_RAC2 =
+  (DESCRIPTION =
+    (ADDRESS = (PROTOCOL = TCP)(HOST = 192.168.56.102)(PORT = 1521))
+    (CONNECT_DATA =
+      (SERVICE_NAME = pdb1)
+    )
+  )
+
+# SOLE on RAC Node 1
+SOLE_RAC1 =
+  (DESCRIPTION =
+    (ADDRESS = (PROTOCOL = TCP)(HOST = 192.168.56.101)(PORT = 1521))
+    (CONNECT_DATA =
+      (SERVICE_NAME = sole)
+    )
+  )
+
+# SOLE on RAC Node 2
+SOLE_RAC2 =
+  (DESCRIPTION =
+    (ADDRESS = (PROTOCOL = TCP)(HOST = 192.168.56.102)(PORT = 1521))
+    (CONNECT_DATA =
+      (SERVICE_NAME = sole)
+    )
+  )
+
+# LUNA on RAC Node 1
+LUNA_RAC1 =
+  (DESCRIPTION =
+    (ADDRESS = (PROTOCOL = TCP)(HOST = 192.168.56.101)(PORT = 1521))
+    (CONNECT_DATA =
+      (SERVICE_NAME = luna)
+    )
+  )
+
+# LUNA on RAC Node 2
+LUNA_RAC2 =
+  (DESCRIPTION =
+    (ADDRESS = (PROTOCOL = TCP)(HOST = 192.168.56.102)(PORT = 1521))
+    (CONNECT_DATA =
+      (SERVICE_NAME = luna)
+    )
+  )
+
+# =============================================================================
+# Docker Oracle Databases (Local)
+# =============================================================================
+
+# Cairo Primary
+CAIRO_PRIMARY =
+  (DESCRIPTION =
+    (ADDRESS = (PROTOCOL = TCP)(HOST = nexi-oracle-cairo-primary)(PORT = 1521))
+    (CONNECT_DATA =
+      (SERVICE_NAME = FREEPDB1)
+    )
+  )
+
+# Cairo Replica  
+CAIRO_REPLICA =
+  (DESCRIPTION =
+    (ADDRESS = (PROTOCOL = TCP)(HOST = nexi-oracle-cairo-replica)(PORT = 1521))
+    (CONNECT_DATA =
+      (SERVICE_NAME = FREEPDB1)
+    )
+  )

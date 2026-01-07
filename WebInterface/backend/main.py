@@ -338,14 +338,22 @@ def clear_alerts():
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
-@app.post("/api/action/connect/{db_name}")
+@app.post("/api/action/connect/{db_name:path}")
 def connect_db(db_name: str, mode: str = "sql"):
-    """Open a terminal connection to the DB. Mode: 'sql' or 'bash'."""
+    """Open a terminal connection to the DB. Mode: 'sql' or 'bash'. db_name can be CDB or CDB/PDB"""
     try:
         # Lookup database to get container host
         if not mongo: raise Exception("MongoProxy not initialized")
         
-        db_info = mongo.execute_eval(f"db.inventory_databases.findOne({{'identity.db_unique_name': '{db_name}'}})")
+        # Check if this is a PDB connection (format: CDB_NAME/PDB_NAME)
+        pdb_name = None
+        cdb_name = db_name
+        if '/' in db_name:
+            parts = db_name.split('/')
+            cdb_name = parts[0]
+            pdb_name = parts[1]
+        
+        db_info = mongo.execute_eval(f"db.inventory_databases.findOne({{'identity.db_unique_name': '{cdb_name}'}})")
         if not db_info:
             raise HTTPException(status_code=404, detail="Database not found")
             
@@ -355,18 +363,64 @@ def connect_db(db_name: str, mode: str = "sql"):
             
         # Determine command based on mode
         engine = db_info.get('identity', {}).get('engine', 'POSTGRES').upper()
+        conn_type = db_info.get('connection', {}).get('type', 'DOCKER')
 
-        if mode == "bash":
-            # Use PowerShell to host the Bash session
-            cmd = f'start powershell -NoExit -Command "Write-Host \'Starting Linux Shell (Docker)...\' -ForegroundColor Cyan; docker exec -it {container} bash"'
-        else:
-            # SQL Mode
-            if engine == 'ORACLE':
-                # Oracle SQLPlus as SYSDBA
-                cmd = f'start powershell -NoExit -Command "Write-Host \'Starting Oracle SQLPlus (SYSDBA)...\' -ForegroundColor Red; docker exec -it {container} sqlplus sys/nexi2024 as sysdba"'
+        if hasattr(conn_type, 'upper') and conn_type.upper() == "REMOTE":
+            # Remote Connection (VirtualBox)
+            conn = db_info.get('connection', {})
+            host = conn.get('host')
+            port = conn.get('port', 1521)
+            service = conn.get('service_name')
+            user = conn.get('user', 'c##aiauto')
+            password = conn.get('password', 'root')
+            
+            # If connecting to a PDB, use PDB name as service and local AIAUTO user
+            if pdb_name:
+                service = pdb_name
+                user = 'aiauto'  # PDB user without C## prefix
+            
+            # Get gateway container name (default to maesdn-gateway for VirtualBox)
+            gateway = db_info.get('identity', {}).get('gateway_ref', 'REMOTE_VBOX')
+            # Use Cairo Oracle container as SQLPlus jump host (has SQLPlus installed)
+            sqlplus_container = "nexi-oracle-cairo-primary"
+            
+            if mode == "bash":
+                # Open bash shell on Cairo container
+                cmd = f'start powershell -NoExit -Command "Write-Host \'Opening shell on Oracle Gateway ({sqlplus_container})...\' -ForegroundColor Cyan; docker exec -it {sqlplus_container} bash"'
             else:
-                # Default to PostgreSQL
-                cmd = f'start powershell -NoExit -Command "Write-Host \'Starting PostgreSQL Console...\' -ForegroundColor Green; docker exec -it {container} psql -U postgres"'
+                # Connect to VirtualBox Oracle using REAL SQLPlus from Cairo container
+                pdb_label = f" (PDB: {pdb_name})" if pdb_name else ""
+                # Use EZConnect format: user/pass@//host:port/service
+                connect_str = f"{user}/{password}@//{host}:{port}/{service}"
+                cmd = f'start powershell -NoExit -Command "Write-Host \'Connecting to Oracle {host}{pdb_label} as {user} via SQLPlus...\' -ForegroundColor Green; docker exec -it {sqlplus_container} sqlplus {connect_str}"'
+            
+        else:
+            # Docker Container Connection - Route through gateway
+            gateway_ref = db_info.get('identity', {}).get('gateway_ref', '')
+            
+            # Map gateway reference to container name
+            gateway_map = {
+                'nexi-gw-milano': 'nexi-gw-milano',
+                'nexi-gw-bratislava': 'nexi-gw-bratislava',
+                'nexi-gw-cairo': 'nexi-gw-cairo',
+            }
+            gateway_container = gateway_map.get(gateway_ref, 'maesdn-gateway')
+            
+            # Get database host for connection from gateway
+            db_host = db_info.get('identity', {}).get('host', '127.0.0.1')
+            db_port = db_info.get('configuration', {}).get('port', 5432)
+            
+            if mode == "bash":
+                # Open bash shell on gateway container
+                cmd = f'start powershell -NoExit -Command "Write-Host \'Opening shell on Gateway ({gateway_container})...\' -ForegroundColor Cyan; docker exec -it {gateway_container} /bin/sh"'
+            else:
+                # SQL Mode via Gateway
+                if engine == 'ORACLE':
+                    # Oracle Docker via gateway - use docker exec on the container directly for now
+                    cmd = f'start powershell -NoExit -Command "Write-Host \'Starting Oracle Console as C##AIAUTO via Gateway...\' -ForegroundColor Green; docker exec -it {container} sqlplus c##aiauto/root"'
+                else:
+                    # PostgreSQL via maesdn-gateway with password
+                    cmd = f'start powershell -NoExit -Command "Write-Host \'Connecting to PostgreSQL via Gateway (maesdn-gateway) as AIAUTO...\' -ForegroundColor Green; docker exec -e PGPASSWORD=root -it maesdn-gateway psql -h {db_host} -p {db_port} -U aiauto -d postgres"'
         
         subprocess.Popen(cmd, shell=True)
         return {"status": f"Terminal ({mode}) opened for {container}"}

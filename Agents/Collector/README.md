@@ -4,7 +4,7 @@ Agente per l'estrazione profonda dei dati da database Oracle e PostgreSQL.
 
 ## 📋 Funzionalità
 
-- Connessione SSH via Gateway (bastion) o diretta
+- Connessione SSH via Gateway (bastion) obbligatoria
 - Estrazione dati Oracle (versione, patch, storage, RAC, DataGuard)
 - Estrazione dati sistema (OS, CPU, memoria)
 - Trasformazione e aggiornamento CMDB
@@ -32,14 +32,11 @@ export MONGO_URI="mongodb://admin:nexi2024@localhost:27017"
 
 ## 📖 Utilizzo
 
+Tutte le connessioni devono passare dal gateway.
+
 ### Raccolta da host specifici
 ```bash
-python main.py --targets host1.local host2.local --gateway dbgec2
-```
-
-### Connessione diretta (senza gateway)
-```bash
-python main.py --targets host1.local --no-gateway
+python main.py --targets host1.local host2.local --gateway gw-milano
 ```
 
 ## 📁 Struttura

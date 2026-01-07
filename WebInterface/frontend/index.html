@@ -38,6 +38,9 @@
             <button class="nav-pill" onclick="showSection('inventory')">
                 <i class="fa-solid fa-server"></i> Inventory
             </button>
+            <button class="nav-pill" onclick="showSection('hosts')">
+                <i class="fa-solid fa-network-wired"></i> Hosts
+            </button>
             <button class="nav-pill" onclick="showSection('alerts')">
                 <i class="fa-solid fa-triangle-exclamation"></i> Alerts
             </button>
@@ -128,6 +131,24 @@
                         </tr>
                     </thead>
                     <tbody id="inventory-list"></tbody>
+                </table>
+            </div>
+        </section>
+
+        <!-- Hosts -->
+        <section id="hosts" class="page-section">
+            <div class="card-panel">
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th>Hostname / IP</th>
+                            <th>OS Info</th>
+                            <th>Resources</th>
+                            <th>Databases</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="host-list"></tbody>
                 </table>
             </div>
         </section>

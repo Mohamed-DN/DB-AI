@@ -14,5 +14,19 @@ services:
       - mongodb_data:/data/db
     restart: unless-stopped
 
+  gateway:
+    image: lscr.io/linuxserver/openssh-server:latest
+    container_name: maesdn-gateway
+    hostname: maesdn
+    environment:
+      - PUID=1000
+      - PGID=1000
+      - USER_NAME=admin
+      - USER_PASSWORD=nexi
+      - PASSWORD_ACCESS=true
+    ports:
+      - "2244:2222"
+    restart: unless-stopped
+
 volumes:
   mongodb_data:

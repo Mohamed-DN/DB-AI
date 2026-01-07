@@ -11,6 +11,7 @@ function showSection(id) {
     const titles = {
         'dashboard': 'Dashboard Overview',
         'inventory': 'Database Inventory',
+        'hosts': 'Host Inventory',
         'alerts': 'System Alerts',
         'chat': 'AI Assistant',
         'mailbox': 'Communications',
@@ -22,6 +23,7 @@ function showSection(id) {
 
     if (id === 'dashboard') loadStats();
     if (id === 'inventory') loadInventory();
+    if (id === 'hosts') loadHosts();
     if (id === 'alerts') loadAlerts();
     if (id === 'mailbox') loadEmails();
     if (id === 'data') loadExplorer('inventory_databases');
@@ -93,7 +95,7 @@ async function switchModel() {
             // Update GPU status after switch
             setTimeout(loadGpuStatus, 2000);
         }
-    } catch (e) { alert('Failed to switch model: ' + e); }
+    } catch (e) { showAlert('Error', 'Failed to switch model: ' + e); }
 }
 
 async function loadGpuStatus() {
@@ -132,7 +134,6 @@ async function loadInventory() {
             const name = db.identity?.db_unique_name || 'UNKNOWN';
             const engine = db.identity?.engine || 'UNKNOWN';
             const host = db.identity?.host || 'N/A';
-            // Port can be in identity or configuration
             const port = db.identity?.port || db.configuration?.port || 'N/A';
             const env = db.identity?.environment || 'N/A';
 
@@ -143,9 +144,10 @@ async function loadInventory() {
             const sqlLabel = isOracle ? 'sqlplus' : 'psql';
             const sqlIcon = isOracle ? 'fa-solid fa-server' : 'fa-solid fa-terminal';
 
+            // Main Row
             tr.innerHTML = `
                 <td><span class="status-badge ${badgeClass}">${status}</span></td>
-                <td>${name}</td>
+                <td><div style="font-weight:bold;">${name}</div><div style="font-size:0.8em; opacity:0.7;">${db.identity?.topology || ''}</div></td>
                 <td><i class="fa-solid fa-database"></i> ${engine}</td>
                 <td>${host}</td>
                 <td>${port}</td>
@@ -159,7 +161,74 @@ async function loadInventory() {
                 </td>
             `;
             tbody.appendChild(tr);
+
+            // Render PDBs if available
+            if (db.configuration?.oracle_specific?.pdbs) {
+                db.configuration.oracle_specific.pdbs.forEach(pdb => {
+                    const pdbRow = document.createElement('tr');
+                    pdbRow.style.background = 'rgba(255,255,255,0.02)';
+                    const pdbName = pdb.name;
+                    const pdbMode = pdb.open_mode || 'N/A'; // Actually we removed open_mode from query, so careful. Collector might not have it.
+                    // Collector patch removed OPEN_MODE to fix ORA error. So we rely on status.
+                    const pdbStatus = pdb.status || 'UNKNOWN';
+                    let pdbBadge = 'status-down';
+                    if (pdbStatus === 'READ WRITE') pdbBadge = 'status-up';
+
+                    pdbRow.innerHTML = `
+                        <td style="text-align:right;"><span style="color:var(--text-secondary); font-size:0.8rem;">↳</span></td>
+                        <td><div style="display:flex; align-items:center; gap:5px;"><i class="fa-solid fa-plug" style="font-size:0.7rem;"></i> ${pdbName}</div></td>
+                        <td colspan="4" style="font-size:0.85rem; color:var(--text-secondary);">
+                            <span class="status-badge ${pdbBadge}" style="transform:scale(0.8);">${pdbStatus}</span>
+                        </td>
+                        <td>
+                             <button class="btn sm" onclick="connectDB('${name}/${pdbName}', 'sql')" title="Connect to PDB" style="opacity:0.7; transform:scale(0.9);"><i class="fa-solid fa-arrow-right-to-bracket"></i> Connect</button>
+                        </td>
+                    `;
+                    tbody.appendChild(pdbRow);
+                });
+            }
         });
+    } catch (e) { console.error(e); }
+}
+
+async function loadHosts() {
+    try {
+        const dbs = await fetch(`${API_URL}/inventory`).then(r => r.json());
+        const tbody = document.getElementById('host-list');
+        tbody.innerHTML = '';
+
+        // Extract unique hosts
+        const hosts = {};
+        dbs.forEach(db => {
+            const h = db.state?.metrics?.hostname || db.identity?.host || db.connection?.host;
+            if (!h) return;
+            if (!hosts[h]) {
+                hosts[h] = {
+                    name: h,
+                    os: db.state?.metrics?.os?.name || 'Unknown',
+                    cpu: db.state?.metrics?.cpu?.cores || '?',
+                    mem: db.state?.metrics?.memory?.total_gb || 0,
+                    dbs: []
+                };
+            }
+            hosts[h].dbs.push(db.identity.db_unique_name);
+        });
+
+        Object.values(hosts).forEach(h => {
+            const tr = document.createElement('tr');
+            tr.innerHTML = `
+                <td><i class="fa-solid fa-server"></i> ${h.name}</td>
+                <td><i class="fa-brands fa-linux"></i> ${h.os}</td>
+                <td>${h.cpu} Cores / ${parseFloat(h.mem).toFixed(1)} GB RAM</td>
+                <td>${h.dbs.map(d => `<span style="font-size:0.8rem; background:rgba(255,255,255,0.1); padding:2px 6px; border-radius:4px; margin-right:4px;">${d}</span>`).join('')}</td>
+                <td>
+                    <button class="btn sm" onclick="alert('Simulated SSH to host ' + '${h.name}')" title="SSH"><i class="fa-solid fa-terminal"></i> SSH</button>
+                    ${h.name === '172.20.3.10' || h.name === '192.168.56.101' ? '<span class="status-badge status-up" style="font-size:0.7rem">GW: MAESDN</span>' : ''}
+                </td>
+            `;
+            tbody.appendChild(tr);
+        });
+
     } catch (e) { console.error(e); }
 }
 
@@ -167,7 +236,7 @@ async function connectDB(name, mode = 'sql') {
     try {
         await fetch(`${API_URL}/action/connect/${name}?mode=${mode}`, { method: 'POST' });
     } catch (e) {
-        alert("Impossibile aprire il terminale: " + e);
+        showAlert("Error", "Impossibile aprire il terminale: " + e);
     }
 }
 
@@ -182,10 +251,10 @@ async function deleteDB(name) {
                 if (res.ok) {
                     loadInventory(); // Refresh list
                 } else {
-                    alert("Error: " + data.detail);
+                    showAlert("Error", "Error: " + data.detail);
                 }
             } catch (e) {
-                alert("Delete failed: " + e);
+                showAlert("Error", "Delete failed: " + e);
             }
         }
     );
@@ -297,8 +366,8 @@ async function triggerAction(action) {
             try {
                 await fetch(`${API_URL}/action/${action}`, { method: 'POST' });
                 setTimeout(loadStats, 2000);
-                alert(`✅ ${action} executed!`);
-            } catch (e) { alert(`❌ Error executing ${action}: ${e.message}`); }
+                showAlert("Success", `✅ ${action} executed!`);
+            } catch (e) { showAlert("Error", `❌ Error executing ${action}: ${e.message}`); }
         }
     );
 }
@@ -346,7 +415,7 @@ async function viewEmail(filename, el) {
         iframe.contentWindow.document.open();
         iframe.contentWindow.document.write(res.content);
         iframe.contentWindow.document.close();
-    } catch (e) { alert("Error loading email"); }
+    } catch (e) { showAlert("Error", "Error loading email"); }
 }
 
 async function deleteEmail(filename) {
@@ -358,7 +427,7 @@ async function deleteEmail(filename) {
             document.getElementById('email-preview').contentWindow.document.write('<html><body style="background:#000;color:#666;display:flex;align-items:center;justify-content:center;height:100%;margin:0;">Email deleted</body></html>');
             document.getElementById('email-preview').contentWindow.document.close();
         }
-    } catch (e) { alert('Failed to delete email: ' + e); }
+    } catch (e) { showAlert("Error", 'Failed to delete email: ' + e); }
 }
 
 async function deleteAllEmails() {
@@ -374,7 +443,7 @@ async function deleteAllEmails() {
                     document.getElementById('email-preview').contentWindow.document.write('<html><body style="background:#000;color:#666;display:flex;align-items:center;justify-content:center;height:100%;margin:0;">All emails deleted</body></html>');
                     document.getElementById('email-preview').contentWindow.document.close();
                 }
-            } catch (e) { alert('Failed to delete emails: ' + e); }
+            } catch (e) { showAlert("Error", 'Failed to delete emails: ' + e); }
         }
     );
 }
@@ -698,7 +767,7 @@ function closeProcessLog() {
 }
 
 // --- CUSTOM MODAL ---
-function showModal(title, message, onConfirm) {
+function showModal(title, message, onConfirm, isAlert = false) {
     const overlay = document.getElementById('custom-modal-overlay');
     const titleEl = document.getElementById('modal-title');
     const msgEl = document.getElementById('modal-message');
@@ -707,6 +776,10 @@ function showModal(title, message, onConfirm) {
 
     titleEl.innerText = title;
     msgEl.innerText = message;
+
+    // Reset Buttons
+    btnConfirm.innerText = isAlert ? "Ok" : "Confirm";
+    btnCancel.style.display = isAlert ? "none" : "inline-block";
 
     // Clear old listeners
     const newConfirm = btnConfirm.cloneNode(true);
@@ -717,7 +790,7 @@ function showModal(title, message, onConfirm) {
     // Add new listeners
     newConfirm.addEventListener('click', () => {
         closeModal();
-        onConfirm();
+        if (onConfirm) onConfirm();
     });
 
     newCancel.addEventListener('click', closeModal);
@@ -726,6 +799,10 @@ function showModal(title, message, onConfirm) {
     });
 
     overlay.classList.add('active');
+}
+
+function showAlert(title, message) {
+    showModal(title, message, null, true);
 }
 
 function closeModal() {

@@ -97,9 +97,10 @@ class GatewayConnection:
 
 
 class DirectConnection:
-    """Direct SSH connection (no gateway)"""
+    """Direct SSH connection (disabled; gateway required)"""
 
     def __init__(self, host: str, user: str, key_file: str = None, password: str = None):
+        raise RuntimeError("DirectConnection is disabled. Use GatewayConnection.")
         self.host = host
         self.user = user
         self.key_file = key_file

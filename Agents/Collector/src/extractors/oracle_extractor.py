@@ -25,6 +25,8 @@ class OracleExtractor:
     FROM v$database d, v$instance i
     """
 
+    SQL_CURRENT_CONTAINER = "SELECT sys_context('userenv', 'con_name') as container FROM dual"
+
     # SQL to get Oracle Home
     SQL_ORACLE_HOME = """
     SELECT SYS_CONTEXT('USERENV', 'ORACLE_HOME') as oracle_home FROM DUAL
@@ -55,8 +57,7 @@ class OracleExtractor:
         tablespace_name,
         ROUND(used_space * 8192 / 1024 / 1024 / 1024, 2) as used_gb,
         ROUND(tablespace_size * 8192 / 1024 / 1024 / 1024, 2) as max_gb,
-        ROUND(used_percent, 2) as used_pct,
-        CASE WHEN max_size = 0 THEN 'NO' ELSE 'YES' END as autoextensible
+        ROUND(used_percent, 2) as used_pct
     FROM dba_tablespace_usage_metrics
     """
 
@@ -100,8 +101,7 @@ class OracleExtractor:
     SQL_PDBS = """
     SELECT 
         pdb_name,
-        status,
-        open_mode
+        status
     FROM dba_pdbs
     WHERE pdb_name != 'PDB$SEED'
     """

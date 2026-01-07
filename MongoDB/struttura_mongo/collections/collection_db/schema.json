@@ -6,7 +6,7 @@
         "engine": "ORACLE | POSTGRES | MYSQL | CASSANDRA",
         "topology": "RAC | SINGLE | REPLICA_SET",
         "environment": "PROD | STG | DEV | UAT",
-        "gateway_ref": "dbgec2"
+        "gateway_ref": "gw-milano (required)"
     },
     "nodes": [
         {

@@ -48,8 +48,7 @@ services:
       ME_CONFIG_MONGODB_ADMINUSERNAME: admin
       ME_CONFIG_MONGODB_ADMINPASSWORD: nexi2024
       ME_CONFIG_MONGODB_URL: mongodb://admin:nexi2024@mongodb:27017/
-      ME_CONFIG_BASICAUTH_USERNAME: admin
-      ME_CONFIG_BASICAUTH_PASSWORD: nexi2024
+      ME_CONFIG_BASICAUTH: "false"
     networks:
       nexi-lab:
         ipv4_address: 172.20.0.15

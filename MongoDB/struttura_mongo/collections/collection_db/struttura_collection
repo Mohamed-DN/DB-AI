@@ -10,7 +10,7 @@
       "engine": "ORACLE",            // ORACLE, POSTGRES, MONGODB
       "topology": "RAC",             // RAC, SINGLE, REPLICA_SET
       "environment": "PROD",
-      "gateway_ref": "dbgec2"
+      "gateway_ref": "gw-milano (required)"
     },
   
     // =================================================================
