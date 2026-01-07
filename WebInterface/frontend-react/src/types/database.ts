@@ -36,6 +36,11 @@ export interface Database {
         db_name?: string;
         open_mode?: string;
         log_mode?: string;
+        oracle_specific?: {
+            architecture?: string;
+            cluster_name?: string;
+            pdbs?: PDB[];
+        };
     };
     pdbs?: PDB[];
 }

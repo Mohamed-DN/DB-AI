@@ -433,16 +433,17 @@ def connect_db(db_name: str, mode: str = "sql"):
         if not mongo: raise Exception("MongoProxy not initialized")
         
         # Check if this is a PDB connection (format: CDB_NAME/PDB_NAME)
+        # Handle PDB paths (e.g., "ORCLCDB/ORCLPDB1")
         pdb_name = None
-        cdb_name = db_name
-        if '/' in db_name:
-            parts = db_name.split('/')
-            cdb_name = parts[0]
-            pdb_name = parts[1]
-        
-        db_info = mongo.execute_eval(f"db.inventory_databases.findOne({{'identity.db_unique_name': '{cdb_name}'}})")
+        if "/" in db_name:
+            parent_name, pdb_name = db_name.split("/", 1)
+            # Find parent database
+            db_info = mongo.db.inventory_databases.find_one({"identity.db_unique_name": parent_name})
+        else:
+            db_info = mongo.db.inventory_databases.find_one({"identity.db_unique_name": db_name})
+
         if not db_info:
-            raise HTTPException(status_code=404, detail="Database not found")
+            raise HTTPException(status_code=404, detail=f"Database not found: {db_name}")
             
         container = (
             db_info.get('connection', {}).get('container') or 
@@ -462,8 +463,8 @@ def connect_db(db_name: str, mode: str = "sql"):
             host = conn.get('host')
             port = conn.get('port', 1521)
             service = conn.get('service_name')
-            user = conn.get('user', 'c##aiauto')
-            password = conn.get('password', 'root')
+            user = 'c##aiauto'  # Always use AIAUTO as requested
+            password = 'root'
             
             # If connecting to a PDB, use PDB name as service and local AIAUTO user
             if pdb_name:
@@ -508,9 +509,11 @@ def connect_db(db_name: str, mode: str = "sql"):
                 # SQL Mode via Gateway
                 if engine == 'ORACLE':
                     # Oracle Docker via gateway - use docker exec on the container directly for now
-                    cmd = f'start powershell -NoExit -Command "Write-Host \'Starting Oracle Console as C##AIAUTO via Gateway...\' -ForegroundColor Green; docker exec -it {container} sqlplus c##aiauto/root"'
+                    # NOTE: Using c##aiauto/root for CDB
+                    cmd = f'start powershell -NoExit -Command "Write-Host \'Starting Oracle Console as C##AIAUTO via Docker...\' -ForegroundColor Green; docker exec -it {container} sqlplus c##aiauto/root"'
                 else:
                     # PostgreSQL via maesdn-gateway with password
+                    # Using aiauto/root
                     cmd = f'start powershell -NoExit -Command "Write-Host \'Connecting to PostgreSQL via Gateway (maesdn-gateway) as AIAUTO...\' -ForegroundColor Green; docker exec -e PGPASSWORD=root -it maesdn-gateway psql -h {db_host} -p {db_port} -U aiauto -d postgres"'
         
         subprocess.Popen(cmd, shell=True)

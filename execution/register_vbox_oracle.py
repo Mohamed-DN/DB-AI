@@ -20,11 +20,13 @@ VBOX_ORACLE_DATABASES = [
     {
         "identity": {
             "db_unique_name": "CDBRAC_RAC1",
+            "db_name": "CDBRAC",
             "engine": "ORACLE",
             "topology": "RAC",
             "environment": "VIRTUALBOX_LAB",
             "host": "192.168.56.101",
-            "datacenter": "VirtualBox"
+            "datacenter": "VirtualBox",
+            "gateway_ref": "REMOTE_VBOX"
         },
         "connection": {
             "type": "REMOTE",
@@ -32,21 +34,53 @@ VBOX_ORACLE_DATABASES = [
             "port": 1521,
             "service_name": "cdbrac",
             "user": "c##aiauto",
-            "password": "root"
+            "password": "root",
+            "container": "nexi-oracle-cairo-primary" # Jump host
+        },
+        "configuration": {
+            "version": "19.3.0.0",
+            "port": 1521,
+            "oracle_specific": {
+                "architecture": "CDB",
+                "cluster_name": "rac-cluster",
+                "pdbs": [
+                    { "name": "PDB1", "status": "READ WRITE", "open_mode": "READ WRITE" },
+                    { "name": "SOLE", "status": "READ WRITE", "open_mode": "READ WRITE" },
+                    { "name": "LUNA", "status": "READ WRITE", "open_mode": "READ WRITE" }
+                ]
+            }
         },
         "state": {
             "status": "UP",
             "last_seen": None
-        }
+        },
+        # Adding missing sections from schema
+        "nodes": [
+            {
+                "node_name": "rac1",
+                "hostname": "rac1.localdomain",
+                "host_ip": "192.168.56.101",
+                "role": "PRIMARY",
+                "status": "OPEN",
+                 "host_specs": {
+                    "os": { "distro": "Oracle Linux", "version": "7.9" },
+                    "cpu": { "model": "VBox CPU", "cores_per_socket": 2 }
+                }
+            }
+        ],
+        "licensing": { "product_edition": "ENTERPRISE", "active_options": ["RAC"] },
+        "storage": { "asm_diskgroups": [{ "name": "DATA", "state": "MOUNTED", "used_pct": 45 }] }
     },
     {
         "identity": {
             "db_unique_name": "CDBRAC_RAC2",
+            "db_name": "CDBRAC",
             "engine": "ORACLE",
             "topology": "RAC",
             "environment": "VIRTUALBOX_LAB",
             "host": "192.168.56.102",
-            "datacenter": "VirtualBox"
+            "datacenter": "VirtualBox",
+            "gateway_ref": "REMOTE_VBOX"
         },
         "connection": {
             "type": "REMOTE",
@@ -54,12 +88,35 @@ VBOX_ORACLE_DATABASES = [
             "port": 1521,
             "service_name": "cdbrac",
             "user": "c##aiauto",
-            "password": "root"
+            "password": "root",
+            "container": "nexi-oracle-cairo-primary"
+        },
+         "configuration": {
+            "version": "19.3.0.0",
+            "port": 1521,
+            "oracle_specific": {
+                "architecture": "CDB",
+                "cluster_name": "rac-cluster",
+                "pdbs": [
+                   { "name": "PDB1", "status": "READ WRITE", "open_mode": "READ WRITE" },
+                   { "name": "SOLE", "status": "READ WRITE", "open_mode": "READ WRITE" },
+                   { "name": "LUNA", "status": "MOUNTED", "open_mode": "MOUNTED" }
+                ]
+            }
         },
         "state": {
             "status": "UP",
             "last_seen": None
-        }
+        },
+        "nodes": [
+            {
+                "node_name": "rac2",
+                "hostname": "rac2.localdomain",
+                "host_ip": "192.168.56.102",
+                "role": "SECONDARY",
+                "status": "OPEN"
+            }
+        ]
     }
 ]
 

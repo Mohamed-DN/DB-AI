@@ -399,7 +399,7 @@ body {
 }
 
 .telemetry-bar {
-  animation: equalizer 1.2s ease-in-out infinite;
+  animation: equalizer 2.5s ease-in-out infinite;
   transform-origin: bottom;
 }
 
@@ -409,29 +409,29 @@ body {
 }
 
 .telemetry-bar:nth-child(2) {
-  animation-delay: 0.2s;
-}
-
-.telemetry-bar:nth-child(3) {
   animation-delay: 0.4s;
 }
 
+.telemetry-bar:nth-child(3) {
+  animation-delay: 0.8s;
+}
+
 .telemetry-bar:nth-child(4) {
-  animation-delay: 0.6s;
+  animation-delay: 1.2s;
 }
 
 .telemetry-bar:nth-child(5) {
-  animation-delay: 0.8s;
+  animation-delay: 1.6s;
 }
 
 /* General Icon Dynamics */
 .lucide {
-  transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+  transition: all 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
 }
 
 /* Glass panel hover effect */
 .glass {
-  transition: all 0.3s ease;
+  transition: all 0.6s ease;
 }
 
 .glass:hover {
@@ -441,7 +441,7 @@ body {
 
 /* Stat card animations */
 .stat-card {
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  transition: all 0.6s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .stat-card:hover {

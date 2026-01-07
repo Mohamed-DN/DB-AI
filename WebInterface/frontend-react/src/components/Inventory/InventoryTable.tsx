@@ -66,7 +66,8 @@ function DatabaseRow({ db }: { db: DatabaseType }) {
     const connectMutation = useConnectDatabase();
     const deleteMutation = useDeleteDatabase();
 
-    const hasPdbs = db.pdbs && db.pdbs.length > 0;
+    const pdbs = db.pdbs || db.configuration?.oracle_specific?.pdbs || [];
+    const hasPdbs = pdbs.length > 0;
 
     const handleSqlConnect = () => {
         connectMutation.mutate({ dbName: db.identity.db_unique_name, mode: 'sql' });
@@ -142,7 +143,7 @@ function DatabaseRow({ db }: { db: DatabaseType }) {
                     </div>
                 </td>
             </tr>
-            {expanded && hasPdbs && db.pdbs?.map((pdb) => (
+            {expanded && hasPdbs && pdbs.map((pdb) => (
                 <PDBRow key={pdb.name} pdb={pdb} parentDb={db} />
             ))}
         </>

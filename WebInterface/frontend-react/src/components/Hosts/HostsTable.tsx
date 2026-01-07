@@ -18,14 +18,22 @@ export default function HostsTable() {
 
     if (databases) {
         databases.forEach((db: any) => {
-            const hostname = db.state?.metrics?.hostname || db.identity?.host || db.connection?.host;
+            // Priority: Explicit Hostname -> Container Name -> DB Name (as virtual host)
+            // This ensures we don't group everything under "localhost" or 127.0.0.1 if user wants to see containers
+            let hostname = db.state?.metrics?.hostname || db.connection?.host;
+
+            // If localhost/127.0.0.1, try to be more specific using container name
+            if (!hostname || hostname === 'localhost' || hostname === '127.0.0.1') {
+                hostname = db.connection?.container || db.identity?.db_unique_name;
+            }
+
             if (!hostname) return;
 
             if (!hostMap[hostname]) {
                 hostMap[hostname] = {
                     name: hostname,
-                    os: db.state?.metrics?.os?.name || 'Linux',
-                    cpu: db.state?.metrics?.cpu?.cores || '?',
+                    os: db.state?.metrics?.os?.name || 'Linux (Container)',
+                    cpu: db.state?.metrics?.cpu?.cores || 'Shared',
                     mem: db.state?.metrics?.memory?.total_gb || 0,
                     dbs: [],
                 };
