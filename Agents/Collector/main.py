@@ -47,6 +47,15 @@ class CollectorAgent:
             print(f"⚠️ CMDB Updater failed (will skip deep updates): {e}")
             self.cmdb_updater = None
         
+    def is_container_running(self, container_name):
+        """Check if container is strictly running (docker stats returns 0.00% for stopped containers on Windows)"""
+        try:
+            cmd = ["docker", "inspect", "-f", "{{.State.Running}}", container_name]
+            output = subprocess.check_output(cmd, stderr=subprocess.DEVNULL).decode('utf-8').strip()
+            return output == 'true'
+        except:
+            return False
+
     def collect_docker_metrics(self, container_name):
         """Collect real-time metrics from Docker"""
         try:
@@ -144,29 +153,46 @@ class CollectorAgent:
             engine = identity.get('engine', 'UNKNOWN')
             is_remote = db.get('connection', {}).get('type') == 'REMOTE' or 'vbox' in name.lower()
             
-            # 1. Handle Remote Oracle
-            if engine == 'ORACLE' and is_remote:
-                if self.collect_remote_oracle(db):
-                    count += 1
-                continue
+            try:
+                # 1. Handle Remote Oracle
+                if engine == 'ORACLE' and is_remote:
+                    if self.collect_remote_oracle(db):
+                        count += 1
+                    continue
 
-            # 2. Handle Docker Containers
-            container_name = identity.get('db_name')
-            
-            # Fallback if db_name missing (old inventory items)
-            if not container_name:
-                container_name = name.lower() if name else None
-            
-            if container_name:
-                metrics = self.collect_docker_metrics(container_name)
-                if metrics:
-                    print(f"   📈 Metrics for {name}: CPU={metrics['cpu_usage']}, RAM={metrics['ram_usage']}")
-                    self.mongo.update_metrics(name, metrics)
-                    count += 1
-                else:
-                    # Only warn if NOT remote (don't expect docker stats for remote)
-                    if not is_remote:
-                        print(f"   ⚠️ Could not collect metrics for {name} (Down?)")
+                # 2. Handle Docker Containers
+                # FIX: Use connection.container as primary source of truth (handles hyphens vs underscores)
+                container_name = db.get('connection', {}).get('container')
+                
+                # Fallback to identity.db_name
+                if not container_name:
+                    container_name = identity.get('db_name')
+                
+                # Final fallback
+                if not container_name:
+                    container_name = name.lower() if name else None
+                
+                if container_name:
+                    # FIX: Strict check for running state (Windows Docker output fix)
+                    if self.is_container_running(container_name):
+                        # Always mark UP if running, even if metrics fail
+                        self.mongo.update_status(name, "UP")
+                        
+                        metrics = self.collect_docker_metrics(container_name)
+                        if metrics:
+                            print(f"   📈 Metrics for {name}: CPU={metrics['cpu_usage']}, RAM={metrics['ram_usage']}")
+                            self.mongo.update_metrics(name, metrics)
+                            count += 1
+                        else:
+                             print(f"   ⚠️ Metrics collection failed for {name} (Running but no stats?)")
+                    else:
+                        if not is_remote:
+                            print(f"   🛑 Container {container_name} is stopped. Marking DOWN.")
+                            self.mongo.update_status(name, "DOWN")
+
+            except Exception as e:
+                print(f"   ❌ Error processing {name}: {e}")
+                continue
         
         print(f"✅ Metric Sync Complete. Updated {count} assets.")
 

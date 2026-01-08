@@ -45,7 +45,7 @@ export function useDeleteDatabase() {
 // Connect to database
 export function useConnectDatabase() {
     return useMutation({
-        mutationFn: ({ dbName, mode }: { dbName: string; mode: 'sql' | 'bash' }) =>
+        mutationFn: ({ dbName, mode }: { dbName: string; mode: 'sql' | 'bash' | 'sysdba' }) =>
             api.connectDatabase(dbName, mode),
     });
 }

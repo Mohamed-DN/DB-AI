@@ -35,9 +35,9 @@ app.add_middleware(
 # Initialize Proxy
 try:
     mongo = MongoProxy()
-    print("✅ Backend connected to MongoProxy")
+    print("[OK] Backend connected to MongoProxy")
 except Exception as e:
-    print(f"❌ Backend MongoProxy failed: {e}")
+    print(f"[ERROR] Backend MongoProxy failed: {e}")
     mongo = None
 
 # Models
@@ -54,11 +54,61 @@ def read_root():
 
 @app.get("/api/inventory")
 def get_inventory():
-    """Get all databases"""
+    """Get all databases enriched with Business Service info"""
     try:
         if not mongo: raise Exception("MongoProxy not initialized")
-        # Fetch using MongoProxy
+        
+        # 1. Fetch Inventory
         dbs = mongo.execute_eval("db.inventory_databases.find({}, {'_id': 0}).toArray()")
+        
+        # 2. Fetch Business Services
+        services = mongo.execute_eval("db.business_services.find({}, {'_id': 0}).toArray()")
+        
+        # 3. Create Lookup Map (DB Name -> Service Info)
+        service_map = {}
+        for svc in services:
+            mappings = svc.get('technical_mapping', {}).get('db_unique_name', [])
+            # Handle both string and list
+            if isinstance(mappings, str):
+                if mappings == "ALL":
+                    # Catch-all service (apply to ALL dbs that don't have specific override?)
+                    # For now, treat as default. Logic: Specific overrides default.
+                    pass 
+                else:
+                    mappings = [mappings]
+            
+            if isinstance(mappings, list):
+                for db_name in mappings:
+                    service_map[db_name] = {
+                        "name": svc.get("name"),
+                        "snow_group": svc.get("snow_group"),
+                        "reperibility": svc.get("reperibility_number"),
+                        "contacts": svc.get("contacts")
+                    }
+            
+            # Handle ALL keyword (simple implementation: if not in map, use this)
+            if svc.get('technical_mapping', {}).get('db_unique_name') == "ALL":
+                default_svc = {
+                        "name": svc.get("name"),
+                        "snow_group": svc.get("snow_group"),
+                        "reperibility": svc.get("reperibility_number"),
+                        "contacts": svc.get("contacts")
+                }
+                # We apply this later
+        
+        # 4. Enrich DB objects
+        for db in dbs:
+            db_name = db.get('identity', {}).get('db_unique_name')
+            # Exact match ?
+            svc_info = service_map.get(db_name)
+            
+            # Fallback to ALL if available
+            if not svc_info and 'default_svc' in locals():
+                svc_info = default_svc
+                
+            if svc_info:
+                db['business_service'] = svc_info
+        
         return dbs
     except Exception as e:
         print(f"Error fetching inventory: {e}")
@@ -164,12 +214,6 @@ def start_agent_endpoint(agent_name: str):
         AGENTS_STATE[agent_key]["running"] = True
     return {"status": "started", "agent": agent_name}
 
-@app.post("/api/action/connect/{db_name}")
-def connect_database_endpoint(db_name: str, mode: str = "sql"):
-    success, msg = connect_db(db_name, mode)
-    if not success:
-        raise HTTPException(status_code=500, detail=f"Failed to connect: {msg}")
-    return {"status": "connected", "message": msg}
 
 @app.post("/api/chat")
 def chat_with_ai(request: ChatRequest):
@@ -386,6 +430,16 @@ def trigger_check():
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
+@app.post("/api/action/collect")
+def trigger_collect():
+    """Trigger Collector Agent"""
+    try:
+        script_path = os.path.abspath(os.path.join(os.path.dirname(__file__), '../../Agents/Collector/main.py'))
+        subprocess.Popen([sys.executable, script_path, "--once"])
+        return {"status": "Collector Agent Triggered"}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
 class ConfigRequest(BaseModel):
     scout_interval: int
     check_interval: int
@@ -438,11 +492,17 @@ def connect_db(db_name: str, mode: str = "sql"):
         if "/" in db_name:
             parent_name, pdb_name = db_name.split("/", 1)
             # Find parent database
-            db_info = mongo.db.inventory_databases.find_one({"identity.db_unique_name": parent_name})
+            # mongo.execute_eval returns a dict or None
+            # DEBUG
+            print(f"DEBUG: Connecting to PDB {pdb_name} of {parent_name}")
+            db_info = mongo.execute_eval(f"db.inventory_databases.findOne({{'identity.db_unique_name': '{parent_name}'}})")
         else:
-            db_info = mongo.db.inventory_databases.find_one({"identity.db_unique_name": db_name})
+            # DEBUG
+            print(f"DEBUG: Connecting to DB {db_name}")
+            db_info = mongo.execute_eval(f"db.inventory_databases.findOne({{'identity.db_unique_name': '{db_name}'}})")
 
         if not db_info:
+            print(f"ERROR: Database not found: {db_name}")
             raise HTTPException(status_code=404, detail=f"Database not found: {db_name}")
             
         container = (
@@ -479,6 +539,12 @@ def connect_db(db_name: str, mode: str = "sql"):
             if mode == "bash":
                 # Open bash shell on Cairo container
                 cmd = f'start powershell -NoExit -Command "Write-Host \'Opening shell on Oracle Gateway ({sqlplus_container})...\' -ForegroundColor Cyan; docker exec -it {sqlplus_container} bash"'
+            elif mode == "sysdba":
+                # Connect as SYSDBA via TCP (requires password)
+                # NOTE: Assuming password 'root' for SYS in VirtualBox Lab
+                pdb_label = f" (PDB: {pdb_name})" if pdb_name else ""
+                connect_str = f"sys/root@//{host}:{port}/{service} as sysdba"
+                cmd = f'start powershell -NoExit -Command "Write-Host \'Connecting to Oracle {host}{pdb_label} as SYSDBA...\' -ForegroundColor Yellow; docker exec -it {sqlplus_container} sqlplus {connect_str}"'
             else:
                 # Connect to VirtualBox Oracle using REAL SQLPlus from Cairo container
                 pdb_label = f" (PDB: {pdb_name})" if pdb_name else ""
@@ -487,34 +553,30 @@ def connect_db(db_name: str, mode: str = "sql"):
                 cmd = f'start powershell -NoExit -Command "Write-Host \'Connecting to Oracle {host}{pdb_label} as {user} via SQLPlus...\' -ForegroundColor Green; docker exec -it {sqlplus_container} sqlplus {connect_str}"'
             
         else:
-            # Docker Container Connection - Route through gateway
-            gateway_ref = db_info.get('identity', {}).get('gateway_ref', '')
-            
-            # Map gateway reference to container name
-            gateway_map = {
-                'nexi-gw-milano': 'nexi-gw-milano',
-                'nexi-gw-bratislava': 'nexi-gw-bratislava',
-                'nexi-gw-cairo': 'nexi-gw-cairo',
-            }
-            gateway_container = gateway_map.get(gateway_ref, 'maesdn-gateway')
-            
-            # Get database host for connection from gateway
-            db_host = db_info.get('identity', {}).get('host', '127.0.0.1')
+            # Docker Container Connection - Direct exec into container
+            # For PostgreSQL, use the container name as the host (Docker DNS)
+            # The container variable already holds the correct container name
             db_port = db_info.get('configuration', {}).get('port', 5432)
             
             if mode == "bash":
-                # Open bash shell on gateway container
-                cmd = f'start powershell -NoExit -Command "Write-Host \'Opening shell on Gateway ({gateway_container})...\' -ForegroundColor Cyan; docker exec -it {gateway_container} /bin/sh"'
-            else:
-                # SQL Mode via Gateway
+                # Open bash shell on the database container directly
+                cmd = f'start powershell -NoExit -Command "Write-Host \'Opening shell on {container}...\' -ForegroundColor Cyan; docker exec -it {container} /bin/bash"'
+            elif mode == "sysdba":
+                # Oracle SYSDBA mode - direct exec without credentials
                 if engine == 'ORACLE':
-                    # Oracle Docker via gateway - use docker exec on the container directly for now
-                    # NOTE: Using c##aiauto/root for CDB
+                    cmd = f'start powershell -NoExit -Command "Write-Host \'Starting Oracle Console as SYSDBA...\' -ForegroundColor Yellow; docker exec -it {container} sqlplus / as sysdba"'
+                else:
+                    # PostgreSQL superuser mode
+                    cmd = f'start powershell -NoExit -Command "Write-Host \'Connecting to PostgreSQL ({container}) as POSTGRES (superuser)...\' -ForegroundColor Yellow; docker exec -it {container} psql -U postgres"'
+            else:
+                # SQL Mode - Direct exec into container with aiauto user
+                if engine == 'ORACLE':
+                    # Oracle Docker - direct exec with c##aiauto/root
                     cmd = f'start powershell -NoExit -Command "Write-Host \'Starting Oracle Console as C##AIAUTO via Docker...\' -ForegroundColor Green; docker exec -it {container} sqlplus c##aiauto/root"'
                 else:
-                    # PostgreSQL via maesdn-gateway with password
-                    # Using aiauto/root
-                    cmd = f'start powershell -NoExit -Command "Write-Host \'Connecting to PostgreSQL via Gateway (maesdn-gateway) as AIAUTO...\' -ForegroundColor Green; docker exec -e PGPASSWORD=root -it maesdn-gateway psql -h {db_host} -p {db_port} -U aiauto -d postgres"'
+                    # PostgreSQL - direct exec into container with psql
+                    # Connect locally inside the container (no network hop needed)
+                    cmd = f'start powershell -NoExit -Command "Write-Host \'Connecting to PostgreSQL ({container}) as AIAUTO...\' -ForegroundColor Green; docker exec -e PGPASSWORD=root -it {container} psql -U aiauto -d postgres"'
         
         subprocess.Popen(cmd, shell=True)
         return {"status": f"Terminal ({mode}) opened for {container}"}

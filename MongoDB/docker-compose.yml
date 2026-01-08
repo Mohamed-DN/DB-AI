@@ -14,6 +14,20 @@ services:
       - mongodb_data:/data/db
     restart: unless-stopped
 
+  mongo-express:
+    image: mongo-express:latest
+    container_name: nexi-mongo-express
+    ports:
+      - "8081:8081"
+    environment:
+      ME_CONFIG_MONGODB_ADMINUSERNAME: admin
+      ME_CONFIG_MONGODB_ADMINPASSWORD: ${MONGO_PASSWORD:-admin123}
+      ME_CONFIG_MONGODB_URL: mongodb://admin:${MONGO_PASSWORD:-admin123}@mongodb:27017/
+      ME_CONFIG_BASICAUTH: "false"
+    depends_on:
+      - mongodb
+    restart: unless-stopped
+
   gateway:
     image: lscr.io/linuxserver/openssh-server:latest
     container_name: maesdn-gateway

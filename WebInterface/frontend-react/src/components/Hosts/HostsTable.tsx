@@ -18,13 +18,22 @@ export default function HostsTable() {
 
     if (databases) {
         databases.forEach((db: any) => {
-            // Priority: Explicit Hostname -> Container Name -> DB Name (as virtual host)
-            // This ensures we don't group everything under "localhost" or 127.0.0.1 if user wants to see containers
-            let hostname = db.state?.metrics?.hostname || db.connection?.host;
+            // FIX: Prioritize Container Name or DB Unique Name over Metrics Hostname
+            // Metrics often report generic names like "mongodb" or "postgres", while we want "nexi-cmdb-mongo"
+            let hostname = db.connection?.container;
 
-            // If localhost/127.0.0.1, try to be more specific using container name
             if (!hostname || hostname === 'localhost' || hostname === '127.0.0.1') {
-                hostname = db.connection?.container || db.identity?.db_unique_name;
+                hostname = db.identity?.db_unique_name;
+            }
+
+            // Fallback to metrics if absolutely nothing else
+            if (!hostname) {
+                hostname = db.state?.metrics?.hostname;
+            }
+
+            // Fallback to connection host if still nothing
+            if (!hostname) {
+                hostname = db.connection?.host;
             }
 
             if (!hostname) return;
@@ -38,7 +47,11 @@ export default function HostsTable() {
                     dbs: [],
                 };
             }
-            hostMap[hostname].dbs.push(db.identity?.db_unique_name || 'Unknown');
+            // Avoid duplicate DB names in the list
+            const dbName = db.identity?.db_unique_name || 'Unknown';
+            if (!hostMap[hostname].dbs.includes(dbName)) {
+                hostMap[hostname].dbs.push(dbName);
+            }
         });
 
         Object.values(hostMap).forEach((h) => hosts.push(h));

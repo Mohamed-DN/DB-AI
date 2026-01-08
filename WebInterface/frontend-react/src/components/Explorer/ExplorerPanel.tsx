@@ -18,7 +18,7 @@ export default function ExplorerPanel() {
         'agent_config',
     ];
 
-    const renderJsonTree = (data: any, depth = 0, isLast = true): ReactNode => {
+    const renderJsonTree = (data: any, depth = 0): ReactNode => {
 
         if (data === null) return <span className="text-gray-500">null</span>;
         if (typeof data === 'boolean') return <span className="text-purple-400">{String(data)}</span>;
@@ -35,7 +35,7 @@ export default function ExplorerPanel() {
                         {data.map((item, i) => (
                             <div key={i} className="relative py-1">
                                 <span className="absolute -left-4 top-4 w-4 h-[1px] bg-gray-700"></span>
-                                {renderJsonTree(item, depth + 1, i === data.length - 1)}
+                                {renderJsonTree(item, depth + 1)}
                             </div>
                         ))}
                     </div>
@@ -48,11 +48,11 @@ export default function ExplorerPanel() {
             return (
                 <div className="relative">
                     <div style={indentStyle}>
-                        {keys.map((key, i) => (
+                        {keys.map((key) => (
                             <div key={key} className="relative py-1">
                                 <span className="absolute -left-4 top-4 w-4 h-[1px] bg-gray-700"></span>
                                 <span className="text-pink-400 font-semibold text-xs mr-2">{key}:</span>
-                                {renderJsonTree(data[key], depth + 1, i === keys.length - 1)}
+                                {renderJsonTree(data[key], depth + 1)}
                             </div>
                         ))}
                     </div>
@@ -64,7 +64,7 @@ export default function ExplorerPanel() {
     };
 
     // Ref for JSON Crack iframe
-    const jsonCrackRef = import.meta.env.MODE === 'development' ? null : null; // irrelevant, just placeholder logic if needed
+    // Ref for JSON Crack iframe
 
     // We use a callback ref or simple effect to handle postMessage
     const handleIframeLoad = (e: React.SyntheticEvent<HTMLIFrameElement>) => {

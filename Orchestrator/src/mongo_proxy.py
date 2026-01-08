@@ -71,3 +71,8 @@ class MongoProxy:
         
         js_cmd = f"db.inventory_databases.updateOne({{ 'identity.db_unique_name': '{name}' }}, {{ $set: {doc_json} }}, {{ upsert: true }})"
         return self.execute_eval(js_cmd)
+
+    def update_status(self, db_name, status):
+        """Update just the status field"""
+        js = f"db.inventory_databases.updateOne({{ 'identity.db_unique_name': '{db_name}' }}, {{ $set: {{ 'state.status': '{status}', 'state.last_check': new Date() }} }})"
+        return self.execute_eval(js)

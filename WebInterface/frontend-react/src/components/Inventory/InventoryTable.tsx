@@ -1,5 +1,6 @@
-import { Terminal, SquareTerminal, Trash2, ChevronDown, ChevronUp, Database } from 'lucide-react';
+import { Terminal, SquareTerminal, Trash2, ChevronDown, ChevronUp, Database, RefreshCw, Loader2 } from 'lucide-react';
 import { useState } from 'react';
+import { useQueryClient } from '@tanstack/react-query';
 import { useDatabases, useConnectDatabase, useDeleteDatabase } from '../../hooks/useDatabases';
 import type { Database as DatabaseType, PDB } from '../../types/database';
 
@@ -68,6 +69,7 @@ function DatabaseRow({ db }: { db: DatabaseType }) {
 
     const pdbs = db.pdbs || db.configuration?.oracle_specific?.pdbs || [];
     const hasPdbs = pdbs.length > 0;
+    const service = (db as any).business_service; // Type assertion until types updated
 
     const handleSqlConnect = () => {
         connectMutation.mutate({ dbName: db.identity.db_unique_name, mode: 'sql' });
@@ -85,17 +87,15 @@ function DatabaseRow({ db }: { db: DatabaseType }) {
 
     return (
         <>
-            <tr className="table-row">
+            <tr className={`table-row ${expanded ? 'bg-gray-800/60 transition-colors' : ''}`}>
                 <td className="px-6 py-4">
-                    <StatusBadge status={db.state.status} />
+                    <StatusBadge status={db.state?.status || 'UNKNOWN'} />
                 </td>
                 <td className="px-6 py-4">
                     <div className="flex items-center gap-2">
-                        {hasPdbs && (
-                            <button onClick={() => setExpanded(!expanded)} className="text-gray-400 hover:text-white">
-                                {expanded ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
-                            </button>
-                        )}
+                        <button onClick={() => setExpanded(!expanded)} className="text-gray-400 hover:text-white transition-colors">
+                            {expanded ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
+                        </button>
                         <span className="font-medium">{db.identity.db_unique_name}</span>
                         <span className="text-xs text-gray-500 bg-gray-800 px-2 py-0.5 rounded">
                             {db.identity.topology}
@@ -109,10 +109,10 @@ function DatabaseRow({ db }: { db: DatabaseType }) {
                     </span>
                 </td>
                 <td className="px-6 py-4 text-gray-400">
-                    {db.connection.host || db.identity.host || 'N/A'}
+                    {db.connection?.host || db.identity?.host || 'N/A'}
                 </td>
                 <td className="px-6 py-4 text-gray-400">
-                    {db.connection.port || '—'}
+                    {db.connection?.port || '—'}
                 </td>
                 <td className="px-6 py-4 text-gray-400">
                     {db.identity.environment || 'N/A'}
@@ -120,9 +120,16 @@ function DatabaseRow({ db }: { db: DatabaseType }) {
                 <td className="px-6 py-4">
                     <div className="flex gap-2">
                         <button
+                            onClick={() => connectMutation.mutate({ dbName: db.identity.db_unique_name, mode: 'sysdba' })}
+                            className="p-2 bg-yellow-500/20 text-yellow-400 rounded hover:bg-yellow-500/30 transition-colors"
+                            title="SYSDBA / Superuser"
+                        >
+                            <span className="text-xs font-bold">DBA</span>
+                        </button>
+                        <button
                             onClick={handleSqlConnect}
                             className="p-2 bg-green-500/20 text-green-400 rounded hover:bg-green-500/30 transition-colors"
-                            title="SQL Console"
+                            title="SQL Console (AIAUTO)"
                         >
                             <Terminal className="w-4 h-4" />
                         </button>
@@ -143,9 +150,82 @@ function DatabaseRow({ db }: { db: DatabaseType }) {
                     </div>
                 </td>
             </tr>
-            {expanded && hasPdbs && pdbs.map((pdb) => (
-                <PDBRow key={pdb.name} pdb={pdb} parentDb={db} />
-            ))}
+            {expanded && (
+                <tr className="bg-gray-900/30">
+                    <td colSpan={7} className="px-6 py-4">
+                        <div className="grid grid-cols-3 gap-8 text-sm">
+                            {/* Census / Ownership */}
+                            <div className="space-y-2">
+                                <h4 className="text-gray-400 font-semibold uppercase text-xs tracking-wider mb-2">Business Census</h4>
+                                <div className="grid grid-cols-[100px_1fr] gap-1">
+                                    <span className="text-gray-500">Service:</span>
+                                    <span className="text-gray-300">{service?.name || "N/A"}</span>
+
+                                    <span className="text-gray-500">SNOW Group:</span>
+                                    <span className="text-cyan-400 font-mono text-xs">{service?.snow_group || "UNASSIGNED"}</span>
+
+                                    <span className="text-gray-500">Reperibilità:</span>
+                                    <span className="text-orange-400">{service?.reperibility || "N/A"}</span>
+
+                                    <span className="text-gray-500">BAO:</span>
+                                    <div className="flex flex-col">
+                                        <span className="text-white">{service?.contacts?.bao?.name || "Unknown"}</span>
+                                        <span className="text-xs text-gray-500">{service?.contacts?.bao?.email}</span>
+                                        <span className="text-xs text-gray-500">{service?.contacts?.bao?.phone}</span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* Technical Details */}
+                            <div className="space-y-2">
+                                <h4 className="text-gray-400 font-semibold uppercase text-xs tracking-wider mb-2">Technical Census</h4>
+                                <div className="grid grid-cols-[100px_1fr] gap-1">
+                                    <span className="text-gray-500">Version:</span>
+                                    <span className="text-gray-300">{db.configuration?.version || "Unknown"}</span>
+
+                                    <span className="text-gray-500">Gateway:</span>
+                                    <span className="text-gray-300">{db.identity.gateway_ref || "Direct"}</span>
+
+                                    <span className="text-gray-500">OS:</span>
+                                    <span className="text-gray-300">{(db.state.metrics as any)?.os?.name || "Linux"}</span>
+
+                                    <span className="text-gray-500">Licensing:</span>
+                                    <span className="text-purple-400">Standard Edition</span>
+                                </div>
+                            </div>
+
+                            {/* Capacity / Other */}
+                            <div className="space-y-2">
+                                <h4 className="text-gray-400 font-semibold uppercase text-xs tracking-wider mb-2">Capacity & Policy</h4>
+                                <div className="grid grid-cols-[100px_1fr] gap-1">
+                                    <span className="text-gray-500">Storage:</span>
+                                    <span className="text-gray-300">{(db.state.metrics as any)?.disk_io || "N/A"} (Current)</span>
+
+                                    <span className="text-gray-500">Max Size:</span>
+                                    <span className="text-gray-300">Not Set</span>
+
+                                    <span className="text-gray-500">Retention:</span>
+                                    <span className="text-gray-300">30 Days (Default)</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* PDB List */}
+                        {hasPdbs && (
+                            <div className="mt-4 pt-4 border-t border-gray-700/50">
+                                <h4 className="text-gray-400 font-semibold uppercase text-xs tracking-wider mb-2">Pluggable Databases (PDBs)</h4>
+                                <table className="w-full text-sm">
+                                    <tbody>
+                                        {pdbs.map((pdb) => (
+                                            <PDBRow key={pdb.name} pdb={pdb} parentDb={db} />
+                                        ))}
+                                    </tbody>
+                                </table>
+                            </div>
+                        )}
+                    </td>
+                </tr>
+            )}
         </>
     );
 }
@@ -173,12 +253,40 @@ export default function InventoryTable() {
         );
     }
 
+    const queryClient = useQueryClient();
+    const [isRefreshing, setIsRefreshing] = useState(false);
+
+    const handleRefresh = async () => {
+        setIsRefreshing(true);
+        try {
+            await fetch('http://localhost:8000/api/action/collect', { method: 'POST' });
+            // Wait 2 seconds for Collector to perform its check
+            setTimeout(() => {
+                queryClient.invalidateQueries({ queryKey: ['databases'] });
+                setIsRefreshing(false);
+            }, 2000);
+        } catch (e) {
+            console.error("Refresh failed", e);
+            setIsRefreshing(false);
+        }
+    };
+
     return (
         <div className="glass overflow-hidden">
             <table className="w-full">
                 <thead className="bg-gray-800/50">
                     <tr>
-                        <th className="px-6 py-4 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">Status</th>
+                        <th className="px-6 py-4 text-left text-xs font-medium text-gray-400 uppercase tracking-wider flex items-center gap-2">
+                            Status
+                            <button
+                                onClick={handleRefresh}
+                                disabled={isRefreshing}
+                                title="Force Refresh Status"
+                                className={`hover:text-white transition-colors ${isRefreshing ? 'animate-spin text-blue-400' : ''}`}
+                            >
+                                {isRefreshing ? <Loader2 className="w-4 h-4" /> : <RefreshCw className="w-4 h-4" />}
+                            </button>
+                        </th>
                         <th className="px-6 py-4 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">Name</th>
                         <th className="px-6 py-4 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">Engine</th>
                         <th className="px-6 py-4 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">Host</th>

@@ -29,13 +29,18 @@ from tools.inventory_tools import (
     search_inventory,
     get_pdbs_info
 )
+from tools.action_tools import (
+    manage_container,
+    get_container_logs,
+    check_system_health
+)
 
 load_dotenv()
 
 app = FastAPI(
-    title="Nexi AI Assistant",
-    description="LangChain-powered AI for database management",
-    version="1.0.0"
+    title="Nexi AI Admin",
+    description="Autonomous AI Administrator for Nexi CMDB",
+    version="2.0.0"
 )
 
 app.add_middleware(
@@ -53,7 +58,7 @@ MODEL_NAME = os.getenv("LLM_MODEL", "llama3.2")
 llm = ChatOllama(
     base_url=OLLAMA_URL,
     model=MODEL_NAME,
-    temperature=0.1,
+    temperature=0.2, # Lower temperature for more precise admin actions
 )
 
 # Define tools
@@ -64,22 +69,36 @@ tools = [
     get_database_metrics,
     search_inventory,
     get_pdbs_info,
+    # ADMIN TOOLS
+    manage_container,
+    get_container_logs,
+    check_system_health
 ]
 
 # System prompt
-SYSTEM_PROMPT = """Sei l'assistente AI di Nexi CMDB (Configuration Management Database).
-Il tuo compito è aiutare gli utenti a gestire e monitorare i database Oracle e PostgreSQL.
+SYSTEM_PROMPT = """Sei l'Amministratore di Sistema AI di Nexi CMDB.
+Hai il COMPLETO CONTROLLO e l'AUTORIZZAZIONE per gestire l'infrastruttura.
+Il tuo obiettivo è mantenere il sistema stabile, sicuro e performante.
 
-Hai accesso ai seguenti strumenti:
-- search_databases: Cerca database per nome
-- get_database_status: Ottieni lo stato di un database specifico
-- list_databases_by_status: Lista tutti i database con un certo stato (UP, DOWN, WARNING)
-- get_database_metrics: Ottieni le metriche di un database
-- search_inventory: Cerca nell'inventario MongoDB
-- get_pdbs_info: Ottieni informazioni sui PDB di un database Oracle
+CAPACITÀ:
+- Puoi avviare, fermare e riavviare container Docker se necessario.
+- Puoi leggere i log per diagnosticare errori.
+- Puoi consultare l'inventario e lo stato dei database.
 
-Rispondi sempre in italiano a meno che l'utente non scriva in inglese.
-Sii conciso ma completo nelle risposte.
+REGOLE DI COMPORTAMENTO:
+1. **Sii Proattivo**: Se vedi un problema (es. DB down), indaga e proponi/esegui una soluzione.
+2. **Ragiona Prima di Agire**: Usa i log per capire la causa radice prima di riavviare a caso.
+3. **Sii Chiaro**: Spiega cosa hai fatto e perché.
+4. **Non Chiedere Permesso per Fix Ovvi**: Se un servizio è crashato, riavvialo. Hai il permesso ("lock") dell'utente.
+
+STRUMENTI A DISPOSIZIONE:
+- `check_system_health`: Controlla lo stato globale dei container.
+- `get_database_status` / `search_databases`: Informazioni sui DB.
+- `get_container_logs`: Leggi i log di errore.
+- `manage_container`: Esegui azioni (start/stop/restart).
+
+Rispondi in italiano. Sii professionale, diretto ed efficace.
+Sembra un SRE (Site Reliability Engineer) senior.
 """
 
 prompt = ChatPromptTemplate.from_messages([
@@ -96,7 +115,7 @@ agent_executor = AgentExecutor(
     tools=tools,
     verbose=True,
     handle_parsing_errors=True,
-    max_iterations=5,
+    max_iterations=10, # Allow more steps for complex diagnosis -> fix -> verify loops
 )
 
 # Chat history storage (simple in-memory for now)

@@ -96,6 +96,16 @@ class CriticalAlertAgent:
             backup_alert = self._check_backup_status(db)
             if backup_alert:
                 alerts.append(backup_alert)
+
+            # [NEW] Check SQL Performance
+            sql_alert = self._check_sql_performance(db)
+            if sql_alert:
+                alerts.append(sql_alert)
+
+            # [NEW] Check Restore Points
+            rp_alert = self._check_restore_points(db)
+            if rp_alert:
+                alerts.append(rp_alert)
         
         # Check monitoring_alerts collection for new alerts from Checkmk
         external_alerts = self._check_monitoring_alerts()
@@ -139,7 +149,10 @@ class CriticalAlertAgent:
         alerts = []
         db_name = db.get('identity', {}).get('db_unique_name', 'UNKNOWN')
         
-        for ts in db.get('storage', {}).get('tablespaces', []):
+        storage = db.get('storage', {}) or {}
+        tablespaces = storage.get('tablespaces') or []
+        
+        for ts in tablespaces:
             usage = ts.get('usage_pct', 0)
             if usage >= 95:
                 alerts.append({
@@ -156,7 +169,8 @@ class CriticalAlertAgent:
     
     def _check_dataguard_lag(self, db: Dict) -> Optional[Dict]:
         """Check Data Guard replication lag."""
-        repl = db.get('data_protection', {}).get('replication', {})
+        dp = db.get('data_protection', {}) or {}
+        repl = dp.get('replication') or {}
         
         if repl.get('technology') == 'DATAGUARD' and repl.get('is_active'):
             # In real implementation, would check actual lag
@@ -176,7 +190,8 @@ class CriticalAlertAgent:
     
     def _check_backup_status(self, db: Dict) -> Optional[Dict]:
         """Check backup status."""
-        backup = db.get('data_protection', {}).get('backup', {})
+        dp = db.get('data_protection', {}) or {}
+        backup = dp.get('backup') or {}
         
         if backup.get('status') == 'FAILED':
             return {
@@ -187,6 +202,45 @@ class CriticalAlertAgent:
                 'timestamp': datetime.now(),
                 'action': 'Email DL'
             }
+        return None
+
+    def _check_sql_performance(self, db: Dict) -> Optional[Dict]:
+        """Check for long running queries (> 1 hour)."""
+        state = db.get('state', {}) or {}
+        metrics = state.get('metrics') or {}
+        max_query_time = metrics.get('max_query_time', 0)
+        
+        if max_query_time > 3600: # 1 hour
+             return {
+                'type': 'SQL_PERFORMANCE',
+                'severity': 'CRITICAL',
+                'db_unique_name': db.get('identity', {}).get('db_unique_name'),
+                'message': f'SQL Query running for {max_query_time}s (>1h)',
+                'timestamp': datetime.now(),
+                'action': 'Email BAO'
+            }
+        return None
+
+    def _check_restore_points(self, db: Dict) -> Optional[Dict]:
+        """Check for old restore points."""
+        rps = db.get('data_protection', {}).get('restore_points', [])
+        for rp in rps:
+            # Mock check: creation_time
+            # Assuming rp has 'timestamp' or we treat existence as check
+            # Requirement: "delete dello stesso dopo massimo x ore"
+            # If we see ANY restore point, we might want to check age.
+            # For now, if RP exists, we assume user should know.
+            # Let's verify 'age_hours' if present.
+            age = rp.get('age_hours', 0)
+            if age > 24:
+                return {
+                    'type': 'RESTORE_POINT_OLD',
+                    'severity': 'WARNING',
+                    'db_unique_name': db.get('identity', {}).get('db_unique_name'),
+                    'message': f"Restore Point '{rp.get('name')}' is {age}h old (>24h)",
+                    'timestamp': datetime.now(),
+                    'action': 'Email DL'
+                }
         return None
     
     def _check_monitoring_alerts(self) -> List[Dict]:

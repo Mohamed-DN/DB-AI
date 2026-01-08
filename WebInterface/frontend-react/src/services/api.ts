@@ -55,7 +55,7 @@ export const refreshDatabase = async (dbName: string): Promise<void> => {
 // Connection
 export const connectDatabase = async (
     dbName: string,
-    mode: 'sql' | 'bash' = 'sql'
+    mode: 'sql' | 'bash' | 'sysdba' = 'sql'
 ): Promise<{ status: string }> => {
     const { data } = await api.post(`/action/connect/${dbName}`, null, {
         params: { mode }
