@@ -46,7 +46,7 @@ Nexi_DB_AI/
 │
 ├── scripts/                # 🛠️ PowerShell Utilities
 │   ├── start-all.ps1       # Start V1 system
-│   ├── start_migration_v2.ps1 # Start V2 shadow system
+│   ├── setup_v2.ps1        # Start V2 shadow system (Zero-Config)
 │   ├── stop-all.ps1        # Stop V1 system
 │   ├── pull_models.ps1     # Download Ollama models
 │   └── ...                 # Other utilities
@@ -152,12 +152,12 @@ cd ..
 
 ### V2 (Shadow System - Parallel)
 ```powershell
-.\scripts\start_migration_v2.ps1
+.\scripts\setup_v2.ps1
 ```
 
 ### Health Check Only
 ```powershell
-.\scripts\start_migration_v2.ps1 -HealthCheckOnly
+.\scripts\setup_v2.ps1 -SkipDocker -SkipFrontend -SkipBackend
 ```
 
 ---
