@@ -300,7 +300,7 @@ services:
     restart: unless-stopped
 
   # ===========================================================================
-  # OBSERVABILITY - Langfuse LLM Tracing (V3)
+  # OBSERVABILITY - Langfuse LLM Tracing
   # ===========================================================================
 
   # PostgreSQL for Langfuse
@@ -319,40 +319,20 @@ services:
         ipv4_address: 172.21.0.20
     restart: unless-stopped
 
-  # ClickHouse for Langfuse V3
-  langfuse-clickhouse:
-    image: clickhouse/clickhouse-server:24
-    container_name: nexi-langfuse-clickhouse2
-    hostname: langfuse-clickhouse.nexi.lab
-    environment:
-      CLICKHOUSE_DB: langfuse
-      CLICKHOUSE_USER: langfuse
-      CLICKHOUSE_PASSWORD: langfuse2024
-    volumes:
-      - langfuse_clickhouse_data_v2:/var/lib/clickhouse
-    networks:
-      nexi-lab2:
-        ipv4_address: 172.21.0.22
-    restart: unless-stopped
-
-  # Langfuse - LLM Observability V3
+  # Langfuse - LLM Observability (V2 - stable, PostgreSQL-only)
   langfuse:
-    image: langfuse/langfuse:latest
+    image: langfuse/langfuse:2
     container_name: nexi-langfuse2
     hostname: langfuse.nexi.lab
     ports:
       - "${LANGFUSE_PORT:-3001}:3000"
     environment:
       DATABASE_URL: postgresql://langfuse:langfuse2024@langfuse-db:5432/langfuse
-      CLICKHOUSE_URL: http://langfuse:langfuse2024@langfuse-clickhouse:8123
-      CLICKHOUSE_MIGRATION_URL: clickhouse://langfuse:langfuse2024@langfuse-clickhouse:9000/langfuse
       NEXTAUTH_URL: http://localhost:3001
       NEXTAUTH_SECRET: super-secret-langfuse-key-change-in-prod
       SALT: super-secret-salt-change-in-prod
-      ENCRYPTION_KEY: 0
     depends_on:
       - langfuse-db
-      - langfuse-clickhouse
     networks:
       nexi-lab2:
         ipv4_address: 172.21.0.21
