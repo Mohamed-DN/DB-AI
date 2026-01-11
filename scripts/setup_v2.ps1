@@ -201,6 +201,18 @@ if (-not $SkipFrontend) {
     Write-Host "✅ Frontend UI Started." -ForegroundColor Green
 }
 
+# -----------------------------------------------------------------------------
+# 7. Seed MongoDB (if empty)
+# -----------------------------------------------------------------------------
+Write-Host "`n[STEP 7] Seeding MongoDB Collections..." -ForegroundColor Yellow
+$SeedScript = "$PSScriptRoot\..\execution\seed_mongodb.py"
+if (Test-Path $SeedScript) {
+    python $SeedScript
+}
+else {
+    Write-Host "⚠️  Seed script not found, skipping." -ForegroundColor Gray
+}
+
 Write-Host "`n=================================================================" -ForegroundColor Cyan
 Write-Host "   NEXI AI CMDB V2 IS READY 🚀" -ForegroundColor Cyan
 Write-Host "=================================================================" -ForegroundColor Cyan
@@ -209,3 +221,4 @@ Write-Host "   API Docs:     http://localhost:$($EnvVars['BACKEND_PORT'])/docs"
 Write-Host "   Mongo UI:     http://localhost:$($EnvVars['MONGO_EXPRESS_PORT'])"
 Write-Host "   Ollama:       http://localhost:$($EnvVars['OLLAMA_PORT'])"
 Write-Host "=================================================================" -ForegroundColor Cyan
+
