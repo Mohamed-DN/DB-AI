@@ -232,10 +232,14 @@ function AppContent() {
   );
 }
 
+import { ConnectionProvider } from './context/ConnectionContext';
+
 export default function App() {
   return (
     <QueryClientProvider client={queryClient}>
-      <AppContent />
+      <ConnectionProvider>
+        <AppContent />
+      </ConnectionProvider>
     </QueryClientProvider>
   );
 }

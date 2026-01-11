@@ -1,7 +1,8 @@
 import { Terminal, SquareTerminal, Trash2, ChevronDown, ChevronUp, Database, RefreshCw, Loader2 } from 'lucide-react';
 import { useState } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
-import { useDatabases, useConnectDatabase, useDeleteDatabase } from '../../hooks/useDatabases';
+import { useDatabases, useDeleteDatabase } from '../../hooks/useDatabases';
+import { useConnection } from '../../context/ConnectionContext';
 import type { Database as DatabaseType, PDB } from '../../types/database';
 
 function StatusBadge({ status }: { status: string }) {
@@ -21,11 +22,11 @@ function StatusBadge({ status }: { status: string }) {
 }
 
 function PDBRow({ pdb, parentDb }: { pdb: PDB; parentDb: DatabaseType }) {
-    const connectMutation = useConnectDatabase();
+    const { connect } = useConnection();
 
     const handleConnect = () => {
         const pdbPath = `${parentDb.identity.db_unique_name}/${pdb.name}`;
-        connectMutation.mutate({ dbName: pdbPath, mode: 'sql' });
+        connect(pdbPath, 'sql');
     };
 
     return (
@@ -64,7 +65,7 @@ function PDBRow({ pdb, parentDb }: { pdb: PDB; parentDb: DatabaseType }) {
 
 function DatabaseRow({ db }: { db: DatabaseType }) {
     const [expanded, setExpanded] = useState(false);
-    const connectMutation = useConnectDatabase();
+    const { connect } = useConnection();
     const deleteMutation = useDeleteDatabase();
 
     const pdbs = db.pdbs || db.configuration?.oracle_specific?.pdbs || [];
@@ -72,11 +73,11 @@ function DatabaseRow({ db }: { db: DatabaseType }) {
     const service = (db as any).business_service; // Type assertion until types updated
 
     const handleSqlConnect = () => {
-        connectMutation.mutate({ dbName: db.identity.db_unique_name, mode: 'sql' });
+        connect(db.identity.db_unique_name, 'sql');
     };
 
     const handleBashConnect = () => {
-        connectMutation.mutate({ dbName: db.identity.db_unique_name, mode: 'bash' });
+        connect(db.identity.db_unique_name, 'bash');
     };
 
     const handleDelete = () => {
@@ -120,7 +121,7 @@ function DatabaseRow({ db }: { db: DatabaseType }) {
                 <td className="px-6 py-4">
                     <div className="flex gap-2">
                         <button
-                            onClick={() => connectMutation.mutate({ dbName: db.identity.db_unique_name, mode: 'sysdba' })}
+                            onClick={() => connect(db.identity.db_unique_name, 'sysdba')}
                             className="p-2 bg-yellow-500/20 text-yellow-400 rounded hover:bg-yellow-500/30 transition-colors"
                             title="SYSDBA / Superuser"
                         >
