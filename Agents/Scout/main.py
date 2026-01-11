@@ -14,10 +14,12 @@ sys.stdout.reconfigure(encoding='utf-8')
 # Add path for shared modules
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '../../')))
 from Orchestrator.src.mongo_proxy import MongoProxy
+from Agents.Scout.user_provisioner import UserProvisioner
 
 class ScoutAgent:
     def __init__(self):
         self.mongo = MongoProxy()
+        self.provisioner = UserProvisioner(self.mongo)
         
     def scan_docker(self):
         """Scan Docker for database containers"""
@@ -157,6 +159,18 @@ class ScoutAgent:
                     "processed": False
                 }
                 self.mongo.insert_alert(alert)
+                
+                # 🔑 AUTO-PROVISION AIAUTO USER
+                try:
+                    prov_result = self.provisioner.provision_database(db)
+                    if prov_result.get('provisioned'):
+                        print(f"✅ AIAUTO user provisioned on {name}")
+                    elif prov_result.get('skipped'):
+                        print(f"⏭️ Skipped provisioning for {name}: {prov_result.get('reason')}")
+                    else:
+                        print(f"⚠️ Provisioning failed for {name}: {prov_result.get('message', prov_result.get('error'))}")
+                except Exception as prov_err:
+                    print(f"❌ Provisioning error for {name}: {prov_err}")
 
             # Check if NEW or EXISTING for Update Logic
             if name in existing_names:
