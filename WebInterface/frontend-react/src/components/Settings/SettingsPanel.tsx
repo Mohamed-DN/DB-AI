@@ -1,89 +1,27 @@
-import { useState, useEffect } from 'react';
-import { Save, RefreshCw } from 'lucide-react';
-
-const AGENT_SETTINGS = [
-    { id: 'scout', name: 'Scout Agent', default: 300 },
-    { id: 'collector', name: 'Collector', default: 60 },
-    { id: 'watcher', name: 'Watcher', default: 30 },
-    { id: 'criticalalert', name: 'Critical Alert', default: 60 },
-    { id: 'forensicanalyzer', name: 'Forensic AI', default: 300 },
-    { id: 'checkmk_bridge', name: 'CheckMK Bridge', default: 120 },
-];
+import { Bot } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 
 export default function SettingsPanel() {
-    const [settings, setSettings] = useState<Record<string, number>>({});
-    const [saving, setSaving] = useState(false);
-
-    useEffect(() => {
-        loadSettings();
-    }, []);
-
-    const loadSettings = async () => {
-        try {
-            const res = await fetch('/api/config');
-            const config = await res.json();
-            const newSettings: Record<string, number> = {};
-            AGENT_SETTINGS.forEach((agent) => {
-                newSettings[agent.id] = config[`${agent.id}_interval`] || agent.default;
-            });
-            setSettings(newSettings);
-        } catch (e) {
-            console.error('Failed to load settings:', e);
-        }
-    };
-
-    const saveSettings = async () => {
-        setSaving(true);
-        try {
-            const config: Record<string, number> = {};
-            Object.keys(settings).forEach((key) => {
-                config[`${key}_interval`] = settings[key];
-            });
-            await fetch('/api/config', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(config),
-            });
-            alert('Settings saved!');
-        } catch (e) {
-            alert('Failed to save settings');
-        }
-        setSaving(false);
-    };
+    const navigate = useNavigate();
 
     return (
-        <div className="glass p-6">
-            <h3 className="text-lg font-semibold mb-6">Agent Intervals (seconds)</h3>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {AGENT_SETTINGS.map((agent) => (
-                    <div key={agent.id}>
-                        <label className="block text-sm text-gray-400 mb-2">{agent.name}</label>
-                        <input
-                            type="number"
-                            value={settings[agent.id] || agent.default}
-                            onChange={(e) =>
-                                setSettings((prev) => ({
-                                    ...prev,
-                                    [agent.id]: parseInt(e.target.value) || agent.default,
-                                }))
-                            }
-                            className="w-full bg-gray-800 border border-gray-600 rounded px-4 py-2 focus:outline-none focus:border-purple-500"
-                        />
-                    </div>
-                ))}
+        <div className="glass p-12 text-center flex flex-col items-center justify-center min-h-[400px]">
+            <div className="p-4 rounded-full bg-purple-500/20 mb-6 animate-pulse">
+                <Bot className="w-16 h-16 text-purple-400" />
             </div>
 
-            <div className="flex gap-4 mt-8">
-                <button onClick={saveSettings} disabled={saving} className="btn-primary">
-                    <Save className="w-4 h-4" />
-                    {saving ? 'Saving...' : 'Save Settings'}
-                </button>
-                <button onClick={loadSettings} className="btn-secondary">
-                    <RefreshCw className="w-4 h-4" />
-                    Reset
-                </button>
-            </div>
+            <h2 className="text-2xl font-bold mb-4">Settings Moved</h2>
+            <p className="text-gray-400 max-w-md mx-auto mb-8">
+                Agent configuration, including intervals and start/stop controls, has been moved to the new consolidated <strong>Agents Panel</strong>.
+            </p>
+
+            <button
+                onClick={() => navigate('/agents')}
+                className="btn-primary px-8 py-3 text-lg flex items-center gap-2"
+            >
+                <Bot className="w-5 h-5" />
+                Go to Agents Configuration
+            </button>
         </div>
     );
 }
