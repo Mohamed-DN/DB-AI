@@ -1,18 +1,31 @@
-# Agents (Folder)
+# Agents
 
-## Scopo del progetto
-Describe the agent executables that run discovery, monitoring, and alerting tasks.
+> Background workers for database discovery, monitoring, and alerting.
 
-## Installazione e Setup
-Install requirements per agent when present. Ensure Docker and MongoDB are running.
+## Structure
 
-## Architettura
-- Scout: auto discovery
-- Collector: metrics collection
-- Watcher: log monitoring
-- CriticalAlert: availability checks and notifications
-- CheckMK Bridge: external monitoring sync
-- DailyAudit: periodic reports
+```
+Agents/
+├── Scout/           # Auto-discovery
+├── Collector/       # Metrics collection
+├── Watcher/         # Log monitoring
+├── CriticalAlert/   # Availability checks
+├── CheckMK_Bridge/  # External sync
+├── AIAssistant/     # Chat tools
+├── DailyAudit/      # Scheduled reports
+└── Monitor/         # Legacy
+```
 
-## Utilizzo
-Use the Agents panel in the UI or run agents from CLI with --once.
+## Running Agents
+
+```bash
+# One-shot mode (recommended for testing)
+python Agents/Scout/main.py --once
+
+# Continuous mode (uses interval from config)
+python Agents/Scout/main.py
+```
+
+## See Also
+- [AGENTS.md](../AGENTS.md) - Full documentation
+- [directives/](../directives/) - SOPs for each agent

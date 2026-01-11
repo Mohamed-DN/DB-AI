@@ -1,26 +1,49 @@
 # WebInterface
 
-## Scopo del progetto
-Provides the REST API and the web dashboard for Nexi DBA AI.
+> Frontend (React) and Backend (FastAPI) for the dashboard.
 
-## Installazione e Setup
-Backend:
-- pip install -r WebInterface/backend/requirements.txt
-- cd WebInterface/backend
-- uvicorn main:app --reload --port 9000
+## Structure
 
-Frontend:
-- cd WebInterface/frontend-react
-- npm install
-- npm run dev:v2
+```
+WebInterface/
+├── backend/           # FastAPI API (Python)
+│   ├── main.py        # Main application (~1000 lines)
+│   └── requirements.txt
+└── frontend-react/    # React Dashboard
+    ├── src/
+    │   ├── components/  # UI components
+    │   ├── hooks/       # React Query hooks
+    │   └── services/    # API client
+    └── package.json
+```
 
-Vite reads VITE_* variables from the repo root .env.
+## Running
 
-## Architettura
-- backend/main.py: API endpoints, agent triggers, system_config handling.
-- frontend-react/src/App.tsx: navigation and layout.
-- frontend-react/src/services/api.ts: API client.
-- frontend-react/src/components: dashboard panels.
+```powershell
+# Backend (port 9000)
+cd WebInterface/backend
+pip install -r requirements.txt
+python -m uvicorn main:app --reload --port 9000
 
-## Utilizzo
-Open http://localhost:4002 and use the dashboard to run auto discovery and manage agents.
+# Frontend (port 4002)
+cd WebInterface/frontend-react
+npm install
+npm run dev:v2
+```
+
+Or use `.\scripts\setup_v2.ps1` to start both automatically.
+
+## API Endpoints
+
+| Endpoint | Method | Purpose |
+|----------|--------|---------|
+| `/api/inventory` | GET | List databases |
+| `/api/alerts` | GET | List alerts |
+| `/api/agents/status` | GET | Agent status |
+| `/api/auto-discovery` | POST | Trigger scan |
+| `/api/chat` | POST | AI chat |
+
+Full docs: http://localhost:9000/docs
+
+## See Also
+- [ARCHITECTURE.md](../ARCHITECTURE.md) - System design

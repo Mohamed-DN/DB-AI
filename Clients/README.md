@@ -1,15 +1,16 @@
 # Clients
 
-## Scopo del progetto
-Placeholders for external clients that integrate with the backend API.
+> Client libraries and connectors.
 
-## Installazione e Setup
-No extra setup. See README.md.
+## Purpose
 
-## Architettura
-Clients call FastAPI endpoints under /api and consume JSON responses.
+Contains client code for connecting to various database types:
+- PostgreSQL
+- Oracle
+- MySQL (planned)
 
-## Utilizzo
-Examples:
-curl http://localhost:9000/api/inventory
-curl -X POST http://localhost:9000/api/action/scan
+## Usage
+
+Clients are used by the Collector agent to gather metrics.
+
+See `Agents/Collector/` for implementation.

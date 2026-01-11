@@ -1,16 +1,25 @@
-# Gateway Layer
+# Gateway
 
-## Scopo del progetto
-Route commands between orchestrator and remote agents using Redis queues.
+> SSH gateways for secure database access.
 
-## Installazione e Setup
-Redis is provided by docker-lab. Configure connection in Gateway/redis_config.
+## Purpose
 
-## Architettura
-Queues:
-- cmd_in: orchestrator to gateway to agent
-- result_out: agent to gateway to orchestrator
-Flow: Orchestrator -> Redis -> Gateway -> Agent -> Gateway -> Redis -> Orchestrator.
+Gateways act as jump hosts to reach databases in isolated networks:
 
-## Utilizzo
-Start Redis from docker-lab and ensure the gateway process can reach it.
+```
+User → Gateway → Database
+```
+
+## V2 Gateways
+
+| Gateway | Location | Accessible DBs |
+|---------|----------|----------------|
+| nexi-gw-milano2 | Milan | pg-milano-* |
+| nexi-gw-bratislava2 | Bratislava | pg-bratislava-* |
+| nexi-gw-cairo2 | Cairo | oracle-cairo-* |
+
+## Configuration
+
+Gateway info is stored in MongoDB `gateways` collection.
+
+Scout agent uses `GATEWAY_SUFFIX` env var to find V2 gateways.

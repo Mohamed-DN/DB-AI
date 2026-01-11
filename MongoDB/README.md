@@ -1,26 +1,40 @@
 # MongoDB (CMDB)
 
-## Scopo del progetto
-MongoDB stores inventory, metrics, alerts, and configuration for the platform.
+> Central data store for inventory, metrics, alerts, and configuration.
 
-## Installazione e Setup
-Use docker-lab or supply a MongoDB instance. Configure:
-MONGODB_HOST, MONGODB_DB, MONGO_USERNAME, MONGO_PASSWORD.
-Optional: MONGO_CONTAINER for MongoProxy.
+## Connection (V2)
 
-## Architettura
-Key collections:
-- inventory_databases
-- monitoring_alerts
-- system_config
-- discovery_queue
-- business_services
-- gateways
-- agent_runs
-- baselines
-- compliance_reports
-- rag_knowledge_base
+```
+Host: localhost
+Port: 28017
+Database: nexi_cmdb_v2
+User: admin
+Password: nexi2024
+```
 
-## Utilizzo
-Use Mongo Express or mongosh to inspect data.
-Example: db.inventory_databases.find({}).limit(5)
+## Collections
+
+| Collection | Purpose | Sample Query |
+|------------|---------|--------------|
+| `inventory_databases` | Discovered DBs | `db.inventory_databases.find()` |
+| `monitoring_alerts` | Active alerts | `db.monitoring_alerts.find({processed: false})` |
+| `system_config` | Settings | `db.system_config.find({key: "scout_interval"})` |
+| `gateways` | SSH gateways | `db.gateways.find()` |
+| `business_services` | Service mapping | `db.business_services.find()` |
+
+## Tools
+
+```powershell
+# Mongo Express UI
+http://localhost:9081
+
+# CLI
+docker exec -it nexi-mongodb2 mongosh nexi_cmdb_v2 -u admin -p nexi2024
+
+# Seed collections (if empty)
+python execution/seed_mongodb.py
+```
+
+## Schema
+
+See `MongoDB/struttura_mongo/collections/` for schema definitions.

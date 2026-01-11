@@ -1,17 +1,36 @@
 # Orchestrator
 
-## Scopo del progetto
-Coordinates LLM and RAG workflows and provides analysis utilities.
+> LLM and RAG pipeline for AI-powered chat and analysis.
 
-## Installazione e Setup
-Ensure Ollama and Qdrant are running. Configure OLLAMA_HOST and QDRANT_HOST.
+## Components
 
-## Architettura
-- config/llm_config.py: model catalog and defaults
-- llm/: Ollama client utilities
-- vector_db/: Qdrant client utilities
-- rag/: retrieval and prompt assembly
-- src/mongo_proxy.py: MongoDB access via Docker
+```
+Orchestrator/
+├── src/
+│   ├── mongo_proxy.py   # MongoDB via Docker CLI
+│   └── ...
+├── rag/                 # RAG pipeline (Qdrant)
+└── config/              # LLM settings
+```
 
-## Utilizzo
-Used by backend endpoints and agents for AI analysis and chat.
+## LLM Configuration
+
+Default model: `qwen2.5:7b` via Ollama
+
+```bash
+# Test Ollama
+curl http://localhost:12434/api/generate -d '{"model":"qwen2.5:7b","prompt":"Hello"}'
+```
+
+## MongoProxy
+
+When direct PyMongo fails, use `MongoProxy` which wraps `docker exec mongosh`:
+
+```python
+from Orchestrator.src.mongo_proxy import MongoProxy
+mongo = MongoProxy()
+result = mongo.execute_eval("db.inventory_databases.find().toArray()")
+```
+
+## See Also
+- [directives/ai_chat.md](../directives/ai_chat.md) - Chat directive
