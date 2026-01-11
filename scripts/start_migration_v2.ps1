@@ -34,6 +34,40 @@ Write-Host "================================================================" -F
 Write-Host ""
 
 # =============================================================================
+# STEP 0: Kill Existing V2 Processes
+# =============================================================================
+Write-Title "STEP 0: Stopping any existing V2 processes..."
+
+# Kill processes on port 9000 (Backend V2)
+$port9000 = netstat -ano | findstr ":9000" | findstr "LISTENING"
+if ($port9000) {
+    $port9000 -match 'LISTENING\s+(\d+)' | Out-Null
+    if ($matches[1]) {
+        try {
+            Stop-Process -Id $matches[1] -Force -ErrorAction SilentlyContinue
+            Write-Ok "Killed old backend on port 9000 (PID: $($matches[1]))"
+        }
+        catch { }
+    }
+}
+
+# Kill processes on port 4002 (Frontend V2)
+$port4002 = netstat -ano | findstr ":4002" | findstr "LISTENING"
+if ($port4002) {
+    $port4002 -match 'LISTENING\s+(\d+)' | Out-Null
+    if ($matches[1]) {
+        try {
+            Stop-Process -Id $matches[1] -Force -ErrorAction SilentlyContinue
+            Write-Ok "Killed old frontend on port 4002 (PID: $($matches[1]))"
+        }
+        catch { }
+    }
+}
+
+Start-Sleep -Seconds 2
+Write-Ok "Cleanup complete"
+
+# =============================================================================
 # STEP 1: Check Prerequisites
 # =============================================================================
 Write-Title "STEP 1: Checking Prerequisites..."
