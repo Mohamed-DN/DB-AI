@@ -1,5 +1,6 @@
 import { Server, Terminal } from 'lucide-react';
 import { useDatabases } from '../../hooks/useDatabases';
+import { useConnection } from '../../context/ConnectionContext';
 
 interface Host {
     name: string;
@@ -11,6 +12,7 @@ interface Host {
 
 export default function HostsTable() {
     const { data: databases, isLoading } = useDatabases();
+    const { connect } = useConnection();
 
     // Extract unique hosts from databases
     const hosts: Host[] = [];
@@ -100,7 +102,7 @@ export default function HostsTable() {
                             </td>
                             <td className="p-4">
                                 <button
-                                    onClick={() => alert(`SSH to ${host.name}`)}
+                                    onClick={() => connect(host.dbs[0] || host.name, 'bash')}
                                     className="btn-secondary text-sm"
                                 >
                                     <Terminal className="w-3 h-3" />

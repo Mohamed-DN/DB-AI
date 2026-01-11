@@ -1,6 +1,4 @@
-
-
-import { Bot, Play, CheckCircle, XCircle, Loader, Terminal as TerminalIcon, Brain, RefreshCw, Eye } from 'lucide-react';
+import { Bot, Play, Square, CheckCircle, XCircle, Loader, Terminal as TerminalIcon, Brain, RefreshCw, Eye, Clock, Settings, X } from 'lucide-react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import axios from 'axios';
 import { useState } from 'react';
@@ -30,6 +28,15 @@ interface ProcessResult {
     success: boolean;
 }
 
+interface AgentConfig {
+    scout_interval: number;
+    collector_interval: number;
+    watcher_interval: number;
+    criticalalert_interval: number;
+    forensicanalyzer_interval: number;
+    checkmk_bridge_interval: number;
+}
+
 // --- API ---
 const getAgentsStatus = async (): Promise<AgentsStatus> => {
     const { data } = await axios.get(`${API_BASE}/agents/status`);
@@ -41,40 +48,162 @@ const getRagStatus = async (): Promise<RagStatus> => {
     return data;
 };
 
+const getConfig = async (): Promise<AgentConfig> => {
+    const { data } = await axios.get(`${API_BASE}/config`);
+    return data;
+};
+
+const updateConfig = async (config: Partial<AgentConfig>): Promise<any> => {
+    const { data } = await axios.post(`${API_BASE}/config`, config);
+    return data;
+};
+
 const startAgent = async (name: string): Promise<ProcessResult> => {
     const { data } = await axios.post(`${API_BASE}/agents/start/${name}`);
     return data;
 };
 
-const triggerAction = async (action: string) => {
-    const { data } = await axios.post(`${API_BASE}/agents/trigger/${action}`);
+const stopAgent = async (name: string): Promise<any> => {
+    const { data } = await axios.post(`${API_BASE}/agents/stop/${name}`);
     return data;
 };
 
 // --- Parsed Agent List for UI ---
-// Map backend keys to nice UI
-const AGENT_UI: Record<string, { label: string; desc: string; icon: any }> = {
-    Scout: { label: 'Scout Agent', desc: 'Auto-Discovery', icon: <Bot className="w-5 h-5 text-purple-400" /> },
-    Collector: { label: 'Metric Collector', desc: 'Database Telemetry', icon: <RefreshCw className="w-5 h-5 text-blue-400" /> },
-    Watcher: { label: 'Log Watcher', desc: 'Live Log Monitoring', icon: <Eye className="w-5 h-5 text-yellow-400" /> },
-    CriticalAlert: { label: 'Critical Aleter', desc: 'Alert Processing', icon: <TerminalIcon className="w-5 h-5 text-red-400" /> },
-    ForensicAnalyzer: { label: 'Forensic AI', desc: 'AI Root Cause Analysis', icon: <Brain className="w-5 h-5 text-pink-400" /> },
-    CheckMK_Bridge: { label: 'CheckMK Bridge', desc: 'Sync with CheckMK', icon: <CheckCircle className="w-5 h-5 text-green-400" /> },
+const AGENT_UI: Record<string, { label: string; desc: string; icon: any; configKey: string }> = {
+    Scout: { label: 'Scout Agent', desc: 'Auto-Discovery', icon: <Bot className="w-5 h-5 text-purple-400" />, configKey: 'scout_interval' },
+    Collector: { label: 'Metric Collector', desc: 'Database Telemetry', icon: <RefreshCw className="w-5 h-5 text-blue-400" />, configKey: 'collector_interval' },
+    Watcher: { label: 'Log Watcher', desc: 'Live Log Monitoring', icon: <Eye className="w-5 h-5 text-yellow-400" />, configKey: 'watcher_interval' },
+    CriticalAlert: { label: 'Critical Alerter', desc: 'Alert Processing', icon: <TerminalIcon className="w-5 h-5 text-red-400" />, configKey: 'criticalalert_interval' },
+    ForensicAnalyzer: { label: 'Forensic AI', desc: 'AI Root Cause Analysis', icon: <Brain className="w-5 h-5 text-pink-400" />, configKey: 'forensicanalyzer_interval' },
+    CheckMK_Bridge: { label: 'CheckMK Bridge', desc: 'Sync with CheckMK', icon: <CheckCircle className="w-5 h-5 text-green-400" />, configKey: 'checkmk_bridge_interval' },
 };
+
+// --- Settings Modal Component ---
+function SettingsModal({ isOpen, onClose, config, onSave }: {
+    isOpen: boolean;
+    onClose: () => void;
+    config: AgentConfig | undefined;
+    onSave: (newConfig: Partial<AgentConfig>) => void;
+}) {
+    const [localConfig, setLocalConfig] = useState<Partial<AgentConfig>>({});
+
+    if (!isOpen || !config) return null;
+
+    const handleSave = () => {
+        onSave(localConfig);
+        onClose();
+    };
+
+    const getValue = (key: keyof AgentConfig) => localConfig[key] ?? config[key] ?? 60;
+    const setValue = (key: keyof AgentConfig, value: number) => {
+        setLocalConfig(prev => ({ ...prev, [key]: value }));
+    };
+
+    return (
+        <div className="fixed inset-0 z-50 flex items-center justify-center">
+            <div className="absolute inset-0 bg-black/70 backdrop-blur-sm" onClick={onClose} />
+            <div className="relative bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 rounded-2xl border border-gray-700/50 shadow-2xl w-[500px] overflow-hidden">
+                <div className="h-1 bg-gradient-to-r from-purple-500 via-blue-500 to-cyan-500" />
+
+                <div className="p-6">
+                    <div className="flex items-center justify-between mb-6">
+                        <h2 className="text-xl font-bold flex items-center gap-2">
+                            <Settings className="w-5 h-5 text-purple-400" />
+                            Agent Intervals
+                        </h2>
+                        <button onClick={onClose} className="text-gray-400 hover:text-white">
+                            <X className="w-5 h-5" />
+                        </button>
+                    </div>
+
+                    <div className="space-y-4">
+                        {Object.entries(AGENT_UI).map(([key, ui]) => (
+                            <div key={key} className="flex items-center justify-between p-3 bg-gray-800/50 rounded-lg">
+                                <div className="flex items-center gap-3">
+                                    {ui.icon}
+                                    <span className="font-medium">{ui.label}</span>
+                                </div>
+                                <div className="flex items-center gap-2">
+                                    <Clock className="w-4 h-4 text-gray-500" />
+                                    <input
+                                        type="number"
+                                        min="5"
+                                        max="3600"
+                                        value={getValue(ui.configKey as keyof AgentConfig)}
+                                        onChange={(e) => setValue(ui.configKey as keyof AgentConfig, parseInt(e.target.value) || 60)}
+                                        className="w-20 px-2 py-1 bg-gray-900 border border-gray-700 rounded text-center text-sm"
+                                    />
+                                    <span className="text-xs text-gray-500">sec</span>
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+
+                    <div className="mt-6 flex justify-end gap-3">
+                        <button onClick={onClose} className="px-4 py-2 bg-gray-700 hover:bg-gray-600 rounded-lg transition-colors">
+                            Cancel
+                        </button>
+                        <button onClick={handleSave} className="px-4 py-2 bg-purple-500 hover:bg-purple-600 rounded-lg transition-colors font-medium">
+                            Save Changes
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    );
+}
+
+// --- Action Result Modal ---
+function ActionModal({ isOpen, onClose, title, message, success }: {
+    isOpen: boolean;
+    onClose: () => void;
+    title: string;
+    message: string;
+    success: boolean;
+}) {
+    if (!isOpen) return null;
+
+    return (
+        <div className="fixed inset-0 z-50 flex items-center justify-center">
+            <div className="absolute inset-0 bg-black/70 backdrop-blur-sm" onClick={onClose} />
+            <div className="relative bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 rounded-2xl border border-gray-700/50 shadow-2xl w-[400px] overflow-hidden">
+                <div className={`h-1 ${success ? 'bg-green-500' : 'bg-red-500'}`} />
+
+                <div className="p-8 text-center">
+                    <div className="flex justify-center mb-4">
+                        {success ? (
+                            <CheckCircle className="w-16 h-16 text-green-500" />
+                        ) : (
+                            <XCircle className="w-16 h-16 text-red-500" />
+                        )}
+                    </div>
+                    <h2 className="text-xl font-bold mb-2">{title}</h2>
+                    <p className="text-gray-400 mb-6">{message}</p>
+                    <button onClick={onClose} className={`w-full py-3 rounded-lg font-medium ${success ? 'bg-green-500/20 text-green-400' : 'bg-red-500/20 text-red-400'}`}>
+                        Close
+                    </button>
+                </div>
+            </div>
+        </div>
+    );
+}
 
 export default function AgentsPanel() {
     const queryClient = useQueryClient();
     const [logVisible, setLogVisible] = useState(false);
     const [logs, setLogs] = useState<ProcessResult | null>(null);
+    const [settingsOpen, setSettingsOpen] = useState(false);
+    const [actionResult, setActionResult] = useState<{ title: string; message: string; success: boolean } | null>(null);
 
     // Queries
     const agentsQuery = useQuery({ queryKey: ['agentsStatus'], queryFn: getAgentsStatus, refetchInterval: 5000 });
     const ragQuery = useQuery({ queryKey: ['ragStatus'], queryFn: getRagStatus, refetchInterval: 10000 });
+    const configQuery = useQuery({ queryKey: ['agentConfig'], queryFn: getConfig });
 
     // Mutations
     const startMutation = useMutation({
         mutationFn: startAgent,
-        onMutate: () => setLogVisible(true), // Open modal immediately
+        onMutate: () => setLogVisible(true),
         onSuccess: (data) => {
             setLogs(data);
             queryClient.invalidateQueries({ queryKey: ['agentsStatus'] });
@@ -89,15 +218,29 @@ export default function AgentsPanel() {
         }
     });
 
-    const triggerMutation = useMutation({
-        mutationFn: triggerAction,
+    const stopMutation = useMutation({
+        mutationFn: stopAgent,
         onSuccess: (data) => {
-            alert(data.status); // Simple feedback for triggers
+            setActionResult({ title: 'Agent Stopped', message: data.status || 'Agent stopped successfully', success: true });
+            queryClient.invalidateQueries({ queryKey: ['agentsStatus'] });
         },
+        onError: (error: any) => {
+            setActionResult({ title: 'Stop Failed', message: error.response?.data?.detail || error.message, success: false });
+        }
     });
 
-    // Helper to get UI info
-    const getAgentUI = (key: string) => AGENT_UI[key] || { label: key, desc: 'Agent Script', icon: <Bot className="w-5 h-5" /> };
+    const configMutation = useMutation({
+        mutationFn: updateConfig,
+        onSuccess: () => {
+            setActionResult({ title: 'Settings Saved', message: 'Agent intervals updated successfully!', success: true });
+            queryClient.invalidateQueries({ queryKey: ['agentConfig'] });
+        },
+        onError: (error: any) => {
+            setActionResult({ title: 'Save Failed', message: error.response?.data?.detail || error.message, success: false });
+        }
+    });
+
+    const getAgentUI = (key: string) => AGENT_UI[key] || { label: key, desc: 'Agent Script', icon: <Bot className="w-5 h-5" />, configKey: '' };
 
     return (
         <div className="space-y-6">
@@ -131,23 +274,31 @@ export default function AgentsPanel() {
                 </div>
             </div>
 
-            {/* Agents Grid */}
-            <h3 className="text-lg font-semibold flex items-center gap-2">
-                <Bot className="w-5 h-5 text-purple-400" /> Agent Control Panel
-            </h3>
+            {/* Agents Header with Settings */}
+            <div className="flex items-center justify-between">
+                <h3 className="text-lg font-semibold flex items-center gap-2">
+                    <Bot className="w-5 h-5 text-purple-400" /> Agent Control Panel
+                </h3>
+                <button
+                    onClick={() => setSettingsOpen(true)}
+                    className="btn-secondary text-sm flex items-center gap-2"
+                >
+                    <Clock className="w-4 h-4" /> Configure Intervals
+                </button>
+            </div>
 
             {agentsQuery.isLoading ? (
                 <div className="text-center py-10 text-gray-500">Loading agents status...</div>
             ) : (
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                    {/* Render known agents first, then others */}
                     {Object.entries(agentsQuery.data?.agents || {}).map(([key, info]) => {
                         const ui = getAgentUI(key);
+                        const interval = configQuery.data?.[ui.configKey as keyof AgentConfig];
                         return (
-                            <div key={key} className="glass p-6 relative overflow-hidden group">
+                            <div key={key} className="glass p-6 relative overflow-hidden group hover:border-purple-500/30 transition-all">
                                 <div className="flex items-start justify-between mb-4">
                                     <div className="flex items-center gap-3">
-                                        <div className={`p-2 rounded-lg bg-gray-800`}>
+                                        <div className={`p-2 rounded-lg ${info.running ? 'bg-green-900/30' : 'bg-gray-800'}`}>
                                             {ui.icon}
                                         </div>
                                         <div>
@@ -156,23 +307,44 @@ export default function AgentsPanel() {
                                         </div>
                                     </div>
                                     {info.running ? (
-                                        <span className="text-xs bg-green-500/20 text-green-400 px-2 py-1 rounded-full animate-pulse">Running</span>
+                                        <span className="text-xs bg-green-500/20 text-green-400 px-2 py-1 rounded-full animate-pulse">● Running</span>
                                     ) : (
-                                        <span className="text-xs bg-gray-700 text-gray-400 px-2 py-1 rounded-full">Stopped</span>
+                                        <span className="text-xs bg-gray-700 text-gray-400 px-2 py-1 rounded-full">○ Stopped</span>
                                     )}
                                 </div>
-                                <div className="mt-4 flex justify-between items-center">
-                                    <code className="text-[10px] text-gray-600 bg-black/20 px-2 py-1 rounded truncate max-w-[120px]" title={info.script}>
+
+                                {/* Interval Display */}
+                                {interval && (
+                                    <div className="text-xs text-gray-500 mb-3 flex items-center gap-1">
+                                        <Clock className="w-3 h-3" /> Every {interval}s
+                                    </div>
+                                )}
+
+                                <div className="flex justify-between items-center gap-2">
+                                    <code className="text-[10px] text-gray-600 bg-black/20 px-2 py-1 rounded truncate flex-1" title={info.script}>
                                         {info.script.split('/').pop()}
                                     </code>
-                                    <button
-                                        onClick={() => startMutation.mutate(key)}
-                                        disabled={info.running || startMutation.isPending}
-                                        className={`btn-primary text-xs px-3 py-1 flex items-center gap-2 ${info.running ? 'opacity-50 cursor-not-allowed' : ''}`}
-                                    >
-                                        {startMutation.isPending && !logs ? <Loader className="w-3 h-3 animate-spin" /> : <Play className="w-3 h-3" />}
-                                        Start
-                                    </button>
+                                    <div className="flex gap-2">
+                                        {info.running ? (
+                                            <button
+                                                onClick={() => stopMutation.mutate(key)}
+                                                disabled={stopMutation.isPending}
+                                                className="p-2 bg-red-500/20 text-red-400 rounded-lg hover:bg-red-500/30 transition-colors"
+                                                title="Stop Agent"
+                                            >
+                                                <Square className="w-4 h-4" />
+                                            </button>
+                                        ) : (
+                                            <button
+                                                onClick={() => startMutation.mutate(key)}
+                                                disabled={startMutation.isPending}
+                                                className="p-2 bg-green-500/20 text-green-400 rounded-lg hover:bg-green-500/30 transition-colors"
+                                                title="Start Agent"
+                                            >
+                                                <Play className="w-4 h-4" />
+                                            </button>
+                                        )}
+                                    </div>
                                 </div>
                             </div>
                         );
@@ -180,18 +352,24 @@ export default function AgentsPanel() {
                 </div>
             )}
 
-            {/* Quick Actions */}
-            <div className="flex gap-4 flex-wrap pt-4 border-t border-gray-800">
-                <button onClick={() => triggerMutation.mutate('checkmk')} className="btn-secondary text-sm flex items-center gap-2">
-                    <RefreshCw className="w-4 h-4" /> Sync CheckMK
-                </button>
-                <button onClick={() => triggerMutation.mutate('forensic')} className="btn-secondary text-sm flex items-center gap-2">
-                    <Brain className="w-4 h-4" /> Run AI Analysis
-                </button>
-                <button onClick={() => triggerMutation.mutate('watcher')} className="btn-secondary text-sm flex items-center gap-2">
-                    <Eye className="w-4 h-4" /> Trigger Watcher
-                </button>
-            </div>
+            {/* Settings Modal */}
+            <SettingsModal
+                isOpen={settingsOpen}
+                onClose={() => setSettingsOpen(false)}
+                config={configQuery.data}
+                onSave={(newConfig) => configMutation.mutate(newConfig)}
+            />
+
+            {/* Action Result Modal */}
+            {actionResult && (
+                <ActionModal
+                    isOpen={!!actionResult}
+                    onClose={() => setActionResult(null)}
+                    title={actionResult.title}
+                    message={actionResult.message}
+                    success={actionResult.success}
+                />
+            )}
 
             {/* Process Log Modal */}
             {logVisible && (

@@ -336,36 +336,36 @@ docker logs nexi-ollama
 
 ---
 
-## 🔀 V2 Shadow Mode (Migrazione Pulita)
+## 🚀 V2 Shadow Mode Migration (RELEASED)
 
-Per testare una nuova installazione parallela al sistema esistente:
+The V2 system runs in parallel with V1 (Shadow Mode) but uses a completely isolated infrastructure with updated ports (+1000 offset).
+
+### Features
+- **Configurability**: Fully driven by `.env.v2`.
+- **Portability**: No hardcoded paths. One-click setup.
+- **Enhanced UI**: New Agents Panel, Hosts SSH Modal.
+- **Auto-Provisioning**: AIAUTO user created automatically on all DBs.
 
 ### Quick Start V2
+
 ```powershell
-.\scripts\start_migration_v2.ps1
+# 1. Start everything (Infrastructure + Backend + Frontend)
+.\scripts\setup_v2.ps1
+
+# Optional flags:
+# .\scripts\setup_v2.ps1 -SkipDocker      (If containers are already running)
+# .\scripts\setup_v2.ps1 -SkipFrontend    (Backend only)
 ```
 
-### Port Mapping V2
+### Access Points
+| Service | URL | Credentials |
+|---------|-----|-------------|
+| **Dashboard** | `http://localhost:4002` | - |
+| **API Docs** | `http://localhost:9000/docs` | - |
+| **Mongo UI** | `http://localhost:9081` | admin / nexi2024 |
+| **Ollama** | `http://localhost:12434` | - |
 
-| Servizio | V1 | V2 |
-|----------|----|----|
-| React Dashboard | 3002 | **4002** |
-| Backend API | 8000 | **9000** |
-| MongoDB | 27017 | **28017** |
-| Mongo Express | 8081 | **9081** |
-| Ollama | 11434 | **12434** |
-| Qdrant | 6333 | **7333** |
-
-### File V2 Principali
-- `docker-lab/docker-compose-v2.yml` - Docker services
-- `.env.v2` - Environment template
-- `scripts/start_migration_v2.ps1` - Startup script
-- `MANIFEST.md` - Project map
-
-### Health Check
-```powershell
-.\scripts\start_migration_v2.ps1 -HealthCheckOnly
-```
+Configuration file: `.env.v2` (Ports, Passwords, etc.)
 
 ---
 

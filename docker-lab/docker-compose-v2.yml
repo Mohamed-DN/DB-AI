@@ -2,7 +2,7 @@
 # NEXI DBA AI - AMBIENTE DI LABORATORIO V2 (SHADOW MODE)
 # =============================================================================
 # Questo docker-compose crea un ambiente PARALLELO per testare il sistema DBA AI
-# TUTTI i servizi hanno suffisso "2", porte +1000, network separata
+# Usa variabili d'ambiente dal file .env (o .env.v2 copiato in .env)
 # =============================================================================
 
 version: '3.8'
@@ -25,11 +25,11 @@ services:
     container_name: nexi-mongodb2
     hostname: mongodb2.nexi.lab
     ports:
-      - "28017:27017"
+      - "${MONGODB_PORT:-28017}:27017"
     environment:
-      MONGO_INITDB_ROOT_USERNAME: admin
-      MONGO_INITDB_ROOT_PASSWORD: nexi2024
-      MONGO_INITDB_DATABASE: nexi_cmdb_v2
+      MONGO_INITDB_ROOT_USERNAME: ${MONGO_USERNAME:-admin}
+      MONGO_INITDB_ROOT_PASSWORD: ${MONGO_PASSWORD:-nexi2024}
+      MONGO_INITDB_DATABASE: ${MONGODB_DB:-nexi_cmdb_v2}
     volumes:
       - mongodb_data_v2:/data/db
     networks:
@@ -43,11 +43,11 @@ services:
     container_name: nexi-mongo-express2
     hostname: mongo-express2.nexi.lab
     ports:
-      - "9081:8081"
+      - "${MONGO_EXPRESS_PORT:-9081}:8081"
     environment:
-      ME_CONFIG_MONGODB_ADMINUSERNAME: admin
-      ME_CONFIG_MONGODB_ADMINPASSWORD: nexi2024
-      ME_CONFIG_MONGODB_URL: mongodb://admin:nexi2024@mongodb2:27017/
+      ME_CONFIG_MONGODB_ADMINUSERNAME: ${MONGO_USERNAME:-admin}
+      ME_CONFIG_MONGODB_ADMINPASSWORD: ${MONGO_PASSWORD:-nexi2024}
+      ME_CONFIG_MONGODB_URL: mongodb://${MONGO_USERNAME:-admin}:${MONGO_PASSWORD:-nexi2024}@mongodb2:27017/
       ME_CONFIG_BASICAUTH: "false"
     networks:
       nexi-lab2:
@@ -62,7 +62,7 @@ services:
     container_name: nexi-redis2
     hostname: redis2.nexi.lab
     ports:
-      - "7379:6379"
+      - "${REDIS_PORT:-7379}:6379"
     networks:
       nexi-lab2:
         ipv4_address: 172.21.0.11
@@ -74,7 +74,7 @@ services:
     container_name: nexi-ollama2
     hostname: ollama2.nexi.lab
     ports:
-      - "12434:11434"
+      - "${OLLAMA_PORT:-12434}:11434"
     volumes:
       - ollama_data_v2:/root/.ollama
     networks:
@@ -95,7 +95,7 @@ services:
     container_name: nexi-open-webui2
     hostname: open-webui2.nexi.lab
     ports:
-      - "4001:8080"
+      - "${OPEN_WEBUI_PORT:-4001}:8080"
     environment:
       - OLLAMA_BASE_URL=http://ollama2:11434
     volumes:
@@ -113,7 +113,7 @@ services:
     container_name: nexi-qdrant2
     hostname: qdrant2.nexi.lab
     ports:
-      - "7333:6333"
+      - "${QDRANT_PORT:-7333}:6333"
     volumes:
       - qdrant_data_v2:/qdrant/storage
     networks:
@@ -130,7 +130,7 @@ services:
     container_name: nexi-gw-milano2
     hostname: gw-milano2.nexi.lab
     ports:
-      - "3221:22"
+      - "${GW_MILANO_PORT:-3221}:22"
     networks:
       nexi-lab2:
         ipv4_address: 172.21.1.1
@@ -161,7 +161,7 @@ services:
     container_name: nexi-pg-milano-dev2
     hostname: pg-milano-dev2.nexi.lab
     ports:
-      - "6433:5432"
+      - "${PG_MILANO_DEV_PORT:-6433}:5432"
     environment:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: nexi2024
@@ -179,7 +179,7 @@ services:
     container_name: nexi-pg-milano-stg2
     hostname: pg-milano-stg2.nexi.lab
     ports:
-      - "6435:5432"
+      - "${PG_MILANO_STG_PORT:-6435}:5432"
     environment:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: nexi2024
@@ -200,7 +200,7 @@ services:
     container_name: nexi-gw-bratislava2
     hostname: gw-bratislava2.nexi.lab
     ports:
-      - "3222:22"
+      - "${GW_BRATISLAVA_PORT:-3222}:22"
     networks:
       nexi-lab2:
         ipv4_address: 172.21.2.1
@@ -231,7 +231,7 @@ services:
     container_name: nexi-pg-bratislava-dev2
     hostname: pg-bratislava-dev2.nexi.lab
     ports:
-      - "6434:5432"
+      - "${PG_BRATISLAVA_DEV_PORT:-6434}:5432"
     environment:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: nexi2024
@@ -252,7 +252,7 @@ services:
     container_name: nexi-gw-cairo2
     hostname: gw-cairo2.nexi.lab
     ports:
-      - "3223:22"
+      - "${GW_CAIRO_PORT:-3223}:22"
     networks:
       nexi-lab2:
         ipv4_address: 172.21.3.1
@@ -267,7 +267,7 @@ services:
     container_name: nexi-oracle-cairo-primary2
     hostname: oracle-cairo-primary2.nexi.lab
     ports:
-      - "2521:1521"
+      - "${ORACLE_CAIRO_PRIMARY_PORT:-2521}:1521"
     environment:
       ORACLE_PASSWORD: nexi2024
       ORACLE_DATABASE: JUPITER
@@ -286,7 +286,7 @@ services:
     container_name: nexi-oracle-cairo-replica2
     hostname: oracle-cairo-replica2.nexi.lab
     ports:
-      - "2522:1521"
+      - "${ORACLE_CAIRO_REPLICA_PORT:-2522}:1521"
     environment:
       ORACLE_PASSWORD: nexi2024
       ORACLE_DATABASE: JUPITER

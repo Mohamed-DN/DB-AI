@@ -192,27 +192,113 @@ def get_raw_collection(collection_name: str):
         print(f"Error fetching raw collection: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
-# In-memory agent state
+# In-memory agent state with process tracking
 AGENTS_STATE = {
-    "scout": {"running": False},
-    "collector": {"running": True},
-    "watcher": {"running": True},
-    "criticalalert": {"running": True},
-    "forensicanalyzer": {"running": False},
-    "checkmk_bridge": {"running": False}
+    "scout": {"running": False, "process": None},
+    "collector": {"running": False, "process": None},
+    "watcher": {"running": False, "process": None},
+    "criticalalert": {"running": False, "process": None},
+    "forensicanalyzer": {"running": False, "process": None},
+    "checkmk_bridge": {"running": False, "process": None}
+}
+
+# Map agent names to script paths
+AGENT_SCRIPTS = {
+    "scout": "../../Agents/Scout/main.py",
+    "collector": "../../Agents/Collector/main.py",
+    "watcher": "../../Agents/Watcher/main.py",
+    "criticalalert": "../../Agents/CriticalAlert/main.py",
+    "forensicanalyzer": "../../Agents/ForensicAnalyzer/main.py",
+    "checkmk_bridge": "../../Agents/CheckMK_Bridge/main.py"
 }
 
 @app.get("/api/agents/status")
 def get_agents_status():
     """Get status of background agents"""
-    return AGENTS_STATE
+    # Create clean status dict without process objects
+    status = {}
+    for name, state in AGENTS_STATE.items():
+        # Verify if process is actually alive
+        is_running = state["running"]
+        if state["process"]:
+            if state["process"].poll() is not None:
+                is_running = False
+                state["running"] = False
+                state["process"] = None
+        
+        status[name] = {
+            "script": AGENT_SCRIPTS.get(name, ""),
+            "running": is_running
+        }
+    return {"agents": status}
 
-@app.post("/api/agents/{agent_name}/start")
+@app.post("/api/agents/start/{agent_name}")
 def start_agent_endpoint(agent_name: str):
     agent_key = agent_name.lower()
-    if agent_key in AGENTS_STATE:
+    
+    if agent_key not in AGENTS_STATE:
+         raise HTTPException(status_code=404, detail="Agent not found")
+         
+    state = AGENTS_STATE[agent_key]
+    
+    # Check if already running
+    if state["running"] and state["process"] and state["process"].poll() is None:
+        return {"status": "already_running", "agent": agent_name}
+        
+    # Start process
+    try:
+        script_rel_path = AGENT_SCRIPTS.get(agent_key)
+        if not script_rel_path:
+             raise HTTPException(status_code=500, detail="Script path not defined")
+             
+        script_path = os.path.abspath(os.path.join(os.path.dirname(__file__), script_rel_path))
+        
+        # Spawn process (continuous mode)
+        proc = subprocess.Popen(
+            [sys.executable, script_path],
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            text=True
+        )
+        
         AGENTS_STATE[agent_key]["running"] = True
-    return {"status": "started", "agent": agent_name}
+        AGENTS_STATE[agent_key]["process"] = proc
+        
+        return {
+            "status": "started", 
+            "agent": agent_name, 
+            "pid": proc.pid,
+            "output": ["Agent started in background", f"PID: {proc.pid}"]
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.post("/api/agents/stop/{agent_name}")
+def stop_agent_endpoint(agent_name: str):
+    agent_key = agent_name.lower()
+    
+    if agent_key not in AGENTS_STATE:
+         raise HTTPException(status_code=404, detail="Agent not found")
+         
+    state = AGENTS_STATE[agent_key]
+    
+    if not state["running"] or not state["process"]:
+        return {"status": "not_running", "agent": agent_name}
+        
+    try:
+        # Terminate process
+        state["process"].terminate()
+        try:
+            state["process"].wait(timeout=5)
+        except subprocess.TimeoutExpired:
+            state["process"].kill()
+            
+        AGENTS_STATE[agent_key]["running"] = False
+        AGENTS_STATE[agent_key]["process"] = None
+        
+        return {"status": "stopped", "agent": agent_name}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
 
 
 @app.post("/api/chat")
