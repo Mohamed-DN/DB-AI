@@ -239,9 +239,9 @@ Start-Process powershell -ArgumentList "-NoExit", "-Command", @"
     cd '$ProjectRoot\WebInterface\frontend-react'
     Write-Host '========================================' -ForegroundColor Cyan
     Write-Host '  NEXI AI CMDB V2 - React Frontend     ' -ForegroundColor Cyan
-    Write-Host '  Port: 4002                           ' -ForegroundColor Cyan
+    Write-Host '  Port: 4002 -> Backend: 9000          ' -ForegroundColor Cyan
     Write-Host '========================================' -ForegroundColor Cyan
-    npm run dev -- --config vite.config.v2.ts
+    npm run dev:v2
 "@
 
 Write-Ok "React Frontend V2 starting on port 4002"
