@@ -232,6 +232,23 @@ function DatabaseRow({ db }: { db: DatabaseType }) {
 
 export default function InventoryTable() {
     const { data: databases, isLoading, error } = useDatabases();
+    const queryClient = useQueryClient();
+    const [isRefreshing, setIsRefreshing] = useState(false);
+
+    const handleRefresh = async () => {
+        setIsRefreshing(true);
+        try {
+            await fetch('/api/action/collect', { method: 'POST' });
+            // Wait 2 seconds for Collector to perform its check
+            setTimeout(() => {
+                queryClient.invalidateQueries({ queryKey: ['databases'] });
+                setIsRefreshing(false);
+            }, 2000);
+        } catch (e) {
+            console.error("Refresh failed", e);
+            setIsRefreshing(false);
+        }
+    };
 
     if (isLoading) {
         return (
@@ -253,23 +270,16 @@ export default function InventoryTable() {
         );
     }
 
-    const queryClient = useQueryClient();
-    const [isRefreshing, setIsRefreshing] = useState(false);
-
-    const handleRefresh = async () => {
-        setIsRefreshing(true);
-        try {
-            await fetch('/api/action/collect', { method: 'POST' });
-            // Wait 2 seconds for Collector to perform its check
-            setTimeout(() => {
-                queryClient.invalidateQueries({ queryKey: ['databases'] });
-                setIsRefreshing(false);
-            }, 2000);
-        } catch (e) {
-            console.error("Refresh failed", e);
-            setIsRefreshing(false);
-        }
-    };
+    // Handle empty database case
+    if (!databases || databases.length === 0) {
+        return (
+            <div className="glass p-8 text-center text-gray-400">
+                <Database className="w-12 h-12 mx-auto mb-4 opacity-30" />
+                <p>No databases in inventory</p>
+                <p className="text-sm mt-2">Click "Auto-Discovery" to scan for databases</p>
+            </div>
+        );
+    }
 
     return (
         <div className="glass overflow-hidden">
