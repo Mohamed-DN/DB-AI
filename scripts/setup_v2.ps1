@@ -165,8 +165,9 @@ if (-not $SkipBackend) {
     $env:MONGO_USERNAME = $EnvVars['MONGO_USERNAME']
     $env:MONGO_PASSWORD = $EnvVars['MONGO_PASSWORD']
 
-    Start-Process -FilePath "uvicorn" `
-        -ArgumentList "main:app --host 0.0.0.0 --port $($EnvVars['BACKEND_PORT']) --reload" `
+    # Use 'python -m uvicorn' instead of 'uvicorn' to avoid PATH issues on some systems
+    Start-Process -FilePath "python" `
+        -ArgumentList "-m uvicorn main:app --host 0.0.0.0 --port $($EnvVars['BACKEND_PORT']) --reload" `
         -WorkingDirectory $BackendDir `
         -NoNewWindow
     
