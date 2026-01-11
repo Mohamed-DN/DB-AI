@@ -123,9 +123,9 @@ function DatabaseRow({ db }: { db: DatabaseType }) {
                         <button
                             onClick={() => connect(db.identity.db_unique_name, 'sysdba')}
                             className="p-2 bg-yellow-500/20 text-yellow-400 rounded hover:bg-yellow-500/30 transition-colors"
-                            title="SYSDBA / Superuser"
+                            title={db.identity.engine === 'ORACLE' ? 'SYSDBA Mode' : 'Superuser (postgres)'}
                         >
-                            <span className="text-xs font-bold">DBA</span>
+                            <span className="text-xs font-bold">{db.identity.engine === 'ORACLE' ? 'DBA' : 'SU'}</span>
                         </button>
                         <button
                             onClick={handleSqlConnect}

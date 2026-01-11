@@ -508,7 +508,8 @@ def connect_db(db_name: str, mode: str = "sql"):
         container = (
             db_info.get('connection', {}).get('container') or 
             db_info.get('identity', {}).get('db_name') or 
-            db_info.get('identity', {}).get('host')
+            db_info.get('identity', {}).get('host') or
+            db_info.get('identity', {}).get('db_unique_name', '').lower()  # Fallback to lowercase unique name
         )
         if not container:
              raise HTTPException(status_code=404, detail="Container name not found for database")
