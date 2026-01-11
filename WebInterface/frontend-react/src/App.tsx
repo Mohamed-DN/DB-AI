@@ -125,7 +125,9 @@ function AppContent() {
   };
 
   const openMongoDB = () => {
-    window.open('http://localhost:8081', '_blank');
+    // V2 uses 9081, V1 uses 8081. Default to V2 if not specified.
+    const port = import.meta.env.VITE_MONGO_EXPRESS_PORT || '9081';
+    window.open(`http://localhost:${port}`, '_blank');
   };
 
   const renderContent = () => {
