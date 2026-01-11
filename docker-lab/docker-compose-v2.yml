@@ -1,0 +1,313 @@
+# =============================================================================
+# NEXI DBA AI - AMBIENTE DI LABORATORIO V2 (SHADOW MODE)
+# =============================================================================
+# Questo docker-compose crea un ambiente PARALLELO per testare il sistema DBA AI
+# TUTTI i servizi hanno suffisso "2", porte +1000, network separata
+# =============================================================================
+
+version: '3.8'
+
+networks:
+  nexi-lab2:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.21.0.0/16
+
+services:
+  # ===========================================================================
+  # ORCHESTRATOR - Servizi centrali (V2)
+  # ===========================================================================
+
+  # MongoDB - CMDB Database (V2)
+  mongodb2:
+    image: mongo:7
+    container_name: nexi-mongodb2
+    hostname: mongodb2.nexi.lab
+    ports:
+      - "28017:27017"
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: admin
+      MONGO_INITDB_ROOT_PASSWORD: nexi2024
+      MONGO_INITDB_DATABASE: nexi_cmdb_v2
+    volumes:
+      - mongodb_data_v2:/data/db
+    networks:
+      nexi-lab2:
+        ipv4_address: 172.21.0.10
+    restart: unless-stopped
+
+  # Mongo Express - Web UI for MongoDB (V2)
+  mongo-express2:
+    image: mongo-express:latest
+    container_name: nexi-mongo-express2
+    hostname: mongo-express2.nexi.lab
+    ports:
+      - "9081:8081"
+    environment:
+      ME_CONFIG_MONGODB_ADMINUSERNAME: admin
+      ME_CONFIG_MONGODB_ADMINPASSWORD: nexi2024
+      ME_CONFIG_MONGODB_URL: mongodb://admin:nexi2024@mongodb2:27017/
+      ME_CONFIG_BASICAUTH: "false"
+    networks:
+      nexi-lab2:
+        ipv4_address: 172.21.0.15
+    depends_on:
+      - mongodb2
+    restart: unless-stopped
+
+  # Redis - Message Queue (V2)
+  redis2:
+    image: redis:7-alpine
+    container_name: nexi-redis2
+    hostname: redis2.nexi.lab
+    ports:
+      - "7379:6379"
+    networks:
+      nexi-lab2:
+        ipv4_address: 172.21.0.11
+    restart: unless-stopped
+
+  # Ollama - Local LLM (V2)
+  ollama2:
+    image: ollama/ollama:latest
+    container_name: nexi-ollama2
+    hostname: ollama2.nexi.lab
+    ports:
+      - "12434:11434"
+    volumes:
+      - ollama_data_v2:/root/.ollama
+    networks:
+      nexi-lab2:
+        ipv4_address: 172.21.0.12
+    restart: unless-stopped
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: all
+              capabilities: [ gpu ]
+
+  # Open WebUI - ChatGPT-like interface for Ollama (V2)
+  open-webui2:
+    image: ghcr.io/open-webui/open-webui:main
+    container_name: nexi-open-webui2
+    hostname: open-webui2.nexi.lab
+    ports:
+      - "4001:8080"
+    environment:
+      - OLLAMA_BASE_URL=http://ollama2:11434
+    volumes:
+      - open_webui_data_v2:/app/backend/data
+    networks:
+      nexi-lab2:
+        ipv4_address: 172.21.0.16
+    depends_on:
+      - ollama2
+    restart: unless-stopped
+
+  # Qdrant - Vector Database (V2)
+  qdrant2:
+    image: qdrant/qdrant:latest
+    container_name: nexi-qdrant2
+    hostname: qdrant2.nexi.lab
+    ports:
+      - "7333:6333"
+    volumes:
+      - qdrant_data_v2:/qdrant/storage
+    networks:
+      nexi-lab2:
+        ipv4_address: 172.21.0.13
+    restart: unless-stopped
+
+  # ===========================================================================
+  # GATEWAY 1 - Milano (Datacenter Primario) V2
+  # ===========================================================================
+
+  gateway-milano2:
+    build: ./gateway-ssh
+    container_name: nexi-gw-milano2
+    hostname: gw-milano2.nexi.lab
+    ports:
+      - "3221:22"
+    networks:
+      nexi-lab2:
+        ipv4_address: 172.21.1.1
+    depends_on:
+      - pg-milano-prod2
+      - pg-milano-dev2
+    restart: unless-stopped
+
+  # PostgreSQL Milano - PROD (V2)
+  pg-milano-prod2:
+    image: postgres:15
+    container_name: nexi-pg-milano-prod2
+    hostname: pg-milano-prod2.nexi.lab
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: nexi2024
+      POSTGRES_DB: payments_prod
+    volumes:
+      - pg_milano_prod_data_v2:/var/lib/postgresql/data
+    networks:
+      nexi-lab2:
+        ipv4_address: 172.21.1.10
+    restart: unless-stopped
+
+  # PostgreSQL Milano - DEV (V2)
+  pg-milano-dev2:
+    image: postgres:15
+    container_name: nexi-pg-milano-dev2
+    hostname: pg-milano-dev2.nexi.lab
+    ports:
+      - "6433:5432"
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: nexi2024
+      POSTGRES_DB: payments_dev
+    volumes:
+      - pg_milano_dev_data_v2:/var/lib/postgresql/data
+    networks:
+      nexi-lab2:
+        ipv4_address: 172.21.1.11
+    restart: unless-stopped
+
+  # PostgreSQL Milano - STAGING (V2)
+  pg-milano-stg2:
+    image: postgres:15
+    container_name: nexi-pg-milano-stg2
+    hostname: pg-milano-stg2.nexi.lab
+    ports:
+      - "6435:5432"
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: nexi2024
+      POSTGRES_DB: payments_stg
+    volumes:
+      - pg_milano_stg_data_v2:/var/lib/postgresql/data
+    networks:
+      nexi-lab2:
+        ipv4_address: 172.21.1.12
+    restart: unless-stopped
+
+  # ===========================================================================
+  # GATEWAY 2 - Bratislava (Datacenter Secondario) V2
+  # ===========================================================================
+
+  gateway-bratislava2:
+    build: ./gateway-ssh
+    container_name: nexi-gw-bratislava2
+    hostname: gw-bratislava2.nexi.lab
+    ports:
+      - "3222:22"
+    networks:
+      nexi-lab2:
+        ipv4_address: 172.21.2.1
+    depends_on:
+      - pg-bratislava-prod2
+      - pg-bratislava-dev2
+    restart: unless-stopped
+
+  # PostgreSQL Bratislava - PROD (V2)
+  pg-bratislava-prod2:
+    image: postgres:15
+    container_name: nexi-pg-bratislava-prod2
+    hostname: pg-bratislava-prod2.nexi.lab
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: nexi2024
+      POSTGRES_DB: cards_prod
+    volumes:
+      - pg_bratislava_prod_data_v2:/var/lib/postgresql/data
+    networks:
+      nexi-lab2:
+        ipv4_address: 172.21.2.10
+    restart: unless-stopped
+
+  # PostgreSQL Bratislava - DEV (V2)
+  pg-bratislava-dev2:
+    image: postgres:15
+    container_name: nexi-pg-bratislava-dev2
+    hostname: pg-bratislava-dev2.nexi.lab
+    ports:
+      - "6434:5432"
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: nexi2024
+      POSTGRES_DB: cards_dev
+    volumes:
+      - pg_bratislava_dev_data_v2:/var/lib/postgresql/data
+    networks:
+      nexi-lab2:
+        ipv4_address: 172.21.2.11
+    restart: unless-stopped
+
+  # ===========================================================================
+  # GATEWAY 3 - Cairo (North Africa Region) V2
+  # ===========================================================================
+
+  gateway-cairo2:
+    build: ./gateway-ssh
+    container_name: nexi-gw-cairo2
+    hostname: gw-cairo2.nexi.lab
+    ports:
+      - "3223:22"
+    networks:
+      nexi-lab2:
+        ipv4_address: 172.21.3.1
+    depends_on:
+      - oracle-cairo-primary2
+      - oracle-cairo-replica2
+    restart: unless-stopped
+
+  # Oracle Cairo - PRIMARY (V2)
+  oracle-cairo-primary2:
+    image: gvenzl/oracle-free:23-slim
+    container_name: nexi-oracle-cairo-primary2
+    hostname: oracle-cairo-primary2.nexi.lab
+    ports:
+      - "2521:1521"
+    environment:
+      ORACLE_PASSWORD: nexi2024
+      ORACLE_DATABASE: JUPITER
+      APP_USER: nexi_app
+      APP_USER_PASSWORD: app2024
+    volumes:
+      - oracle_cairo_prim_data_v2:/opt/oracle/oradata
+    networks:
+      nexi-lab2:
+        ipv4_address: 172.21.3.10
+    restart: unless-stopped
+
+  # Oracle Cairo - REPLICA (GoldenGate Target) V2
+  oracle-cairo-replica2:
+    image: gvenzl/oracle-free:23-slim
+    container_name: nexi-oracle-cairo-replica2
+    hostname: oracle-cairo-replica2.nexi.lab
+    ports:
+      - "2522:1521"
+    environment:
+      ORACLE_PASSWORD: nexi2024
+      ORACLE_DATABASE: JUPITER
+      APP_USER: nexi_app
+      APP_USER_PASSWORD: app2024
+    volumes:
+      - oracle_cairo_repl_data_v2:/opt/oracle/oradata
+    networks:
+      nexi-lab2:
+        ipv4_address: 172.21.3.11
+    restart: unless-stopped
+
+volumes:
+  mongodb_data_v2:
+  ollama_data_v2:
+  open_webui_data_v2:
+  qdrant_data_v2:
+  pg_milano_prod_data_v2:
+  pg_milano_dev_data_v2:
+  pg_milano_stg_data_v2:
+  pg_bratislava_prod_data_v2:
+  pg_bratislava_dev_data_v2:
+  oracle_cairo_prim_data_v2:
+  oracle_cairo_repl_data_v2:

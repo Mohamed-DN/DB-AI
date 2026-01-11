@@ -1,201 +1,92 @@
-# 🤖 Agents - Nexi DBA AI
+# 🤖 Agents - Background Workers
 
-Questa directory contiene gli **agenti autonomi** che eseguono le operazioni di monitoraggio.
-
-## 📋 Lista Agenti
-
-| Agente | Descrizione | Intervallo |
-|--------|-------------|------------|
-| [Scout](./Scout/) | Auto-discovery database in Docker | 60s |
-| [CriticalAlert](./CriticalAlert/) | Invio email per alert critici | 30s |
-| [Watcher](./Watcher/) | Streaming log e forensics | 10s |
-| [CheckMK_Bridge](./CheckMK_Bridge/) | Importa metriche esterne | 60s |
-| [Collector](./Collector/) | Raccolta metriche performance | 30s |
+> Questa directory contiene i 6 agenti di background che compongono il sistema di monitoraggio autonomo.
 
 ---
 
-## 🛰️ Scout
+## 📋 Overview
 
-**Scopo**: Rileva automaticamente database in container Docker.
+| Agent | Intervallo | Scopo |
+|-------|------------|-------|
+| **Scout** | 60s | Auto-discovery database in Docker |
+| **Collector** | 30s | Raccolta metriche performance |
+| **Watcher** | 10s | Streaming log containers |
+| **CriticalAlert** | 30s | Email per alert critici |
+| **CheckMK_Bridge** | 60s | Sync metriche da CheckMK |
+| **AIAssistant** | on-demand | RAG-powered assistant |
+| **DailyAudit** | 24h | Report giornalieri |
+| **Monitor** | 10s | Container health monitoring |
 
-**Come funziona**:
-1. Esegue `docker ps` per trovare container
-2. Filtra per label `db.type` (ORACLE, POSTGRES, etc.)
-3. Verifica che il gateway del datacenter sia UP
-4. Blocca i DB senza gateway_ref (obbligatorio)
-5. Aggiorna `inventory_databases` in MongoDB
-6. Genera alert `DB_DOWN` / `DB_RECOVERY` per cambi di stato
+---
 
-**Esecuzione**:
+## 🔧 Struttura
+
+```
+Agents/
+├── Scout/
+│   └── main.py           # Discovery via docker ps
+├── Collector/
+│   ├── main.py           # Orchestrator metriche
+│   └── src/extractors/   # Extractors per engine (Oracle, Postgres, etc.)
+├── Watcher/
+│   └── main.py           # Log streaming con pattern matching
+├── CriticalAlert/
+│   ├── main.py           # Email sender
+│   └── critical_alert.py # Core logic
+├── CheckMK_Bridge/
+│   └── main.py           # API sync con CheckMK
+├── AIAssistant/
+│   └── main.py           # RAG pipeline interface
+├── DailyAudit/
+│   └── main.py           # Daily report generator
+└── main.py               # Entry point per avvio multiplo
+```
+
+---
+
+## 🚀 Avvio
+
+### Singolo Agente
 ```powershell
-python Agents/Scout/main.py --once  # Una volta
-python Agents/Scout/main.py         # Continuo
+cd Agents/Scout
+python main.py --once  # Esecuzione singola
+python main.py         # Loop continuo
 ```
 
----
-
-## 🔔 CriticalAlert
-
-**Scopo**: Invia email per alert critici.
-
-**Come funziona**:
-1. Polling MongoDB `monitoring_alerts` per alert `CRITICAL` non processati
-2. Lookup contatto DBA da `inventory_databases`
-3. Genera email HTML con template colorato
-4. Invia via SMTP (Gmail) o salva in `emails/`
-5. Marca alert come `processed: true`
-
-**Configurazione**:
-```env
-SMTP_USER=your-email@gmail.com
-SMTP_PASSWORD=your-app-password
-```
-
-**Esecuzione**:
+### Tutti gli Agenti
 ```powershell
-python Agents/CriticalAlert/critical_alert.py --email admin@company.com --once
+python Agents/main.py
 ```
 
 ---
 
-## 👁️ Watcher
+## ⚙️ Configurazione
 
-**Scopo**: Streaming log container per rilevamento errori.
-
-**Come funziona**:
-1. Per ogni database UP, avvia `docker logs -f`
-2. Bufferizza le ultime 100 righe per contesto
-3. Rileva pattern critici: `ORA-*`, `TNS-*`, `FATAL`, etc.
-4. Genera alert `DB_FORENSICS` con contesto
-5. Il ForensicAnalyzer processa con AI
-
-**Esecuzione**:
-```powershell
-python Agents/Watcher/main.py
-```
+Gli intervalli sono configurabili via:
+1. **Dashboard** → Settings → Agent Intervals
+2. **MongoDB** → `system_config` collection
+3. **Argomenti CLI** → `--interval 30`
 
 ---
 
-## 🧠 ForensicAnalyzer
+## 📡 Dipendenze
 
-**Scopo**: Analisi AI degli errori rilevati.
+Tutti gli agenti dipendono da:
+- **MongoProxy** (`Orchestrator/src/mongo_proxy.py`)
+- **MongoDB** (port 27017/28017)
 
-**Come funziona**:
-1. Polling `monitoring_alerts` per alert `DB_FORENSICS`
-2. Estrae errore e contesto log
-3. Invia a RAG pipeline (Qdrant + Ollama)
-4. Riceve diagnosi con confidence score
-5. Aggiorna alert con `ai_analysis`
-
-**Esecuzione**:
-```powershell
-python Agents/Watcher/ai_analyzer.py --once
-python Agents/Watcher/ai_analyzer.py --check  # Solo verifica dipendenze
-```
+Alcuni agenti richiedono anche:
+- **Ollama** (AIAssistant, ForensicAnalyzer)
+- **Qdrant** (AIAssistant per RAG)
+- **SMTP** (CriticalAlert per email)
 
 ---
 
-## 📡 CheckMK_Bridge
+## 🔍 Pattern Matching (Watcher)
 
-**Scopo**: Importa metriche da monitoring esterno.
-
-**Come funziona**:
-1. Chiama CheckMK REST API (o simula dati)
-2. Mappa hostname → `db_unique_name`
-3. Estrae: CPU, RAM, Disk, host_state
-4. Aggiorna `deep_observability.external_metrics` in MongoDB
-
-**Configurazione**:
-```env
-CHECKMK_URL=http://checkmk-server/check_mk/api/v0
-CHECKMK_USER=automation
-CHECKMK_SECRET=your-secret
-```
-
-**Esecuzione**:
-```powershell
-python Agents/CheckMK_Bridge/main.py --once
-```
-
----
-
-## 📊 Collector
-
-**Scopo**: Raccoglie metriche di performance dettagliate.
-
-**Come funziona**:
-1. Esegue query SQL su database target
-2. Per Oracle: AWR, tablespaces, wait events
-3. Per Postgres: pg_stat, pg_statio
-4. Salva in `deep_observability` MongoDB
-
-**Esecuzione**:
-```powershell
-python Agents/Collector/main.py --once
-```
-
----
-
-## 🔄 Ciclo di Vita
-
-```
-                    ┌─────────────┐
-                    │   Scout     │ ──► Rileva database
-                    └──────┬──────┘
-                           │
-              ┌────────────┼────────────┐
-              ▼            ▼            ▼
-        ┌──────────┐ ┌──────────┐ ┌──────────┐
-        │ Watcher  │ │CheckMK   │ │Collector │
-        │ (logs)   │ │ Bridge   │ │(metrics) │
-        └────┬─────┘ └────┬─────┘ └────┬─────┘
-             │            │            │
-             ▼            │            │
-        ┌──────────┐      │            │
-        │Forensic  │      │            │
-        │Analyzer  │      │            │
-        └────┬─────┘      │            │
-             │            ▼            ▼
-             └───────►  MongoDB  ◄─────┘
-                           │
-                           ▼
-                    ┌─────────────┐
-                    │CriticalAlert│ ──► Email
-                    └─────────────┘
-```
-
----
-
-## 📝 Aggiungere un Nuovo Agente
-
-1. Crea directory `Agents/NomeAgente/`
-2. Crea `main.py` con struttura:
-   ```python
-   import argparse
-   
-   def run_once():
-       # Logica agente
-       pass
-   
-   def run_continuous(interval=30):
-       while True:
-           run_once()
-           time.sleep(interval)
-   
-   if __name__ == "__main__":
-       parser = argparse.ArgumentParser()
-       parser.add_argument("--once", action="store_true")
-       parser.add_argument("--interval", type=int, default=30)
-       args = parser.parse_args()
-       
-       if args.once:
-           run_once()
-       else:
-           run_continuous(args.interval)
-   ```
-
-3. Registra in `WebInterface/backend/main.py`:
-   - Aggiungi a `agent_scripts` in `start_agent()`
-   - Aggiungi a `agents` in `get_agents_status()`
-
-4. Aggiungi configurazione intervallo in Settings HTML
+Il Watcher cerca pattern critici nei log:
+- `ORA-*` - Errori Oracle
+- `TNS-*` - Errori TNS
+- `FATAL` - Errori fatali
+- `ERROR` - Errori generici
+- `deadlock` - Deadlock detection

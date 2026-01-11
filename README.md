@@ -336,6 +336,39 @@ docker logs nexi-ollama
 
 ---
 
+## 🔀 V2 Shadow Mode (Migrazione Pulita)
+
+Per testare una nuova installazione parallela al sistema esistente:
+
+### Quick Start V2
+```powershell
+.\scripts\start_migration_v2.ps1
+```
+
+### Port Mapping V2
+
+| Servizio | V1 | V2 |
+|----------|----|----|
+| React Dashboard | 3002 | **4002** |
+| Backend API | 8000 | **9000** |
+| MongoDB | 27017 | **28017** |
+| Mongo Express | 8081 | **9081** |
+| Ollama | 11434 | **12434** |
+| Qdrant | 6333 | **7333** |
+
+### File V2 Principali
+- `docker-lab/docker-compose-v2.yml` - Docker services
+- `.env.v2` - Environment template
+- `scripts/start_migration_v2.ps1` - Startup script
+- `MANIFEST.md` - Project map
+
+### Health Check
+```powershell
+.\scripts\start_migration_v2.ps1 -HealthCheckOnly
+```
+
+---
+
 ## 📞 Supporto
 
 Per problemi o domande:

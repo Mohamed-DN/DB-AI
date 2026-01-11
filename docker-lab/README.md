@@ -4,10 +4,19 @@ Questa directory contiene la configurazione Docker per l'ambiente di sviluppo e 
 
 ## 🚀 Avvio
 
+### V1 (Sistema Originale)
 ```powershell
 cd docker-lab
 docker-compose up -d
 ```
+
+### V2 (Shadow Mode - Parallelo)
+```powershell
+cd docker-lab
+docker-compose -f docker-compose-v2.yml up -d
+```
+
+> **Note**: V2 usa porte +1000 (es. 27017→28017), network separata (172.21.x.x), e volumi indipendenti.
 
 ## 📦 Servizi Inclusi
 
