@@ -115,7 +115,12 @@ else {
 Write-Host "`n[STEP 4] Verifying Service Health..." -ForegroundColor Yellow
 
 function Test-Port($port, $name) {
-    $conn = Test-NetConnection -ComputerName localhost -Port $port -WarningAction SilentlyContinue
+    if (-not $port) {
+        Write-Host "⚠️  $name PORT not defined. Skipping check." -ForegroundColor Gray
+        return $false
+    }
+    # Use 127.0.0.1 to force IPv4 and avoid ::1 connection issues
+    $conn = Test-NetConnection -ComputerName 127.0.0.1 -Port $port -WarningAction SilentlyContinue
     if ($conn.TcpTestSucceeded) {
         Write-Host "✅ $name is UP (Port $port)" -ForegroundColor Green
         return $true
