@@ -6,13 +6,19 @@ class MongoProxy:
     """Proxy to interact with MongoDB via Docker CLI when PyMongo fails"""
     
     def __init__(self):
-        self.container = "nexi-cmdb-mongo"
-        self.auth_args = ["--username", "admin", "--password", "admin123", "--authenticationDatabase", "admin"]
+        # V2 Support: Read from environment or use defaults
+        # V1 defaults: nexi-cmdb-mongo / nexi_cmdb / admin / admin123
+        # V2 values:   nexi-mongodb2 / nexi_cmdb_v2 / admin / nexi2024
+        self.container = os.environ.get("MONGO_CONTAINER", "nexi-cmdb-mongo")
+        self.database = os.environ.get("MONGODB_DB", "nexi_cmdb")
+        mongo_user = os.environ.get("MONGO_USERNAME", "admin")
+        mongo_pass = os.environ.get("MONGO_PASSWORD", "admin123")
+        self.auth_args = ["--username", mongo_user, "--password", mongo_pass, "--authenticationDatabase", "admin"]
     
     def execute_eval(self, eval_js):
         cmd = [
             "docker", "exec", self.container, 
-            "mongosh", "nexi_cmdb"
+            "mongosh", self.database
         ] + self.auth_args + ["--quiet", "--eval", f"JSON.stringify({eval_js})"]
         
         try:

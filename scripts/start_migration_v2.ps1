@@ -213,14 +213,16 @@ $env:Path = [System.Environment]::GetEnvironmentVariable("Path", "Machine") + ";
 
 Start-Process powershell -ArgumentList "-NoExit", "-Command", @"
     cd '$ProjectRoot\WebInterface\backend'
-    `$env:MONGODB_PORT = '28017'
-    `$env:MONGODB_HOST = 'localhost'  
+    `$env:MONGO_CONTAINER = 'nexi-mongodb2'
     `$env:MONGODB_DB = 'nexi_cmdb_v2'
+    `$env:MONGO_USERNAME = 'admin'
+    `$env:MONGO_PASSWORD = 'nexi2024'
     `$env:OLLAMA_HOST = 'http://localhost:12434'
     `$env:QDRANT_HOST = 'http://localhost:7333'
     Write-Host '========================================' -ForegroundColor Cyan
     Write-Host '  NEXI AI CMDB V2 - Backend API        ' -ForegroundColor Cyan
     Write-Host '  Port: 9000                           ' -ForegroundColor Cyan
+    Write-Host '  MongoDB: nexi-mongodb2               ' -ForegroundColor Cyan
     Write-Host '========================================' -ForegroundColor Cyan
     python -m uvicorn main:app --host 0.0.0.0 --port 9000 --reload
 "@
