@@ -59,10 +59,10 @@ def get_inventory():
         if not mongo: raise Exception("MongoProxy not initialized")
         
         # 1. Fetch Inventory
-        dbs = mongo.execute_eval("db.inventory_databases.find({}, {'_id': 0}).toArray()")
+        dbs = mongo.execute_eval("db.inventory_databases.find({}, {'_id': 0}).toArray()") or []
         
         # 2. Fetch Business Services
-        services = mongo.execute_eval("db.business_services.find({}, {'_id': 0}).toArray()")
+        services = mongo.execute_eval("db.business_services.find({}, {'_id': 0}).toArray()") or []
         
         # 3. Create Lookup Map (DB Name -> Service Info)
         service_map = {}
@@ -121,7 +121,7 @@ def get_alerts():
         if not mongo: raise Exception("MongoProxy not initialized")
         # Fetch alerts, sort by timestamp desc, limit 50
         # JS: db.monitoring_alerts.find().sort({timestamp: -1}).limit(50).toArray()
-        alerts = mongo.execute_eval("db.monitoring_alerts.find().sort({timestamp: -1}).limit(50).toArray()")
+        alerts = mongo.execute_eval("db.monitoring_alerts.find().sort({timestamp: -1}).limit(50).toArray()") or []
         
         # Convert _id if present (MongoProxy returns JSON/dict, but _id might be object string in JS output 
         # usually MongoProxy handles it if it returns JSON)
