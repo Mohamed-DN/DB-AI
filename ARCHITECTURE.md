@@ -1,90 +1,186 @@
-# Nexi DBA AI - Architecture
+# 🏗️ Architecture
 
-## 3-Layer Architecture
+> Technical architecture of the Nexi DBA AI platform.
 
-This project follows a **3-Layer Architecture** that separates concerns:
+---
 
-```
-┌─────────────────────────────────────────────────────────────┐
-│                    LAYER 1: DIRECTIVES                      │
-│                     (directives/*.md)                       │
-│   SOPs defining WHAT to do, inputs, outputs, edge cases     │
-└─────────────────────────────────────────────────────────────┘
-                              │
-                              ▼
-┌─────────────────────────────────────────────────────────────┐
-│                  LAYER 2: ORCHESTRATION                     │
-│              (AI Assistant / Backend API)                   │
-│   Decision making, routing, error handling, learning        │
-└─────────────────────────────────────────────────────────────┘
-                              │
-                              ▼
-┌─────────────────────────────────────────────────────────────┐
-│                    LAYER 3: EXECUTION                       │
-│                    (execution/*.py)                         │
-│   Deterministic scripts, API calls, DB operations           │
-└─────────────────────────────────────────────────────────────┘
+## 🎯 AI Context
+
+```yaml
+Purpose: AI-powered CMDB with auto-discovery, monitoring, and LLM chat
+Pattern: 3-Layer Architecture (Directives → Orchestration → Execution)
+Stack: Python/FastAPI + React + MongoDB + Ollama LLM
+Ports: Backend 9000, Frontend 4002, MongoDB 28017
 ```
 
-## Why This Works
+---
 
-LLMs are probabilistic - they can make mistakes. Business logic is deterministic - it must be consistent. This architecture:
+## 🔄 3-Layer Architecture
 
-1. **Directives** = Human-readable instructions (like giving tasks to an employee)
-2. **Orchestration** = AI reads directives, decides which scripts to run
-3. **Execution** = Reliable Python scripts that do the actual work
+```mermaid
+flowchart TB
+    subgraph L1["📜 Layer 1: DIRECTIVES"]
+        direction LR
+        D1[database_discovery.md]
+        D2[alert_processing.md]
+        D3[metric_collection.md]
+        D4[ai_chat.md]
+    end
 
-## Directory Structure
+    subgraph L2["🧠 Layer 2: ORCHESTRATION"]
+        direction LR
+        AI[AI Assistant<br/>Decision Making]
+        API[Backend API<br/>Routing]
+    end
 
+    subgraph L3["⚡ Layer 3: EXECUTION"]
+        direction LR
+        E1[seed_mongodb.py]
+        E2[discover_docker.py]
+        E3[Agents/Scout]
+        E4[Agents/Collector]
+    end
+
+    L1 --> L2
+    L2 --> L3
+
+    style L1 fill:#e3f2fd,stroke:#1976d2
+    style L2 fill:#fff3e0,stroke:#f57c00
+    style L3 fill:#e8f5e9,stroke:#388e3c
 ```
-Nexi_DB_AI/
-├── directives/           # Layer 1: SOPs (Markdown)
-├── execution/            # Layer 3: Deterministic scripts
-├── Agents/               # Background workers
-├── Orchestrator/         # LLM + RAG pipeline
-├── WebInterface/
-│   ├── backend/          # FastAPI (Orchestration Layer)
-│   └── frontend-react/   # React Dashboard
-├── docker-lab/           # Infrastructure (MongoDB, Ollama, DBs)
-├── scripts/              # PowerShell utilities
-└── .env.v2               # Configuration
+
+### Why This Works
+
+| Layer | Responsibility | Example |
+|-------|---------------|---------|
+| **Directives** | WHAT to do | "Discover databases in Docker" |
+| **Orchestration** | WHICH script to run | AI decides to call Scout |
+| **Execution** | HOW to do it | `Scout/main.py` runs discovery |
+
+---
+
+## 🏢 System Architecture
+
+```mermaid
+flowchart TB
+    subgraph Client["👤 Client"]
+        Browser[Web Browser]
+    end
+
+    subgraph Frontend["🖥️ Frontend :4002"]
+        React[React Dashboard]
+    end
+
+    subgraph Backend["⚙️ Backend :9000"]
+        FastAPI[FastAPI]
+        MongoProxy[MongoProxy]
+    end
+
+    subgraph Observability["📊 Observability"]
+        Langfuse[Langfuse :3001]
+    end
+
+    subgraph AI["🤖 AI Layer"]
+        Ollama[Ollama LLM :12434]
+        Qdrant[Qdrant Vector :7333]
+    end
+
+    subgraph Data["💾 Data Layer"]
+        MongoDB[(MongoDB :28017)]
+    end
+
+    subgraph Agents["🤖 Agents"]
+        Scout[Scout]
+        Collector[Collector]
+        Watcher[Watcher]
+        CriticalAlert[CriticalAlert]
+    end
+
+    subgraph Managed["🗄️ Managed DBs"]
+        PG[(PostgreSQL)]
+        Oracle[(Oracle)]
+    end
+
+    Browser --> React
+    React --> FastAPI
+    FastAPI --> MongoProxy --> MongoDB
+    FastAPI --> Ollama
+    FastAPI -.-> Langfuse
+    Ollama --> Qdrant
+
+    Agents --> MongoDB
+    Agents --> Managed
 ```
 
-## Data Flow
+---
 
+## 📊 Data Flow
+
+```mermaid
+sequenceDiagram
+    participant U as User
+    participant F as Frontend
+    participant B as Backend
+    participant A as Agent
+    participant M as MongoDB
+    participant L as LLM
+
+    Note over U,L: Discovery Flow
+    U->>F: Click "Scan"
+    F->>B: POST /api/auto-discovery
+    B->>A: Start Scout --once
+    A->>M: Insert to inventory_databases
+    A->>B: Done
+    B->>F: 200 OK
+    F->>U: Show new databases
+
+    Note over U,L: Chat Flow
+    U->>F: "Show PostgreSQL DBs"
+    F->>B: POST /api/chat
+    B->>M: Get context
+    B->>L: Generate response
+    L->>B: Response
+    B->>F: AI Message
+    F->>U: Display
 ```
-User Request → Frontend → Backend API → Agent/Script → MongoDB
-                                    ↓
-                              Orchestrator
-                                    ↓
-                            Ollama LLM + Qdrant
+
+---
+
+## 📁 Directory Structure
+
+```mermaid
+flowchart LR
+    subgraph Root["📦 Project Root"]
+        direction TB
+        Agents["Agents/<br/>🤖 Background workers"]
+        Web["WebInterface/<br/>🖥️ Frontend + Backend"]
+        Orch["Orchestrator/<br/>🧠 LLM + RAG"]
+        Exec["execution/<br/>⚡ Scripts"]
+        Dir["directives/<br/>📜 SOPs"]
+        Docker["docker-lab/<br/>🐳 Infrastructure"]
+    end
+
+    Agents --> Scout & Collector & Watcher
+    Web --> Backend & Frontend
+    Orch --> LLM & RAG
 ```
 
-## Agents
+---
 
-| Agent | Purpose | Directive |
-|-------|---------|-----------|
-| Scout | Auto-discovery | `database_discovery.md` |
-| Collector | Metrics | `metric_collection.md` |
-| Watcher | Log monitoring | `container_monitoring.md` |
-| CriticalAlert | Alerting | `alert_processing.md` |
-| CheckMK Bridge | External sync | `checkmk_sync.md` |
-| AIAssistant | Chat tools | `ai_chat.md` |
+## 🔌 Integration Points
 
-## Configuration
+| Component | Protocol | Port | Purpose |
+|-----------|----------|------|---------|
+| Frontend → Backend | HTTP/REST | 9000 | API calls |
+| Backend → MongoDB | MongoDB | 28017 | Data storage |
+| Backend → Ollama | HTTP | 12434 | LLM inference |
+| Backend → Langfuse | HTTP | 3001 | Observability |
+| Agents → MongoDB | MongoDB | 28017 | Results storage |
 
-All configuration is managed via environment variables. See `.env.example` for the full list.
+---
 
-Key variables:
-- `MONGODB_*`: Database connection
-- `OLLAMA_*`: LLM configuration
-- `QDRANT_*`: Vector database
-- `GATEWAY_SUFFIX`: V1 vs V2 mode
+## 🔗 Related
 
-## Quick Reference
-
-| Command | Purpose |
-|---------|---------|
-| `.\scripts\setup_v2.ps1` | Start everything |
-| `.\scripts\cleanup_v2.ps1` | Stop and clean |
-| `python execution/discover_docker_databases.py` | Manual discovery |
+- [README.md](README.md) - Quick start
+- [AGENTS.md](AGENTS.md) - Agent documentation
+- [MANIFEST.md](MANIFEST.md) - Port mappings

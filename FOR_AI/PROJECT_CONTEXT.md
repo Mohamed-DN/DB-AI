@@ -1,38 +1,100 @@
-# AI Project Context
+# 🧠 AI Project Context
 
-> Master reference for AI assistants. Read this first.
+> Master reference for AI assistants. **Read this first.**
 
-## 🎯 What Is This Project?
+---
 
-**Nexi DBA AI** is an AI-powered CMDB (Configuration Management Database) for database infrastructure. It:
+## 🎯 Quick Context
 
-1. **Discovers** databases running in Docker
-2. **Monitors** health, metrics, logs
-3. **Alerts** when things go wrong
-4. **Provides AI chat** for natural language queries
+```yaml
+Project: Nexi DBA AI
+Purpose: AI-powered database monitoring and management CMDB
+Version: V3 (Shadow Mode on V2 ports)
+Stack: Python/FastAPI + React + MongoDB + Ollama LLM
 
-## 🏗️ Architecture (3-Layer)
+# Critical Ports (ALWAYS use these)
+Backend: 9000
+Frontend: 4002
+MongoDB: 28017
+Langfuse: 3001
 
-```
-┌─────────────────────────────────────────────────┐
-│  LAYER 1: DIRECTIVES (directives/*.md)          │
-│  What to do - SOPs in plain English             │
-└─────────────────────────────────────────────────┘
-                    │
-                    ▼
-┌─────────────────────────────────────────────────┐
-│  LAYER 2: ORCHESTRATION (You, the AI)           │
-│  Decision making - Route to correct scripts     │
-└─────────────────────────────────────────────────┘
-                    │
-                    ▼
-┌─────────────────────────────────────────────────┐
-│  LAYER 3: EXECUTION (execution/*.py)            │
-│  Do the work - Deterministic Python scripts     │
-└─────────────────────────────────────────────────┘
+# Environment
+Config File: .env.v2 (NOT .env)
+Gateway Suffix: GATEWAY_SUFFIX=2
 ```
 
-## 🚀 Key Commands
+---
+
+## 🏗️ Architecture Overview
+
+```mermaid
+flowchart TB
+    subgraph User["👤 User"]
+        Browser[Browser]
+    end
+
+    subgraph App["🖥️ Application"]
+        FE[React :4002]
+        BE[FastAPI :9000]
+    end
+
+    subgraph AI["🤖 AI"]
+        Ollama[Ollama LLM]
+        Qdrant[Qdrant Vector]
+    end
+
+    subgraph Data["💾 Data"]
+        MongoDB[(MongoDB :28017)]
+    end
+
+    subgraph Agents["🔧 Agents"]
+        Scout[Scout]
+        Collector[Collector]
+        CriticalAlert[CriticalAlert]
+    end
+
+    Browser --> FE --> BE
+    BE --> MongoDB
+    BE --> Ollama --> Qdrant
+    Agents --> MongoDB
+```
+
+---
+
+## 📂 Directory Map
+
+```mermaid
+flowchart LR
+    subgraph L1["Layer 1: Directives"]
+        Dir[directives/*.md]
+    end
+
+    subgraph L2["Layer 2: Orchestration"]
+        BE[WebInterface/backend/]
+        Orch[Orchestrator/]
+    end
+
+    subgraph L3["Layer 3: Execution"]
+        Exec[execution/*.py]
+        Agents[Agents/]
+    end
+
+    Dir --> BE
+    BE --> Exec
+    BE --> Agents
+```
+
+| Path | Layer | Purpose |
+|------|-------|---------|
+| `directives/` | L1 | SOPs (what to do) |
+| `WebInterface/backend/` | L2 | API & routing |
+| `Orchestrator/` | L2 | LLM + RAG |
+| `execution/` | L3 | Deterministic scripts |
+| `Agents/` | L3 | Background workers |
+
+---
+
+## ⚡ Key Commands
 
 ```powershell
 # Start everything (zero-config)
@@ -48,16 +110,64 @@ python Agents/Scout/main.py --once
 python execution/seed_mongodb.py
 ```
 
-## 📁 Directory Map
+---
 
-| Path | Layer | Purpose |
-|------|-------|---------|
-| `directives/` | L1 | SOPs (what to do) |
-| `execution/` | L3 | Python scripts (how to do it) |
-| `Agents/` | L3 | Background workers |
-| `WebInterface/backend/` | L2 | FastAPI API |
-| `WebInterface/frontend-react/` | - | React UI |
-| `Orchestrator/` | L2/L3 | LLM + RAG |
+## 📊 MongoDB Collections
+
+```mermaid
+erDiagram
+    inventory_databases {
+        ObjectId _id
+        object identity
+        object state
+        object business_service
+    }
+
+    monitoring_alerts {
+        ObjectId _id
+        string db_name
+        string state
+        boolean processed
+        object ai_analysis
+    }
+
+    system_config {
+        string key
+        any value
+        datetime updated_at
+    }
+
+    gateways {
+        string _id
+        object location
+        object network
+    }
+
+    inventory_databases ||--o{ monitoring_alerts : generates
+    gateways ||--o{ inventory_databases : reaches
+```
+
+| Collection | Purpose |
+|------------|---------|
+| `inventory_databases` | Discovered databases |
+| `monitoring_alerts` | Active alerts |
+| `system_config` | Agent intervals, global settings |
+| `gateways` | SSH gateway info |
+| `business_services` | Service-to-DB mapping |
+
+---
+
+## 🔧 When You Need To...
+
+| Task | Action |
+|------|--------|
+| Fix a bug | Edit code → Test with `setup_v2.ps1` → Commit to v3 |
+| Add feature | Update directive first → Then implement |
+| Debug "error loading" | Check backend logs, verify ports |
+| Reset everything | `cleanup_v2.ps1` → `setup_v2.ps1` |
+| Push to personal repo | `git push personal v3:main` |
+
+---
 
 ## ⚠️ Critical Constraints
 
@@ -66,28 +176,14 @@ python execution/seed_mongodb.py
 3. **Gateway Suffix**: `GATEWAY_SUFFIX=2` for V2 containers
 4. **Branch Strategy**: Develop on `v3`, sync to `v2`
 
-## 🔧 When You Need To...
-
-| Task | Action |
-|------|--------|
-| Fix a bug | Edit code, test with `setup_v2.ps1`, commit to v3 |
-| Add a feature | Update directive first, then implement |
-| Debug "error loading" | Check backend logs, verify ports |
-| Reset everything | Run `cleanup_v2.ps1` then `setup_v2.ps1` |
-
-## 📊 MongoDB Collections
-
-| Collection | Purpose |
-|------------|---------|
-| `inventory_databases` | Discovered databases |
-| `monitoring_alerts` | Active alerts |
-| `system_config` | Agent intervals, global settings |
-| `business_services` | Service-to-DB mapping |
-| `gateways` | SSH gateway info |
+---
 
 ## 🔗 Related Files
 
-- [ARCHITECTURE.md](../ARCHITECTURE.md) - Technical architecture
-- [AGENTS.md](../AGENTS.md) - Agent documentation
-- [ROADMAP_V3.md](../ROADMAP_V3.md) - Development roadmap
-- [README.md](../README.md) - Quick start
+| Document | Description |
+|----------|-------------|
+| [README.md](../README.md) | Quick start |
+| [ARCHITECTURE.md](../ARCHITECTURE.md) | Technical architecture |
+| [AGENTS.md](../AGENTS.md) | Agent documentation |
+| [MANIFEST.md](../MANIFEST.md) | Port mappings |
+| [ROADMAP_V3.md](../ROADMAP_V3.md) | Development roadmap |

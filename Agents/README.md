@@ -2,30 +2,30 @@
 
 > Background workers for database discovery, monitoring, and alerting.
 
-## Structure
+---
 
-```
-Agents/
-├── Scout/           # Auto-discovery
-├── Collector/       # Metrics collection
-├── Watcher/         # Log monitoring
-├── CriticalAlert/   # Availability checks
-├── CheckMK_Bridge/  # External sync
-├── AIAssistant/     # Chat tools
-├── DailyAudit/      # Scheduled reports
-└── Monitor/         # Legacy
+## 🎯 AI Context
+
+```yaml
+Location: Agents/
+Purpose: Autonomous background workers
+Trigger: python Agents/{name}/main.py --once
+Output: MongoDB collections
 ```
 
-## Running Agents
+---
 
-```bash
-# One-shot mode (recommended for testing)
-python Agents/Scout/main.py --once
+## 📋 Agent Reference
 
-# Continuous mode (uses interval from config)
-python Agents/Scout/main.py
-```
+| Agent | Purpose | Command |
+|-------|---------|---------|
+| Scout | Auto-discovery | `python Agents/Scout/main.py --once` |
+| Collector | Metrics | `python Agents/Collector/main.py --once` |
+| Watcher | Log monitoring | `python Agents/Watcher/main.py` |
+| CriticalAlert | Alerting | `python Agents/CriticalAlert/main.py --once` |
 
-## See Also
-- [AGENTS.md](../AGENTS.md) - Full documentation
-- [directives/](../directives/) - SOPs for each agent
+---
+
+## 🔗 Related
+
+- [../AGENTS.md](../AGENTS.md) - Full documentation
