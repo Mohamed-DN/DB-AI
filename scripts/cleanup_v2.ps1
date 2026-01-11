@@ -33,11 +33,12 @@ else {
 Write-Host "`n[STEP 2] Killing V2 Processes..." -ForegroundColor Yellow
 
 # Function to kill process by port
-function Kill-ProcessByPort($port, $name) {
+# Function to stop process by port (renamed to use approved verb 'Stop')
+function Stop-ProcessByPort($port, $name) {
     if (-not $port) { return }
     $ProcId = Get-NetTCPConnection -LocalPort $port -ErrorAction SilentlyContinue | Select-Object -ExpandProperty OwningProcess -First 1
     if ($ProcId) {
-        Write-Host "Killing $name on port $port (PID: $ProcId)..." -ForegroundColor Red
+        Write-Host "Stopping $name on port $port (PID: $ProcId)..." -ForegroundColor Red
         Stop-Process -Id $ProcId -Force -ErrorAction SilentlyContinue
     }
     else {
@@ -50,12 +51,19 @@ $BackendPort = 9000
 $FrontendPort = 4002
 
 if (Test-Path $EnvFile) {
-    Get-Content $EnvFile | Where-Object { $_ -match "^BACKEND_PORT=(\d+)" } | ForEach-Object { $BackendPort = $Matches[1] }
-    Get-Content $EnvFile | Where-Object { $_ -match "^FRONTEND_PORT=(\d+)" } | ForEach-Object { $FrontendPort = $Matches[1] }
+    # Use foreach loop to avoid pipeline variable scoping issues
+    foreach ($line in Get-Content $EnvFile) {
+        if ($line -match "^BACKEND_PORT=(\d+)") {
+            $BackendPort = $Matches[1]
+        }
+        if ($line -match "^FRONTEND_PORT=(\d+)") {
+            $FrontendPort = $Matches[1]
+        }
+    }
 }
 
-Kill-ProcessByPort $BackendPort "Backend V2"
-Kill-ProcessByPort $FrontendPort "Frontend V2"
+Stop-ProcessByPort $BackendPort "Backend V2"
+Stop-ProcessByPort $FrontendPort "Frontend V2"
 
 Write-Host "`n[CLEANUP COMPLETED] V2 System is gone." -ForegroundColor Green
 Write-Host "You can now test clean installation with setup_v2.ps1" -ForegroundColor Cyan
