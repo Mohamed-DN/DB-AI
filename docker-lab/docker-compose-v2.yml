@@ -299,6 +299,45 @@ services:
         ipv4_address: 172.21.3.11
     restart: unless-stopped
 
+  # ===========================================================================
+  # OBSERVABILITY - Langfuse LLM Tracing
+  # ===========================================================================
+
+  # PostgreSQL for Langfuse
+  langfuse-db:
+    image: postgres:15-alpine
+    container_name: nexi-langfuse-db2
+    hostname: langfuse-db.nexi.lab
+    environment:
+      POSTGRES_USER: langfuse
+      POSTGRES_PASSWORD: langfuse2024
+      POSTGRES_DB: langfuse
+    volumes:
+      - langfuse_db_data_v2:/var/lib/postgresql/data
+    networks:
+      nexi-lab2:
+        ipv4_address: 172.21.0.20
+    restart: unless-stopped
+
+  # Langfuse - LLM Observability
+  langfuse:
+    image: langfuse/langfuse:latest
+    container_name: nexi-langfuse2
+    hostname: langfuse.nexi.lab
+    ports:
+      - "${LANGFUSE_PORT:-3001}:3000"
+    environment:
+      DATABASE_URL: postgresql://langfuse:langfuse2024@langfuse-db:5432/langfuse
+      NEXTAUTH_URL: http://localhost:3001
+      NEXTAUTH_SECRET: super-secret-langfuse-key-change-in-prod
+      SALT: super-secret-salt-change-in-prod
+    depends_on:
+      - langfuse-db
+    networks:
+      nexi-lab2:
+        ipv4_address: 172.21.0.21
+    restart: unless-stopped
+
 volumes:
   mongodb_data_v2:
   ollama_data_v2:
@@ -311,3 +350,6 @@ volumes:
   pg_bratislava_dev_data_v2:
   oracle_cairo_prim_data_v2:
   oracle_cairo_repl_data_v2:
+  langfuse_db_data_v2:
+
+

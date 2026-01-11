@@ -13,6 +13,7 @@
 | Ollama LLM | 12434 | nexi-ollama2 |
 | Qdrant | 7333 | nexi-qdrant2 |
 | Open WebUI | 4001 | nexi-open-webui2 |
+| **Langfuse** | **3001** | nexi-langfuse2 |
 
 ### Application
 | Service | Port |

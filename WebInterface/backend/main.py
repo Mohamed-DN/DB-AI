@@ -19,6 +19,30 @@ from Orchestrator.config.llm_config import (
     get_model_info, get_recommended_models, get_all_models
 )
 
+# Langfuse LLM Observability (optional - graceful fallback if not configured)
+try:
+    from langfuse import Langfuse
+    LANGFUSE_HOST = os.getenv("LANGFUSE_HOST", "http://localhost:3001")
+    LANGFUSE_PUBLIC_KEY = os.getenv("LANGFUSE_PUBLIC_KEY")
+    LANGFUSE_SECRET_KEY = os.getenv("LANGFUSE_SECRET_KEY")
+    
+    if LANGFUSE_PUBLIC_KEY and LANGFUSE_SECRET_KEY:
+        langfuse = Langfuse(
+            public_key=LANGFUSE_PUBLIC_KEY,
+            secret_key=LANGFUSE_SECRET_KEY,
+            host=LANGFUSE_HOST
+        )
+        LANGFUSE_ENABLED = True
+        print("[OK] Langfuse observability enabled")
+    else:
+        langfuse = None
+        LANGFUSE_ENABLED = False
+        print("[INFO] Langfuse keys not set, observability disabled")
+except ImportError:
+    langfuse = None
+    LANGFUSE_ENABLED = False
+    print("[INFO] Langfuse not installed, observability disabled")
+
 app = FastAPI(title="Nexi AI CMDB", version="2.0.0", description="AI-Powered Database Management")
 
 SAFE_IDENTIFIER_RE = re.compile(r"^[A-Za-z0-9._/\-]+$")
@@ -418,15 +442,36 @@ Remember: BE HELPFUL, BE DECISIVE, SOLVE THE PROBLEM!
         global current_llm_model
         model_to_use = request.model if request.model else current_llm_model
         
+        # Langfuse trace (optional)
+        trace = None
+        generation = None
+        if LANGFUSE_ENABLED and langfuse:
+            trace = langfuse.trace(
+                name="chat_with_ai",
+                user_id="nexi-dba-user",
+                metadata={"db_count": str(db_count), "active_alerts": str(active_alerts)}
+            )
+            generation = trace.generation(
+                name="ollama-generate",
+                model=model_to_use,
+                input=prompt,
+                metadata={"system_prompt_length": len(system_prompt)}
+            )
+        
         # Call Ollama with enhanced prompt
+        full_prompt = f"System: {system_prompt}\n\nUser: {prompt}\n\nAssistant (be decisive and action-oriented):"
         response = requests.post(f"{OLLAMA_CONFIG['base_url']}/api/generate", json={
             "model": model_to_use,
-            "prompt": f"System: {system_prompt}\n\nUser: {prompt}\n\nAssistant (be decisive and action-oriented):",
+            "prompt": full_prompt,
             "stream": False,
             "options": {**OLLAMA_CONFIG.get("options", {}), "temperature": 0.7}
         }, timeout=OLLAMA_CONFIG.get("timeout", 120))
         
         reply = response.json().get("response", "")
+        
+        # End Langfuse generation
+        if generation:
+            generation.end(output=reply)
         
         # Check for JSON Action in reply
         clean_reply = reply.strip()
