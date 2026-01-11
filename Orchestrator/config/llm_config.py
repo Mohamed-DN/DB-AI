@@ -2,6 +2,7 @@
 LLM Configuration for Nexi DBA AI
 Optimized for RTX 5070 Ti (16GB VRAM)
 """
+import os
 
 # Available models optimized for 16GB VRAM
 LLM_MODELS = {
@@ -9,7 +10,7 @@ LLM_MODELS = {
     "qwen2.5:14b": {
         "name": "Qwen 2.5 14B",
         "vram_gb": 12,
-        "description": "Bilanciamento perfetto velocità/intelligenza. Ottimo in italiano.",
+        "description": "Balanced speed and quality. Strong in Italian.",
         "use_case": "chat",
         "recommended": True
     },
@@ -18,7 +19,7 @@ LLM_MODELS = {
     "deepseek-coder-v2:16b": {
         "name": "DeepSeek Coder V2 16B",
         "vram_gb": 14,
-        "description": "Modello 'Thinking' avanzato. Eccellente per codice e logica complessa.",
+        "description": "Advanced reasoning model. Strong for code and complex logic.",
         "use_case": "reasoning",
         "recommended": True
     },
@@ -27,7 +28,7 @@ LLM_MODELS = {
     "qwen2.5-coder:14b": {
         "name": "Qwen 2.5 Coder 14B",
         "vram_gb": 12,
-        "description": "Specializzato in generazione codice e SQL.",
+        "description": "Specialized in code and SQL generation.",
         "use_case": "coding",
         "recommended": False
     },
@@ -36,7 +37,7 @@ LLM_MODELS = {
     "llama3.1:8b": {
         "name": "Llama 3.1 8B",
         "vram_gb": 7,
-        "description": "Risposte immediate, basso consumo risorse.",
+        "description": "Fast responses, low resource usage.",
         "use_case": "fast",
         "recommended": False
     }
@@ -50,7 +51,7 @@ FALLBACK_MODEL = "llama3.1:8b"
 
 # Ollama configuration
 OLLAMA_CONFIG = {
-    "base_url": "http://localhost:11434",
+    "base_url": os.getenv("OLLAMA_HOST", "http://localhost:11434"),
     "timeout": 120,  # seconds
     "stream": True,  # Enable streaming for better UX
     "options": {

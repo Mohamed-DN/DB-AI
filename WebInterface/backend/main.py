@@ -4,6 +4,7 @@ import os
 import subprocess
 import json
 import sys
+import re
 from dotenv import load_dotenv
 from pydantic import BaseModel
 
@@ -19,6 +20,13 @@ from Orchestrator.config.llm_config import (
 )
 
 app = FastAPI(title="Nexi AI CMDB", version="2.0.0", description="AI-Powered Database Management")
+
+SAFE_IDENTIFIER_RE = re.compile(r"^[A-Za-z0-9._/\-]+$")
+
+def validate_identifier(value: str, label: str) -> str:
+    if not value or not SAFE_IDENTIFIER_RE.match(value):
+        raise HTTPException(status_code=400, detail=f"Invalid {label}")
+    return value
 
 # Current LLM model state
 current_llm_model = DEFAULT_MODEL
@@ -138,6 +146,9 @@ def get_alerts():
 def connect_db(db_name, mode="sql"):
     """Validates DB and opens terminal"""
     try:
+        db_name = validate_identifier(db_name, "database")
+        if mode not in {"sql", "bash", "sysdba"}:
+            raise HTTPException(status_code=400, detail="Invalid connection mode")
         # 1. Get DB info
         db_info = mongo.execute_eval(f"db.inventory_databases.findOne({{'identity.db_unique_name': '{db_name}'}})")
         if not db_info:
@@ -179,7 +190,18 @@ def get_raw_collection(collection_name: str):
     """Get raw collection data for Explorer"""
     try:
         if not mongo: raise Exception("MongoProxy not initialized")
-        allowed = ["inventory_databases", "monitoring_alerts", "business_services", "agent_config", "emails"]
+        allowed = [
+            "inventory_databases",
+            "monitoring_alerts",
+            "business_services",
+            "system_config",
+            "discovery_queue",
+            "agent_runs",
+            "baselines",
+            "compliance_reports",
+            "gateways",
+            "rag_knowledge_base"
+        ]
         if collection_name not in allowed:
              raise HTTPException(status_code=400, detail="Invalid collection")
         
@@ -208,7 +230,7 @@ AGENT_SCRIPTS = {
     "collector": "../../Agents/Collector/main.py",
     "watcher": "../../Agents/Watcher/main.py",
     "criticalalert": "../../Agents/CriticalAlert/main.py",
-    "forensicanalyzer": "../../Agents/ForensicAnalyzer/main.py",
+    "forensicanalyzer": "../../Agents/Watcher/ai_analyzer.py",
     "checkmk_bridge": "../../Agents/CheckMK_Bridge/main.py"
 }
 
@@ -256,9 +278,8 @@ def start_agent_endpoint(agent_name: str):
         # Spawn process (continuous mode)
         proc = subprocess.Popen(
             [sys.executable, script_path],
-            stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE,
-            text=True
+            stdout=subprocess.DEVNULL,
+            stderr=subprocess.DEVNULL
         )
         
         AGENTS_STATE[agent_key]["running"] = True
@@ -429,14 +450,14 @@ Remember: BE HELPFUL, BE DECISIVE, SOLVE THE PROBLEM!
                     return f"✅ **Action Executed**: Email sent to {to}\n\n{reply}"
                 
                 elif action == "connect_terminal":
-                    db_name = action_json.get("database")
+                    db_name = validate_identifier(action_json.get("database"), "database")
                     mode = action_json.get("mode", "sql")
                     # Trigger terminal connection
                     connect_db(db_name, mode)
                     return f"✅ **Action Executed**: Terminal opened for {db_name} ({mode})\n\n{reply}"
                 
                 elif action == "run_query":
-                    db_name = action_json.get("database")
+                    db_name = validate_identifier(action_json.get("database"), "database")
                     sql = action_json.get("sql")
                     
                     # EXECUTE THE QUERY
@@ -473,7 +494,7 @@ Remember: BE HELPFUL, BE DECISIVE, SOLVE THE PROBLEM!
                         return f"⚠️ Execution error: {exec_err}\n\n{reply}"
                 
                 elif action == "create_alert":
-                    db_name = action_json.get("database")
+                    db_name = validate_identifier(action_json.get("database"), "database")
                     alert_type = action_json.get("type", "WARNING")
                     message = action_json.get("message")
                     mongo.insert_alert({
@@ -500,18 +521,27 @@ def trigger_scan():
     try:
         # Path to Scout
         script_path = os.path.abspath(os.path.join(os.path.dirname(__file__), '../../Agents/Scout/main.py'))
-        subprocess.Popen([sys.executable, script_path])
+        subprocess.Popen([sys.executable, script_path, "--once"], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
         return {"status": "Scout Agent Triggered via Async Subprocess"}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+
+@app.post("/api/action/auto-discovery")
+def trigger_auto_discovery():
+    """Backwards-compatible alias for auto-discovery"""
+    return trigger_scan()
 
 @app.post("/api/action/check")
 def trigger_check():
     """Trigger CriticalAlert Agent"""
     try:
         script_path = os.path.abspath(os.path.join(os.path.dirname(__file__), '../../Agents/CriticalAlert/main.py'))
-        email = os.getenv("SMTP_USER", "admin@nexi.com")
-        subprocess.Popen([sys.executable, script_path, "--email", email, "--once"])
+        email = os.getenv("ALERT_EMAIL") or os.getenv("SMTP_USER") or "admin@nexi.com"
+        subprocess.Popen(
+            [sys.executable, script_path, "--email", email, "--once"],
+            stdout=subprocess.DEVNULL,
+            stderr=subprocess.DEVNULL
+        )
         return {"status": "CriticalAlert Agent Triggered"}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
@@ -521,14 +551,10 @@ def trigger_collect():
     """Trigger Collector Agent"""
     try:
         script_path = os.path.abspath(os.path.join(os.path.dirname(__file__), '../../Agents/Collector/main.py'))
-        subprocess.Popen([sys.executable, script_path, "--once"])
+        subprocess.Popen([sys.executable, script_path, "--once"], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
         return {"status": "Collector Agent Triggered"}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
-
-class ConfigRequest(BaseModel):
-    scout_interval: int
-    check_interval: int
 
 @app.get("/api/config")
 def get_config():
@@ -538,6 +564,8 @@ def get_config():
     
     config = {}
     try:
+        if not mongo:
+            raise Exception("MongoProxy not initialized")
         for agent in agents:
             doc = mongo.execute_eval(f"db.system_config.findOne({{key: '{agent}_interval'}})")
             config[f"{agent}_interval"] = doc.get('value', defaults[agent]) if doc else defaults[agent]
@@ -549,9 +577,20 @@ def get_config():
 def update_config(cfg: dict):
     """Update agent intervals"""
     try:
+        if not mongo:
+            raise Exception("MongoProxy not initialized")
         for key, value in cfg.items():
-            if key.endswith('_interval'):
-                mongo.execute_eval(f"db.system_config.updateOne({{key: '{key}'}}, {{$set: {{value: {int(value)}}}}}, {{upsert: true}})")
+            if not key.endswith('_interval'):
+                continue
+            try:
+                normalized = int(value)
+            except (TypeError, ValueError):
+                raise HTTPException(status_code=400, detail=f"Invalid value for {key}")
+            if normalized < 5:
+                raise HTTPException(status_code=400, detail=f"Interval too small for {key}")
+            mongo.execute_eval(
+                f"db.system_config.updateOne({{key: '{key}'}}, {{$set: {{value: {normalized}}}}}, {{upsert: true}})"
+            )
         return {"status": "Updated", "config": cfg}
     except Exception as e:
          raise HTTPException(status_code=500, detail=str(e))
@@ -569,6 +608,9 @@ def clear_alerts():
 def connect_db(db_name: str, mode: str = "sql"):
     """Open a terminal connection to the DB. Mode: 'sql' or 'bash'. db_name can be CDB or CDB/PDB"""
     try:
+        db_name = validate_identifier(db_name, "database")
+        if mode not in {"sql", "bash", "sysdba"}:
+            raise HTTPException(status_code=400, detail="Invalid connection mode")
         # Lookup database to get container host
         if not mongo: raise Exception("MongoProxy not initialized")
         
@@ -694,9 +736,9 @@ def get_system_status():
         conf = mongo.execute_eval("db.system_config.findOne({key: 'global_status'})")
         # Default to RUNNING if not set
         status = conf.get('value', 'RUNNING') if conf else 'RUNNING'
-        return {"status": status}
+        return {"status": status, "paused": status == "PAUSED"}
     except:
-        return {"status": "RUNNING"}
+        return {"status": "RUNNING", "paused": False}
 
 @app.post("/api/system/status")
 def set_system_status(item: dict):
@@ -765,21 +807,6 @@ def set_system_status(item: dict):
             "containers_affected": len(lab_containers),
             "results": results
         }
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
-
-@app.get("/api/raw/{collection}")
-def get_raw_collection(collection: str):
-    """Get raw JSON of a collection"""
-    try:
-        if collection not in ["inventory_databases", "monitoring_alerts", "system_config"]:
-            raise HTTPException(status_code=400, detail="Invalid collection")
-        
-        data = mongo.execute_eval(f"db.{collection}.find().limit(100).toArray()")
-        # Clean IDs
-        for d in data:
-            if "_id" in d: d["_id"] = str(d["_id"])
-        return data
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
@@ -957,97 +984,12 @@ def get_alerts_with_ai_analysis():
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
-@app.get("/api/agents/status")
-def get_agents_status():
-    """Get status of all agents (checks for running Python processes)"""
-    import subprocess
-    
-    agents = {
-        "Scout": {"script": "Agents/Scout/main.py", "running": False},
-        "CriticalAlert": {"script": "Agents/CriticalAlert/critical_alert.py", "running": False},
-        "Watcher": {"script": "Agents/Watcher/main.py", "running": False},
-        "ForensicAnalyzer": {"script": "Agents/Watcher/ai_analyzer.py", "running": False},
-        "CheckMK_Bridge": {"script": "Agents/CheckMK_Bridge/main.py", "running": False},
-        "Collector": {"script": "Agents/Collector/main.py", "running": False}
-    }
-    
-    try:
-        # Get list of running Python processes
-        result = subprocess.run(
-            ["wmic", "process", "where", "name='python.exe'", "get", "commandline"],
-            capture_output=True, text=True, timeout=10
-        )
-        
-        running_processes = result.stdout.lower()
-        
-        for name, info in agents.items():
-            script_name = info["script"].lower().replace("/", "\\\\")
-            if script_name in running_processes or info["script"].lower() in running_processes:
-                agents[name]["running"] = True
-                
-    except Exception as e:
-        print(f"Error checking agents: {e}")
-    
-    return {"agents": agents}
-
-@app.post("/api/agents/start/{agent_name}")
-def start_agent(agent_name: str):
-    """Start a specific agent (runs once and returns output)"""
-    agent_scripts = {
-        "scout": ("Agents/Scout/main.py", ["--once"]),
-        "criticalalert": ("Agents/CriticalAlert/critical_alert.py", ["--once"]),
-        "watcher": ("Agents/Watcher/main.py", []),  # Watcher runs continuously
-        "forensicanalyzer": ("Agents/Watcher/ai_analyzer.py", ["--once"]),
-        "checkmk_bridge": ("Agents/CheckMK_Bridge/main.py", ["--once"]),
-        "collector": ("Agents/Collector/main.py", ["--once"])
-    }
-    
-    agent_info = agent_scripts.get(agent_name.lower())
-    if not agent_info:
-        raise HTTPException(status_code=404, detail=f"Agent {agent_name} not found")
-    
-    script, args = agent_info
-    
-    try:
-        script_path = os.path.abspath(os.path.join(os.path.dirname(__file__), '../../', script))
-        
-        # Run agent and capture output
-        result = subprocess.run(
-            [sys.executable, script_path] + args,
-            capture_output=True,
-            text=True,
-            timeout=60,
-            encoding='utf-8',
-            errors='replace'
-        )
-        
-        output = result.stdout + result.stderr
-        # Clean emoji and special chars for JSON
-        output_lines = [line for line in output.split('\n') if line.strip()]
-        
-        return {
-            "status": "completed",
-            "agent": agent_name,
-            "exit_code": result.returncode,
-            "output": output_lines[-20:] if len(output_lines) > 20 else output_lines,  # Last 20 lines
-            "success": result.returncode == 0
-        }
-    except subprocess.TimeoutExpired:
-        return {
-            "status": "timeout",
-            "agent": agent_name,
-            "output": ["Agent execution timed out (60s limit)"],
-            "success": False
-        }
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
-
 @app.post("/api/agents/trigger/watcher")
 def trigger_watcher_once():
     """Trigger Watcher agent for a single scan"""
     try:
         script_path = os.path.abspath(os.path.join(os.path.dirname(__file__), '../../Agents/Watcher/main.py'))
-        subprocess.Popen([sys.executable, script_path])
+        subprocess.Popen([sys.executable, script_path], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
         return {"status": "Watcher triggered"}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
@@ -1057,7 +999,7 @@ def trigger_checkmk_sync():
     """Trigger CheckMK Bridge for a single sync"""
     try:
         script_path = os.path.abspath(os.path.join(os.path.dirname(__file__), '../../Agents/CheckMK_Bridge/main.py'))
-        subprocess.Popen([sys.executable, script_path, "--once"])
+        subprocess.Popen([sys.executable, script_path, "--once"], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
         return {"status": "CheckMK sync triggered"}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
@@ -1067,7 +1009,7 @@ def trigger_forensic_analysis():
     """Trigger Forensic AI Analyzer for a single run"""
     try:
         script_path = os.path.abspath(os.path.join(os.path.dirname(__file__), '../../Agents/Watcher/ai_analyzer.py'))
-        subprocess.Popen([sys.executable, script_path, "--once"])
+        subprocess.Popen([sys.executable, script_path, "--once"], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
         return {"status": "Forensic Analyzer triggered"}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))

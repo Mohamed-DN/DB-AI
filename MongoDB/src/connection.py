@@ -17,7 +17,7 @@ def get_client() -> MongoClient:
     """Get MongoDB client (singleton)"""
     global _client
     if _client is None:
-        uri = os.getenv("MONGO_URI", "mongodb://localhost:27017")
+        uri = os.getenv("MONGO_URI") or os.getenv("MONGODB_URI") or "mongodb://localhost:27017"
         _client = MongoClient(uri)
     return _client
 
@@ -26,7 +26,7 @@ def get_database() -> Database:
     """Get MongoDB database"""
     global _db
     if _db is None:
-        db_name = os.getenv("MONGO_DB", "nexi_cmdb")
+        db_name = os.getenv("MONGO_DB") or os.getenv("MONGODB_DB") or "nexi_cmdb"
         _db = get_client()[db_name]
     return _db
 

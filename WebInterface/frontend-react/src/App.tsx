@@ -114,7 +114,7 @@ function AppContent() {
 
   useEffect(() => {
     if (systemStatus) {
-      setIsPaused(systemStatus.paused);
+      setIsPaused(systemStatus.paused ?? systemStatus.status === 'PAUSED');
     }
   }, [systemStatus]);
 
@@ -154,7 +154,7 @@ function AppContent() {
       case 'agents':
         return <AgentsPanel />;
       case 'settings':
-        return <SettingsPanel />;
+        return <SettingsPanel onNavigateToAgents={() => setActiveTab('agents')} />;
       default:
         return null;
     }
@@ -204,8 +204,10 @@ function AppContent() {
 
             {/* Status Indicator */}
             <div className="flex items-center gap-2 px-3">
-              <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
-              <span className="text-gray-400 text-sm hidden md:inline">SYSTEM ONLINE</span>
+              <span className={`w-2 h-2 rounded-full ${isPaused ? 'bg-amber-400' : 'bg-emerald-500 animate-pulse'}`}></span>
+              <span className="text-gray-400 text-sm hidden md:inline">
+                {isPaused ? 'SYSTEM PAUSED' : 'SYSTEM ONLINE'}
+              </span>
             </div>
           </div>
         </div>

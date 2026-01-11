@@ -1,21 +1,13 @@
-# Performance Module
+# Module: Performance
 
-Handles SQL tuning, plan analysis, and performance optimization.
+## Scopo del progetto
+Provide performance analysis guidance and tuning references.
 
-## Capabilities
+## Installazione e Setup
+No separate setup. Content is consumed by the RAG pipeline.
 
-### SQL Tuning
-- Identify top SQL by elapsed time
-- Detect SQL with plan changes
-- Find queries missing bind variables
-- Send reports to BAO for long-running queries
+## Architettura
+Documents in this module are indexed into the vector store.
 
-### Connection Analysis
-- Pool sizing verification
-- Client version audit
-- Connection count monitoring
-
-### Restore Points
-- Check existence
-- Alert if older than threshold
-- Schedule cleanup
+## Utilizzo
+Update content and reindex to refresh AI recommendations.

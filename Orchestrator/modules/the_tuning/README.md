@@ -1,17 +1,13 @@
-# THE TUNING Module
+# Module: The Tuning
 
-Performance optimization AI for database tuning.
+## Scopo del progetto
+Provide tuning patterns for common database engines.
 
-## Capabilities
+## Installazione e Setup
+No separate setup. Content is consumed by the RAG pipeline.
 
-- Analyzes AWR/ASH reports
-- Suggests parameter changes
-- Identifies slow queries
-- Recommends index creation
+## Architettura
+Tuning guidance is indexed into the vector store.
 
-## Actions It Can Take
-
-- Suggest: "Consider increasing SGA_TARGET to 16GB"
-- Analyze: "Top 5 SQL by elapsed time"
-- Recommend: "Add index on ORDERS(customer_id)"
-- Apply (future): Auto-tune with approval workflow
+## Utilizzo
+Add engine specific tuning notes and reindex the knowledge base.

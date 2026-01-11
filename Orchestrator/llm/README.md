@@ -1,27 +1,16 @@
-# LLM Integration
+# LLM Module
 
-Local Large Language Model for AI processing.
+## Scopo del progetto
+Manage LLM configuration and model switching.
 
-## Technology
+## Installazione e Setup
+Set OLLAMA_HOST in .env. Pull models with scripts/pull_models.ps1.
 
-- **Ollama** for local inference
-- Models: Llama3, Mistral, CodeLlama
+## Architettura
+- llm/ollama_client.py: client calls
+- config/llm_config.py: model list and defaults
 
-## Configuration
-
-```yaml
-llm:
-  provider: "ollama"
-  base_url: "http://localhost:11434"
-  models:
-    chat: "llama3:8b"
-    code: "codellama:7b"
-    embed: "nomic-embed-text"
-```
-
-## Use Cases
-
-- Natural language query processing
-- Code/SQL generation
-- Incident analysis
-- Runbook suggestions
+## Utilizzo
+API endpoints:
+- GET /api/llm/current
+- POST /api/llm/switch { "model": "..." }

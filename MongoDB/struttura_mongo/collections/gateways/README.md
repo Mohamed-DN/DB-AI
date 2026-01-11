@@ -1,35 +1,13 @@
-# Gateways Collection
+# Collection: gateways
 
-Bastion host SSH che fungono da ponte per accedere ai database.
+## Scopo del progetto
+Store gateway inventory and connectivity metadata.
 
-## Scopo
+## Installazione e Setup
+Created by gateway provisioning workflows.
 
-- **Routing**: Definire quale gateway usare per raggiungere un database
-- **Topologia**: Mappare quale datacenter serve quali host
-- **Monitoraggio**: Tracciare stato e raggiungibilità
+## Architettura
+Fields include: gateway_id, hostname, region, ssh_port, status, last_seen.
 
-## Campi Principali
-
-| Campo | Descrizione |
-|-------|-------------|
-| `_id` | ID univoco gateway (es. `dbgec2`) |
-| `location` | Paese, città, datacenter |
-| `info` | Hostname, IP, OS, hardware |
-| `network` | Porte aperte, stato |
-| `reachability` | Host e database accessibili |
-
-## Indici
-
-```javascript
-// Lookup per hostname
-db.gateways.createIndex(
-  { "info.hostname": 1 },
-  { unique: true, name: "idx_gw_hostname" }
-);
-
-// Lookup per datacenter
-db.gateways.createIndex(
-  { "location.datacenter": 1 },
-  { name: "idx_gw_datacenter" }
-);
-```
+## Utilizzo
+db.gateways.find({ status: "UP" })

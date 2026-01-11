@@ -10,6 +10,7 @@ import tailwindcss from '@tailwindcss/vite'
 // =============================================================================
 
 export default defineConfig({
+    envDir: '../../',
     plugins: [react(), tailwindcss()],
     server: {
         port: 4002, // V2 Frontend Port (V1 = 3002)

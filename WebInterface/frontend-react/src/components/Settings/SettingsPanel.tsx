@@ -1,8 +1,15 @@
 import { Bot } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
 
-export default function SettingsPanel() {
-    const navigate = useNavigate();
+type SettingsPanelProps = {
+    onNavigateToAgents?: () => void;
+};
+
+export default function SettingsPanel({ onNavigateToAgents }: SettingsPanelProps) {
+    const handleNavigate = () => {
+        if (onNavigateToAgents) {
+            onNavigateToAgents();
+        }
+    };
 
     return (
         <div className="glass p-12 text-center flex flex-col items-center justify-center min-h-[400px]">
@@ -16,7 +23,7 @@ export default function SettingsPanel() {
             </p>
 
             <button
-                onClick={() => navigate('/agents')}
+                onClick={handleNavigate}
                 className="btn-primary px-8 py-3 text-lg flex items-center gap-2"
             >
                 <Bot className="w-5 h-5" />

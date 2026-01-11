@@ -1,16 +1,13 @@
-# THE ARCHITECTURE Module
+# Module: The Architecture
 
-AI module responsible for understanding system topology and relationships.
+## Scopo del progetto
+Explain system architecture concepts used by the AI layer.
 
-## Capabilities
+## Installazione e Setup
+No separate setup. Content is consumed by the RAG pipeline.
 
-- Understands RAC, Data Guard, GoldenGate topologies
-- Maps dependencies between databases
-- Knows which DBs serve which business services
-- Provides architectural context for troubleshooting
+## Architettura
+Architecture notes are indexed and retrieved by the RAG pipeline.
 
-## Queries It Can Answer
-
-- "What databases are part of the NZSEP cluster?"
-- "Show me the Data Guard topology for PROD databases"
-- "Which services depend on this database?"
+## Utilizzo
+Keep this module aligned with the current system topology.

@@ -1,23 +1,16 @@
-# 🚨 CriticalAlert Agent
+# CriticalAlert Agent
 
-Agente real-time che monitora errori critici e attiva alert immediati.
+## Scopo del progetto
+Monitor database availability and create critical alerts.
 
-## ⏱️ Schedule
-- **Frequenza**: Continuo (polling ogni 30 secondi)
-- **Sorgente**: Checkmk + controlli diretti DB
+## Installazione e Setup
+- pip install -r Agents/CriticalAlert/requirements.txt
+- Set ALERT_EMAIL or SMTP_USER/SMTP_PASSWORD
 
-## 🔴 Condizioni Critiche Monitorate
+## Architettura
+- Reads inventory_databases via MongoProxy
+- Writes monitoring_alerts
+- Sends SMTP or saves HTML files in emails/
 
-| Condizione | Severità | Azione |
-|------------|----------|--------|
-| Database DOWN | CRITICAL | Email BAO + DL |
-| Tablespace > 95% | CRITICAL | Email BAO |
-| Data Guard LAG > 1 ora | HIGH | Email DL |
-| Backup fallito | HIGH | Email DL |
-| Sessione bloccante > 30 min | MEDIUM | Log + Alert |
-
-## 🔗 Integrazione
-
-- Legge da `monitoring_alerts` (sync Checkmk)
-- Interroga CMDB per info contatti
-- Invia email via SMTP
+## Utilizzo
+python Agents/CriticalAlert/main.py --once --email you@example.com

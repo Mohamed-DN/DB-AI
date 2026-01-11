@@ -1,7 +1,15 @@
-# Clients Component
+# Clients
 
-This directory holds the frontend client application for the Nexi_DB_AI project.
+## Scopo del progetto
+Placeholders for external clients that integrate with the backend API.
 
-## Contents
+## Installazione e Setup
+No extra setup. See README.md.
 
-- **index.tsx**: The main entry point for the React/Frontend application.
+## Architettura
+Clients call FastAPI endpoints under /api and consume JSON responses.
+
+## Utilizzo
+Examples:
+curl http://localhost:9000/api/inventory
+curl -X POST http://localhost:9000/api/action/scan

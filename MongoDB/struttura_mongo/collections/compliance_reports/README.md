@@ -1,16 +1,13 @@
-# Compliance Reports Collection
+# Collection: compliance_reports
 
-Stores daily audit results and remediation tracking.
+## Scopo del progetto
+Store audit and compliance results for databases.
 
-## Purpose
-- Track compliance status over time
-- Document issues and remediation
-- Generate reports for management
+## Installazione e Setup
+Created by DailyAudit or analysis workflows.
 
-## Indexes
+## Architettura
+Fields include: db_unique_name, rule_id, status, findings, created_at.
 
-```javascript
-db.compliance_reports.createIndex({ "report_date": -1 }, { name: "idx_report_date" });
-db.compliance_reports.createIndex({ "issues.db_unique_name": 1 }, { name: "idx_issues_db" });
-db.compliance_reports.createIndex({ "issues.remediation_status": 1, "issues.severity": 1 }, { name: "idx_open_issues" });
-```
+## Utilizzo
+db.compliance_reports.find({ status: "FAIL" }).limit(20)

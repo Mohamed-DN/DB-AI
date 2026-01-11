@@ -1,4 +1,4 @@
-import { useState, type ReactNode } from 'react';
+import { useState, useEffect, type ReactNode } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import * as api from '../../services/api';
 
@@ -15,11 +15,16 @@ export default function ExplorerPanel() {
         'inventory_databases',
         'monitoring_alerts',
         'business_services',
-        'agent_config',
+        'system_config',
+        'discovery_queue',
+        'agent_runs',
+        'baselines',
+        'compliance_reports',
+        'gateways',
+        'rag_knowledge_base',
     ];
 
     const renderJsonTree = (data: any, depth = 0): ReactNode => {
-
         if (data === null) return <span className="text-gray-500">null</span>;
         if (typeof data === 'boolean') return <span className="text-purple-400">{String(data)}</span>;
         if (typeof data === 'number') return <span className="text-blue-400">{data}</span>;
@@ -63,10 +68,6 @@ export default function ExplorerPanel() {
         return <span className="bg-gray-800/50 px-1 rounded text-gray-300">{String(data)}</span>;
     };
 
-    // Ref for JSON Crack iframe
-    // Ref for JSON Crack iframe
-
-    // We use a callback ref or simple effect to handle postMessage
     const handleIframeLoad = (e: React.SyntheticEvent<HTMLIFrameElement>) => {
         const iframe = e.currentTarget;
         if (selectedItem) {
@@ -79,11 +80,13 @@ export default function ExplorerPanel() {
     // Update graph when selected item changes
     const [iframeRef, setIframeRef] = useState<HTMLIFrameElement | null>(null);
 
-    if (selectedItem && iframeRef?.contentWindow) {
-        iframeRef.contentWindow.postMessage({
-            json: JSON.stringify(selectedItem)
-        }, "*");
-    }
+    useEffect(() => {
+        if (selectedItem && iframeRef?.contentWindow) {
+            iframeRef.contentWindow.postMessage({
+                json: JSON.stringify(selectedItem)
+            }, "*");
+        }
+    }, [selectedItem, iframeRef]);
 
     return (
         <div className="flex gap-4 h-[600px]">

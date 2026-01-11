@@ -1,180 +1,26 @@
-# 📊 MongoDB - Schema CMDB
+# MongoDB (CMDB)
 
-Questa directory contiene gli schemi e script per il database MongoDB.
+## Scopo del progetto
+MongoDB stores inventory, metrics, alerts, and configuration for the platform.
 
-## 📋 Collezioni
+## Installazione e Setup
+Use docker-lab or supply a MongoDB instance. Configure:
+MONGODB_HOST, MONGODB_DB, MONGO_USERNAME, MONGO_PASSWORD.
+Optional: MONGO_CONTAINER for MongoProxy.
 
-### inventory_databases
+## Architettura
+Key collections:
+- inventory_databases
+- monitoring_alerts
+- system_config
+- discovery_queue
+- business_services
+- gateways
+- agent_runs
+- baselines
+- compliance_reports
+- rag_knowledge_base
 
-**Descrizione**: Inventario completo di tutti i database gestiti.
-
-**Schema principale**:
-```json
-{
-  "_id": "ObjectId",
-  "identity": {
-    "db_name": "nexi-pg-milano-prod",
-    "db_unique_name": "NEXI-PG-MILANO-PROD",
-    "engine": "POSTGRES",
-    "version": "15.0",
-    "host": "nexi-pg-milano-prod",
-    "port": 5432
-  },
-  "location": {
-    "datacenter": "Milano",
-    "gateway": "gw-milano",
-    "env": "PROD"
-  },
-  "contacts": {
-    "dba_email": "dba-team@nexi.com",
-    "business_owner": "payments-team"
-  },
-  "state": {
-    "status": "UP",
-    "last_seen": "2026-01-05T18:00:00Z"
-  },
-  "deep_observability": {
-    "oracle_internals": {
-      "tablespaces": [...],
-      "asm_diskgroups": [...],
-      "fra_usage_pct": 45
-    },
-    "data_protection": {
-      "rman_last_backup": "2026-01-05T02:00:00Z",
-      "dataguard_lag_seconds": 3
-    },
-    "performance_metrics": {
-      "cpu_percent": 35,
-      "active_sessions": 12,
-      "blocking_sessions": 0
-    },
-    "external_metrics": {
-      "checkmk": {
-        "host_state": "OK",
-        "cpu_util": 35,
-        "memory_util": 60,
-        "last_sync": "2026-01-05T18:00:00Z"
-      }
-    }
-  }
-}
-```
-
----
-
-### monitoring_alerts
-
-**Descrizione**: Alert generati dagli agenti.
-
-**Tipi alert**:
-- `DB_DOWN` - Database non raggiungibile
-- `DB_RECOVERY` - Database tornato online
-- `ASSET_MISSING` - Database non rilevato in Docker
-- `DB_FORENSICS` - Errore critico rilevato nei log
-
-**Schema**:
-```json
-{
-  "_id": "ObjectId",
-  "type": "DB_DOWN",
-  "state": "CRITICAL",
-  "db_unique_name": "NEXI-ORACLE-CAIRO-PRIMARY",
-  "message": "Gateway gw-cairo is DOWN",
-  "timestamp": "2026-01-05T17:30:00Z",
-  "processed": false,
-  "ai_analysis": {
-    "diagnosis": "Il gateway è probabilmente offline...",
-    "confidence": 0.85,
-    "sources_used": ["Oracle KB", "DBA Playbook"],
-    "analyzed_at": "2026-01-05T17:31:00Z"
-  }
-}
-```
-
----
-
-### system_config
-
-**Descrizione**: Configurazione del sistema.
-
-**Chiavi**:
-```json
-{ "key": "scout_interval", "value": 60 }
-{ "key": "criticalalert_interval", "value": 30 }
-{ "key": "watcher_interval", "value": 10 }
-{ "key": "forensicanalyzer_interval", "value": 30 }
-{ "key": "checkmk_bridge_interval", "value": 60 }
-{ "key": "collector_interval", "value": 30 }
-{ "key": "global_status", "value": "RUNNING" }
-```
-
----
-
-### gateways
-
-**Descrizione**: Mappa gateway per datacenter.
-
-```json
-{
-  "name": "gw-cairo",
-  "datacenter": "Cairo",
-  "container": "nexi-gw-cairo",
-  "databases": ["NEXI-ORACLE-CAIRO-PRIMARY", "NEXI-ORACLE-CAIRO-REPLICA"]
-}
-```
-
----
-
-## 🔧 Scripts
-
-| Script | Descrizione |
-|--------|-------------|
-| `scripts/create_indexes.py` | Crea indici per performance |
-| `scripts/seed_sample_data.py` | Popola dati di esempio |
-| `scripts/update_email_address.py` | Aggiorna email contatti |
-| `scripts/check_missing_dbs.py` | Verifica database mancanti |
-
----
-
-## 📝 Accesso Diretto
-
-### Via mongosh
-
-```powershell
-docker exec -it nexi-mongodb mongosh nexi_cmdb
-```
-
-### Query utili
-
-```javascript
-// Lista database
-db.inventory_databases.find({}, {"identity.db_unique_name": 1})
-
-// Alert non processati
-db.monitoring_alerts.find({processed: false})
-
-// Configurazione
-db.system_config.find()
-```
-
-### Via Mongo Express
-
-Vai a: **http://localhost:8081**
-
----
-
-## 🔄 Backup/Restore
-
-### Backup
-
-```powershell
-docker exec nexi-mongodb mongodump --db nexi_cmdb --out /backup
-docker cp nexi-mongodb:/backup ./backup
-```
-
-### Restore
-
-```powershell
-docker cp ./backup nexi-mongodb:/backup
-docker exec nexi-mongodb mongorestore --db nexi_cmdb /backup/nexi_cmdb
-```
+## Utilizzo
+Use Mongo Express or mongosh to inspect data.
+Example: db.inventory_databases.find({}).limit(5)

@@ -1,17 +1,15 @@
 # RAG Pipeline
 
-Retrieval Augmented Generation for context-aware AI responses.
+## Scopo del progetto
+Combine retrieval from Qdrant with prompts for LLM responses.
 
-## Flow
+## Installazione e Setup
+Qdrant must be running. Configure QDRANT_HOST.
 
-1. **Query** → User asks a question
-2. **Retrieve** → Search Qdrant for relevant documents
-3. **Augment** → Combine docs with CMDB context
-4. **Generate** → LLM produces response
+## Architettura
+- rag/ for ingestion and retrieval steps
+- vector_db/ for storage and search
+- knowledge sources from MongoDB and docs
 
-## Data Sources for RAG
-
-- Runbooks and procedures
-- SQL scripts with comments
-- Architecture documentation
-- Historical incidents
+## Utilizzo
+Used by backend and agents to enrich alerts and chat responses.

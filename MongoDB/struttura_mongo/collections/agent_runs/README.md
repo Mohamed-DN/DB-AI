@@ -1,16 +1,13 @@
-# Agent Runs Collection
+# Collection: agent_runs
 
-Log delle esecuzioni degli agenti SADA (Scout e Collector).
+## Scopo del progetto
+Track agent executions for audit and troubleshooting.
 
-## Scopo
+## Installazione e Setup
+Created by backend or agents at runtime.
 
-- **Auditing**: Tracciare ogni esecuzione.
-- **Debugging**: Analizzare errori.
-- **Metriche**: Dashboard sulle performance degli agenti.
+## Architettura
+Fields include: agent, status, exit_code, started_at, finished_at, duration, output.
 
-## Indici
-
-```javascript
-db.agent_runs.createIndex({ "agent_type": 1, "started_at": -1 }, { name: "idx_agent_history" });
-db.agent_runs.createIndex({ "status": 1 }, { name: "idx_run_status" });
-```
+## Utilizzo
+db.agent_runs.find({ agent: "scout" }).sort({ started_at: -1 }).limit(10)

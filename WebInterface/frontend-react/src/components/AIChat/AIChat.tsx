@@ -18,6 +18,7 @@ export default function AIChat() {
         },
     ]);
     const [input, setInput] = useState('');
+    const [selectedModel, setSelectedModel] = useState('');
     const messagesEndRef = useRef<HTMLDivElement>(null);
 
     const { data: currentModel } = useQuery({
@@ -32,7 +33,7 @@ export default function AIChat() {
     });
 
     const sendMessageMutation = useMutation({
-        mutationFn: api.sendChatMessage,
+        mutationFn: ({ message, model }: { message: string; model?: string }) => api.sendChatMessage(message, model),
         onSuccess: (response) => {
             setMessages((prev) => [
                 ...prev,
@@ -48,7 +49,21 @@ export default function AIChat() {
                 ...prev,
                 {
                     role: 'assistant',
-                    content: `Errore: ${error}`,
+                    content: `Errore: ${String(error)}`,
+                    timestamp: new Date(),
+                },
+            ]);
+        },
+    });
+
+    const switchModelMutation = useMutation({
+        mutationFn: api.switchModel,
+        onError: (error) => {
+            setMessages((prev) => [
+                ...prev,
+                {
+                    role: 'assistant',
+                    content: `Model switch failed: ${String(error)}`,
                     timestamp: new Date(),
                 },
             ]);
@@ -63,11 +78,11 @@ export default function AIChat() {
             { role: 'user', content: input, timestamp: new Date() },
         ]);
 
-        sendMessageMutation.mutate(input);
+        sendMessageMutation.mutate({ message: input, model: selectedModel || currentModel?.model });
         setInput('');
     };
 
-    const handleKeyPress = (e: React.KeyboardEvent) => {
+    const handleKeyDown = (e: React.KeyboardEvent) => {
         if (e.key === 'Enter' && !e.shiftKey) {
             e.preventDefault();
             handleSend();
@@ -77,6 +92,12 @@ export default function AIChat() {
     useEffect(() => {
         messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
     }, [messages]);
+
+    useEffect(() => {
+        if (currentModel?.model) {
+            setSelectedModel(currentModel.model);
+        }
+    }, [currentModel]);
 
     const gpuInfo = gpuStatus && !gpuStatus.error
         ? `GPU: ${(gpuStatus.memory_used_mb / 1024).toFixed(1)}/${(gpuStatus.memory_total_mb / 1024).toFixed(1)}GB`
@@ -91,7 +112,12 @@ export default function AIChat() {
                     <span className="text-gray-400">Model:</span>
                     <select
                         className="bg-gray-800 border border-gray-600 rounded px-3 py-1 text-sm"
-                        defaultValue={currentModel?.model || 'deepseek-r1:14b'}
+                        value={selectedModel || currentModel?.model || 'deepseek-r1:14b'}
+                        onChange={(e) => {
+                            const nextModel = e.target.value;
+                            setSelectedModel(nextModel);
+                            switchModelMutation.mutate(nextModel);
+                        }}
                     >
                         <option value="qwen3:30b-a3b">Qwen3 30B-A3B (Best)</option>
                         <option value="mistral-small3.1:24b">Mistral-Small 24B</option>
@@ -157,7 +183,7 @@ export default function AIChat() {
                         type="text"
                         value={input}
                         onChange={(e) => setInput(e.target.value)}
-                        onKeyPress={handleKeyPress}
+                        onKeyDown={handleKeyDown}
                         placeholder="Chiedi informazioni sui database, alert, o stato del sistema..."
                         className="flex-1 bg-gray-800 border border-gray-600 rounded-lg px-4 py-3 focus:outline-none focus:border-purple-500"
                     />

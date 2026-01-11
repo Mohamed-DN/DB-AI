@@ -19,7 +19,7 @@ class EmailSender:
     """Send email alerts via SMTP"""
     
     def __init__(self):
-        self.smtp_server = os.getenv("SMTP_SERVER", "smtp.gmail.com")
+        self.smtp_server = os.getenv("SMTP_SERVER") or os.getenv("SMTP_HOST") or "smtp.gmail.com"
         self.smtp_port = int(os.getenv("SMTP_PORT", "587"))
         self.smtp_user = os.getenv("SMTP_USER", "")
         self.smtp_password = os.getenv("SMTP_PASSWORD", "")
@@ -30,14 +30,14 @@ class EmailSender:
         try:
             msg = MIMEMultipart()
             msg['From'] = self.from_email
-            msg['To'] = to_email
-            msg['Subject'] = f"🚨 DBA AI ALERT: {subject}"
-            
+            msg['To'] = to_email or ""
+            msg['Subject'] = f"Nexi DBA AI Alert: {subject}"
+
             html_body = f"""
             <html>
             <body style="font-family: Arial, sans-serif;">
                 <div style="background-color: #ff4444; color: white; padding: 20px; text-align: center;">
-                    <h1>⚠️ CRITICAL DATABASE ALERT</h1>
+                    <h1>CRITICAL DATABASE ALERT</h1>
                 </div>
                 <div style="padding: 20px;">
                     <h2>{subject}</h2>
@@ -51,20 +51,25 @@ class EmailSender:
             </body>
             </html>
             """
-            
+
             msg.attach(MIMEText(html_body, 'html'))
-            
-            if self.smtp_user and self.smtp_password:
+
+            email_sent = False
+            if to_email and self.smtp_user and self.smtp_password:
                 with smtplib.SMTP(self.smtp_server, self.smtp_port) as server:
                     server.starttls()
                     server.login(self.smtp_user, self.smtp_password)
                     server.send_message(msg)
-                print(f"✅ [REAL EMAIL] Sent to {to_email}")
+                print(f"EMAIL SENT: {to_email}")
+                email_sent = True
             else:
-                # Simulate email if no SMTP configured
-                print(f"📧 [SIMULATED EMAIL] To: {to_email}")
-                print(f"   Subject: {subject}")
-                print(f"   Body: {body[:100]}...")
+                if not to_email:
+                    print("No alert email configured; skipping SMTP send.")
+                else:
+                    print(f"SIMULATED EMAIL: {to_email}")
+                    print(f"Subject: {subject}")
+                    print(f"Body: {body[:100]}...")
+                email_sent = bool(to_email)
 
             # Save to file for verification
             try:
@@ -73,21 +78,21 @@ class EmailSender:
                 emails_dir = os.path.join(base_dir, 'emails')
                 if not os.path.exists(emails_dir):
                     os.makedirs(emails_dir)
-                
+
                 timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
                 clean_subject = "".join([c if c.isalnum() else "_" for c in subject])[:30]
                 filename = os.path.join(emails_dir, f"email_{timestamp}_{clean_subject}.html")
-                
+
                 with open(filename, "w", encoding="utf-8") as f:
                     f.write(html_body)
-                print(f"    💾 Email saved to: {filename}")
+                print(f"Email saved to: {filename}")
             except Exception as e:
-                print(f"    ❌ Failed to save email to file: {e}")
+                print(f"Failed to save email to file: {e}")
 
-            return True
-                
+            return email_sent
+
         except Exception as e:
-            print(f"❌ Failed to send email: {e}")
+            print(f"Failed to send email: {e}")
             return False
 
 
@@ -161,45 +166,55 @@ class CriticalAlertAgent:
         self.email_sender = EmailSender()
         self.databases = []
         self.alerts_sent = []
+        self.default_pg_user = os.getenv("POSTGRES_USER", "postgres")
+        self.default_pg_password = os.getenv("POSTGRES_PASSWORD", "nexi2024")
+        self.default_pg_db = os.getenv("POSTGRES_DB", "postgres")
         
         # Connect to MongoDB via Proxy
         try:
             sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '../../')))
             from Orchestrator.src.mongo_proxy import MongoProxy
             self.mongo_proxy = MongoProxy()
-            print("✅ Connected to MongoDB (Proxy)")
+            print("Connected to MongoDB (Proxy)")
             
             # Load targets from Inventory
             self.load_targets_from_inventory()
         except Exception as e:
-            print(f"❌ MongoDB Proxy Setup Failed: {e}")
+            print(f"MongoDB Proxy Setup Failed: {e}")
             self.mongo_proxy = None
 
     def load_targets_from_inventory(self):
         """Fetch active databases from MongoDB Inventory"""
-        print("🔄 Fetching targets from Inventory...")
+        if not self.mongo_proxy:
+            print("MongoDB proxy not available; skipping inventory load.")
+            return
+
+        print("Fetching targets from inventory...")
         try:
-            # Query inventory
             dbs = self.mongo_proxy.execute_eval("db.inventory_databases.find({'identity.engine': 'POSTGRES'}).toArray()")
-            if dbs:
-                count = 0
-                for db in dbs:
-                    identity = db.get('identity', {})
-                    config = db.get('configuration', {})
-                    name = identity.get('db_unique_name', 'UNKNOWN')
-                    host = identity.get('host', '127.0.0.1')
-                    port = config.get('port', 5432)
-                    
-                    # Add to monitoring list if not exists or update?
-                    # For simplicity, we just append or recreating list logic
-                    # Just add standard credentials for now (In real world, fetch from Vault)
-                    self.add_database(host, port, "postgres", "nexi2024", "postgres", name)
-                    count += 1
-                print(f"✅ Loaded {count} targets from Inventory.")
+            targets = []
+            for db in dbs or []:
+                identity = db.get('identity', {})
+                config = db.get('configuration', {})
+                name = identity.get('db_unique_name', 'UNKNOWN')
+                host = identity.get('host', '127.0.0.1')
+                port = config.get('port') or identity.get('port') or 5432
+                targets.append(PostgresChecker(
+                    host=host,
+                    port=int(port),
+                    user=self.default_pg_user,
+                    password=self.default_pg_password,
+                    database=self.default_pg_db,
+                    name=name
+                ))
+
+            self.databases = targets
+            if targets:
+                print(f"Loaded {len(targets)} targets from inventory.")
             else:
-                print("⚠️ No targets found in Inventory.")
+                print("No targets found in inventory.")
         except Exception as e:
-            print(f"❌ Failed to load targets: {e}")
+            print(f"Failed to load targets: {e}")
 
     def add_database(self, host: str, port: int, user: str, password: str, database: str, name: str):
         """Add a database to monitor"""
@@ -266,14 +281,14 @@ class CriticalAlertAgent:
             # Find unprocessed CRITICAL alerts for this DB
             query = f"db.monitoring_alerts.updateMany({{database: '{db_name}', processed: false, state: 'CRITICAL'}}, {{$set: {{processed: true, resolved_at: new Date()}}}})"
             self.mongo_proxy.execute_eval(query)
-            print(f"    ✅ Resolved active alerts for {db_name}")
+            print(f"    Resolved active alerts for {db_name}")
         except Exception as e:
-            print(f"    ❌ Failed to resolve alerts: {e}")
+            print(f"    Failed to resolve alerts: {e}")
 
     def run_once(self):
         """Run one check cycle and send alerts"""
         print(f"\n{'='*60}")
-        print(f"🔍 CriticalAlert Agent Check - {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
+        print(f"CriticalAlert Agent Check - {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
         print(f"{'='*60}")
         
         # Check all databases
@@ -297,9 +312,9 @@ class CriticalAlertAgent:
                 if problem['severity'] == 'CRITICAL':
                     # Check duplication
                     if self.check_for_active_alert(db.name, problem['type']):
-                        print(f"  ⚠️  [SUPPRESSED] Alert already active for {db.name}. No email sent.")
+                        print(f"  [SUPPRESSED] Alert already active for {db.name}. No email sent.")
                     else:
-                        print(f"  🚨 [NEW] {db.name}: {problem['type']}")
+                        print(f"  [NEW] {db.name}: {problem['type']}")
                         # Send Email
                         self.email_sender.send_alert(
                             self.alert_email, 
@@ -314,18 +329,20 @@ class CriticalAlertAgent:
                 # Try to resolve any pending critical alerts
                 self.resolve_alerts(db.name)
         
-        print("✅ Check cycle complete.")
+        print("Check cycle complete.")
         return current_status
     
-    def get_interval(self):
+    def get_interval(self, default_value: int = 30) -> int:
+        if not self.mongo_proxy:
+            return default_value
         try:
-             cmd = "db.system_config.findOne({key: 'check_interval'})"
-             doc = self.mongo_proxy.execute_eval(cmd)
-             if doc and 'value' in doc:
-                 return int(doc['value'])
-        except:
-             pass
-        return 30
+            cmd = "db.system_config.findOne({key: 'criticalalert_interval'})"
+            doc = self.mongo_proxy.execute_eval(cmd)
+            if doc and 'value' in doc:
+                return int(doc['value'])
+        except Exception:
+            pass
+        return default_value
 
     def check_pause(self):
         """Check if system is globally paused"""
@@ -340,12 +357,12 @@ class CriticalAlertAgent:
 
     def run_continuous(self, interval_seconds: int = 30):
         """Run continuous monitoring"""
-        print(f"🚀 Starting CriticalAlert Agent")
+        print("Starting CriticalAlert Agent")
         
         while True:
             try:
                 if self.check_pause():
-                    print("⏸️ System Global Pause Active. Alert Agent sleeping...")
+                    print("System global pause active. Alert Agent sleeping...")
                     time.sleep(10)
                     continue
 
@@ -355,11 +372,11 @@ class CriticalAlertAgent:
                 self.run_once()
                 
                 # Dynamic Interval
-                actual_wait = self.get_interval()
-                print(f"💤 Sleeping for {actual_wait}s...")
+                actual_wait = self.get_interval(interval_seconds)
+                print(f"Sleeping for {actual_wait}s...")
                 time.sleep(actual_wait)
             except KeyboardInterrupt:
-                print("\n⏹️ Agent stopped")
+                print("\nAgent stopped")
                 break
             except Exception as e:
                 print(f"Error: {e}")
@@ -369,12 +386,16 @@ class CriticalAlertAgent:
 def main():
     import argparse
     parser = argparse.ArgumentParser(description="CriticalAlert Agent")
-    parser.add_argument("--email", required=True, help="Email for alerts")
+    parser.add_argument("--email", help="Email for alerts (optional)")
     parser.add_argument("--interval", type=int, default=30, help="Check interval in seconds")
     parser.add_argument("--once", action="store_true", help="Run once and exit")
     args = parser.parse_args()
-    
-    agent = CriticalAlertAgent(args.email)
+
+    email = args.email or os.getenv("ALERT_EMAIL") or os.getenv("SMTP_USER") or ""
+    if not email:
+        print("No alert email configured; alerts will be logged only.")
+
+    agent = CriticalAlertAgent(email)
     
     # Add Docker lab databases - REMOVED, now using dynamic loading
     # agent.add_database("localhost", 5433, "postgres", "nexi2024", "payments_dev", "PG-Milano-DEV")

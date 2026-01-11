@@ -1,10 +1,16 @@
-L'Architettura
-Il flusso dei dati sarà questo:
+# Data Extraction Schema
 
-Collector (Python): Si connette via SSH ai server o via JDBC/ODBC ai DB. Esegue comandi grezzi (lscpu, SELECT * FROM...).
+## Scopo del progetto
+Describe how raw metrics and configuration data are extracted and normalized.
 
-Raw Data: Ottieni stringhe di testo non strutturate o parzialmente strutturate.
+## Installazione e Setup
+Use Scout and Collector agents. See Agents/Collector/README.md.
 
-LLM Processor (The Brain): Prende il testo grezzo + lo Schema JSON desiderato e "mappa" i dati.
+## Architettura
+- Scout discovers targets and inserts inventory stubs
+- Collector enriches inventory with metrics
+- CheckMK Bridge imports external metrics
+- CriticalAlert writes alert documents
 
-MongoDB Loader: Salva il JSON pulito.
+## Utilizzo
+Use this document when adding new extractors or data sources.

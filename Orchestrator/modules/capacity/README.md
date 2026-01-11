@@ -1,20 +1,13 @@
-# Capacity Module
+# Module: Capacity
 
-Storage management, retention policies, and baseline comparisons.
+## Scopo del progetto
+Provide capacity planning guidance and thresholds.
 
-## Capabilities
+## Installazione e Setup
+No separate setup. Content is consumed by the RAG pipeline.
 
-### Storage Management
-- Track current vs max capacity per application
-- Alert BAO before reaching thresholds
-- Budget-aware capacity planning
+## Architettura
+Capacity guidelines are indexed into the vector store.
 
-### Data Retention
-- Enforce retention policies
-- Partition Manager integration
-- Archive recommendations
-
-### Baselines
-- Create baselines: CPU, RAM, Storage, SGA, PGA
-- Compare current metrics vs baseline
-- Detect performance degradation
+## Utilizzo
+Update thresholds and examples as infrastructure changes.

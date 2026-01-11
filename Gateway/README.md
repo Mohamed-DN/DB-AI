@@ -1,35 +1,16 @@
-# 🔀 Gateway Layer
+# Gateway Layer
 
-Il Gateway funge da hub centrale di routing tra gli agenti remoti e l'orchestrator.
+## Scopo del progetto
+Route commands between orchestrator and remote agents using Redis queues.
 
-## 📋 Componenti
+## Installazione e Setup
+Redis is provided by docker-lab. Configure connection in Gateway/redis_config.
 
-### Python Gateway
-- Inoltra comandi dall'Orchestrator agli Agenti
-- Raccoglie risultati dagli Agenti verso l'Orchestrator
+## Architettura
+Queues:
+- cmd_in: orchestrator to gateway to agent
+- result_out: agent to gateway to orchestrator
+Flow: Orchestrator -> Redis -> Gateway -> Agent -> Gateway -> Redis -> Orchestrator.
 
-### Redis Queues
-
-| Queue | Direzione | Scopo |
-|-------|-----------|-------|
-| `cmd_in` | Orchestrator → Agent | Comandi da eseguire |
-| `result_out` | Agent → Orchestrator | Risultati esecuzione |
-
-## 🔄 Flusso Dati
-
-```
-Orchestrator → Redis (cmd_in) → Gateway → Agent (via SSH)
-Agent → Gateway → Redis (result_out) → Orchestrator
-```
-
-## ⚙️ Configurazione
-
-Vedere `redis_config/` per le impostazioni di connessione Redis.
-
-## 🚀 Avvio
-
-```bash
-# Redis è incluso nell'ambiente Docker lab
-cd ../docker-lab
-docker-compose up -d redis
-```
+## Utilizzo
+Start Redis from docker-lab and ensure the gateway process can reach it.

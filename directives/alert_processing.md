@@ -1,28 +1,13 @@
-# Alert Processing
+# Directive: alert_processing
 
-## Goal
-Process system alerts from monitoring agents, triage by severity, trigger notifications, and update alert status in MongoDB.
+## Scopo del progetto
+Analyze alerts and enrich them with AI output.
 
-## Inputs
-- Alert data from CriticalAlert agent or API
-- Alert severity levels: CRITICAL, WARNING, INFO
+## Installazione e Setup
+Requires Orchestrator (LLM + Qdrant) and MongoDB.
 
-## Execution Scripts
-- `execution/send_alert_email.py` - Send email notification for critical alerts
-- `execution/process_alert.py` - Update alert status in MongoDB
+## Architettura
+Alerts in monitoring_alerts can be read and annotated with ai_analysis.
 
-## Steps
-1. Receive alert from source (agent or API)
-2. Check alert severity
-3. If CRITICAL: send immediate email notification
-4. Store alert in `monitoring_alerts` collection
-5. Mark as processed when acknowledged
-
-## Edge Cases
-- Email server not available: log error, retry later
-- Duplicate alerts: deduplicate by service+host+message within 5 minutes
-- MongoDB connection failed: use MongoProxy with container name `nexi-cmdb-mongo`
-
-## Learnings
-- MongoDB auth: admin/admin123 on admin database
-- Container must be on `docker-lab_nexi-lab` network
+## Utilizzo
+Trigger analysis from backend tools or custom scripts.

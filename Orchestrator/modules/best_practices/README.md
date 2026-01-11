@@ -1,28 +1,13 @@
-# Best Practices Module
+# Module: Best Practices
 
-Enforces Oracle/Postgres best practices and sends remediation requests.
+## Scopo del progetto
+Provide DBA best practice guidance for analysis and recommendations.
 
-## Checks
+## Installazione e Setup
+No separate setup. Content is consumed by the RAG pipeline.
 
-### Partitioning
-- Tables > 50GB without partitioning
-- Tables > 100GB (critical)
-- Incremental stats on partitioned tables
+## Architettura
+Text and prompts in this module are indexed into the vector store.
 
-### Indexing
-- Missing indexes on FK relationships
-- Full table scans on large tables
-- Index usage statistics
-
-### Bind Variables
-- Queries with literals instead of binds
-- High version count in shared pool
-
-### Environment Validation
-- Staging validation before PROD
-- Configuration drift detection
-
-## Actions
-- Generate email to BAO with remediation requests
-- Link to CMDB contact info
-- Track remediation status
+## Utilizzo
+Add or update documents and reindex the knowledge base.

@@ -1,16 +1,13 @@
-# THE WATCHER Module
+# Module: The Watcher
 
-Proactive monitoring AI that predicts issues before they occur.
+## Scopo del progetto
+Describe log monitoring patterns and alert heuristics.
 
-## Capabilities
+## Installazione e Setup
+No separate setup. Content is consumed by the RAG pipeline.
 
-- Analyzes trends in metrics (tablespace growth, CPU, memory)
-- Predicts capacity issues (e.g., "tablespace full in 3 days")
-- Correlates alerts across multiple systems
-- Learns from historical incidents
+## Architettura
+Watcher related knowledge is indexed into the vector store.
 
-## Alerts It Generates
-
-- Predictive: "Database X will run out of space in 48 hours"
-- Anomaly: "Unusual lock contention detected"
-- Correlation: "3 databases on same host showing degradation"
+## Utilizzo
+Update rules and examples as log patterns evolve.

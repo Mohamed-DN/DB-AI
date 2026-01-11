@@ -64,20 +64,28 @@ export const connectDatabase = async (
 };
 
 // AI Chat
-export const sendChatMessage = async (message: string): Promise<any> => {
-    const { data } = await api.post('/chat', { message });
+export const sendChatMessage = async (message: string, model?: string): Promise<any> => {
+    const payload = model ? { message, model } : { message };
+    const { data } = await api.post('/chat', payload);
     return data;
 };
 
 // Auto-discovery
 export const runAutoDiscovery = async (): Promise<void> => {
-    await api.post('/action/auto-discovery');
+    await api.post('/action/scan');
 };
 
 // System status
-export const getSystemStatus = async (): Promise<{ paused: boolean }> => {
+export interface SystemStatus {
+    status: string;
+    paused: boolean;
+}
+
+export const getSystemStatus = async (): Promise<SystemStatus> => {
     const { data } = await api.get('/system/status');
-    return data;
+    const status = data?.status || (data?.paused ? 'PAUSED' : 'RUNNING');
+    const paused = data?.paused ?? status === 'PAUSED';
+    return { status, paused };
 };
 
 export const setSystemStatus = async (paused: boolean): Promise<void> => {
@@ -109,19 +117,21 @@ export const getAgentsStatus = async (): Promise<any> => {
     } catch (error) {
         // Return mock data if endpoint doesn't exist
         return {
-            scout: { running: false },
-            collector: { running: false },
-            watcher: { running: false },
-            criticalalert: { running: false },
-            forensicanalyzer: { running: false },
-            checkmk_bridge: { running: false }
+            agents: {
+                scout: { running: false, script: '' },
+                collector: { running: false, script: '' },
+                watcher: { running: false, script: '' },
+                criticalalert: { running: false, script: '' },
+                forensicanalyzer: { running: false, script: '' },
+                checkmk_bridge: { running: false, script: '' }
+            }
         };
     }
 };
 
 export const startAgent = async (agentName: string): Promise<any> => {
     try {
-        const { data } = await api.post(`/agents/${agentName}/start`);
+        const { data } = await api.post(`/agents/start/${agentName}`);
         return data;
     } catch (error) {
         console.error(`Failed to start agent ${agentName}:`, error);

@@ -1,15 +1,13 @@
-# Baselines Collection
+# Collection: baselines
 
-Stores performance baselines for comparison and anomaly detection.
+## Scopo del progetto
+Store baseline metrics for comparison and drift detection.
 
-## Purpose
-- Track normal operating metrics
-- Detect performance degradation
-- Capacity trending
+## Installazione e Setup
+Created by collector or analysis workflows.
 
-## Indexes
+## Architettura
+Fields include: db_unique_name, metric, baseline_value, window, updated_at.
 
-```javascript
-db.baselines.createIndex({ "db_unique_name": 1, "baseline_date": -1 }, { name: "idx_db_baseline" });
-db.baselines.createIndex({ "type": 1 }, { name: "idx_baseline_type" });
-```
+## Utilizzo
+db.baselines.find({ db_unique_name: "DB1" })

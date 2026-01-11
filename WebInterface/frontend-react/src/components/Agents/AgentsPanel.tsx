@@ -70,12 +70,12 @@ const stopAgent = async (name: string): Promise<any> => {
 
 // --- Parsed Agent List for UI ---
 const AGENT_UI: Record<string, { label: string; desc: string; icon: any; configKey: string }> = {
-    Scout: { label: 'Scout Agent', desc: 'Auto-Discovery', icon: <Bot className="w-5 h-5 text-purple-400" />, configKey: 'scout_interval' },
-    Collector: { label: 'Metric Collector', desc: 'Database Telemetry', icon: <RefreshCw className="w-5 h-5 text-blue-400" />, configKey: 'collector_interval' },
-    Watcher: { label: 'Log Watcher', desc: 'Live Log Monitoring', icon: <Eye className="w-5 h-5 text-yellow-400" />, configKey: 'watcher_interval' },
-    CriticalAlert: { label: 'Critical Alerter', desc: 'Alert Processing', icon: <TerminalIcon className="w-5 h-5 text-red-400" />, configKey: 'criticalalert_interval' },
-    ForensicAnalyzer: { label: 'Forensic AI', desc: 'AI Root Cause Analysis', icon: <Brain className="w-5 h-5 text-pink-400" />, configKey: 'forensicanalyzer_interval' },
-    CheckMK_Bridge: { label: 'CheckMK Bridge', desc: 'Sync with CheckMK', icon: <CheckCircle className="w-5 h-5 text-green-400" />, configKey: 'checkmk_bridge_interval' },
+    scout: { label: 'Scout Agent', desc: 'Auto-discovery', icon: <Bot className="w-5 h-5 text-purple-400" />, configKey: 'scout_interval' },
+    collector: { label: 'Metric Collector', desc: 'Database telemetry', icon: <RefreshCw className="w-5 h-5 text-blue-400" />, configKey: 'collector_interval' },
+    watcher: { label: 'Log Watcher', desc: 'Live log monitoring', icon: <Eye className="w-5 h-5 text-yellow-400" />, configKey: 'watcher_interval' },
+    criticalalert: { label: 'Critical Alerter', desc: 'Alert processing', icon: <TerminalIcon className="w-5 h-5 text-red-400" />, configKey: 'criticalalert_interval' },
+    forensicanalyzer: { label: 'Forensic AI', desc: 'Root cause analysis', icon: <Brain className="w-5 h-5 text-pink-400" />, configKey: 'forensicanalyzer_interval' },
+    checkmk_bridge: { label: 'CheckMK Bridge', desc: 'CheckMK sync', icon: <CheckCircle className="w-5 h-5 text-green-400" />, configKey: 'checkmk_bridge_interval' },
 };
 
 // --- Settings Modal Component ---
@@ -251,9 +251,9 @@ export default function AgentsPanel() {
                         <div className="text-sm text-gray-400">Ollama LLM</div>
                         <div className="text-lg font-bold flex items-center gap-2">
                             {ragQuery.data?.ollama.connected ? (
-                                <span className="text-green-400 flex items-center gap-2">● Connected <span className="text-xs text-gray-500">({ragQuery.data.ollama.models.length} models)</span></span>
+                                <span className="text-green-400 flex items-center gap-2">Connected <span className="text-xs text-gray-500">({ragQuery.data.ollama.models.length} models)</span></span>
                             ) : (
-                                <span className="text-red-400">● Offline</span>
+                                <span className="text-red-400">Offline</span>
                             )}
                         </div>
                     </div>
@@ -264,9 +264,9 @@ export default function AgentsPanel() {
                         <div className="text-sm text-gray-400">Qdrant Vector DB</div>
                         <div className="text-lg font-bold">
                             {ragQuery.data?.qdrant.connected ? (
-                                <span className="text-green-400 flex items-center gap-2">● Connected <span className="text-xs text-gray-500">({ragQuery.data.qdrant.collections} collections)</span></span>
+                                <span className="text-green-400 flex items-center gap-2">Connected <span className="text-xs text-gray-500">({ragQuery.data.qdrant.collections} collections)</span></span>
                             ) : (
-                                <span className="text-red-400">● Offline</span>
+                                <span className="text-red-400">Offline</span>
                             )}
                         </div>
                     </div>
@@ -307,14 +307,14 @@ export default function AgentsPanel() {
                                         </div>
                                     </div>
                                     {info.running ? (
-                                        <span className="text-xs bg-green-500/20 text-green-400 px-2 py-1 rounded-full animate-pulse">● Running</span>
+                                        <span className="text-xs bg-green-500/20 text-green-400 px-2 py-1 rounded-full animate-pulse">Running</span>
                                     ) : (
-                                        <span className="text-xs bg-gray-700 text-gray-400 px-2 py-1 rounded-full">○ Stopped</span>
+                                        <span className="text-xs bg-gray-700 text-gray-400 px-2 py-1 rounded-full">Stopped</span>
                                     )}
                                 </div>
 
                                 {/* Interval Display */}
-                                {interval && (
+                                {interval !== undefined && (
                                     <div className="text-xs text-gray-500 mb-3 flex items-center gap-1">
                                         <Clock className="w-3 h-3" /> Every {interval}s
                                     </div>
@@ -322,7 +322,7 @@ export default function AgentsPanel() {
 
                                 <div className="flex justify-between items-center gap-2">
                                     <code className="text-[10px] text-gray-600 bg-black/20 px-2 py-1 rounded truncate flex-1" title={info.script}>
-                                        {info.script.split('/').pop()}
+                                        {info.script.split(/[\\/]/).pop()}
                                     </code>
                                     <div className="flex gap-2">
                                         {info.running ? (
@@ -390,11 +390,15 @@ export default function AgentsPanel() {
                                     <Loader className="w-4 h-4 animate-spin" /> Starting agent process...
                                 </div>
                             ) : (
-                                logs.output.map((line, i) => (
-                                    <div key={i} className={`border-l-2 pl-2 ${line.includes('Error') || line.includes('❌') ? 'border-red-500 text-red-300' : 'border-gray-800 text-gray-300'}`}>
-                                        {line}
-                                    </div>
-                                ))
+                                logs.output.map((line, i) => {
+                                    const normalizedLine = line.toLowerCase();
+                                    const isError = normalizedLine.includes('error') || normalizedLine.includes('failed');
+                                    return (
+                                        <div key={i} className={`border-l-2 pl-2 ${isError ? 'border-red-500 text-red-300' : 'border-gray-800 text-gray-300'}`}>
+                                            {line}
+                                        </div>
+                                    );
+                                })
                             )}
                             {logs && (
                                 <div className={`mt-4 p-2 rounded ${logs.success ? 'bg-green-900/20 text-green-400' : 'bg-red-900/20 text-red-400'}`}>

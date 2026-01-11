@@ -37,13 +37,13 @@ function PDBRow({ pdb, parentDb }: { pdb: PDB; parentDb: DatabaseType }) {
             <td className="px-6 py-3">
                 <div className="flex items-center gap-2 pl-8">
                     <Database className="w-4 h-4 text-purple-400" />
-                    <span className="text-purple-300">↳ {pdb.name}</span>
+                    <span className="text-purple-300">{pdb.name}</span>
                     <span className="text-xs text-gray-500">PDB</span>
                 </div>
             </td>
-            <td className="px-6 py-3 text-gray-500">—</td>
-            <td className="px-6 py-3 text-gray-500">—</td>
-            <td className="px-6 py-3 text-gray-500">—</td>
+            <td className="px-6 py-3 text-gray-500">{parentDb.connection?.host || parentDb.identity?.host || 'N/A'}</td>
+            <td className="px-6 py-3 text-gray-500">{parentDb.connection?.port ?? 'N/A'}</td>
+            <td className="px-6 py-3 text-gray-500">{parentDb.identity?.environment || 'N/A'}</td>
             <td className="px-6 py-3">
                 <span className="px-2 py-1 bg-purple-500/20 text-purple-400 rounded text-xs">
                     {pdb.status}
@@ -113,7 +113,7 @@ function DatabaseRow({ db }: { db: DatabaseType }) {
                     {db.connection?.host || db.identity?.host || 'N/A'}
                 </td>
                 <td className="px-6 py-4 text-gray-400">
-                    {db.connection?.port || '—'}
+                    {db.connection?.port ?? 'N/A'}
                 </td>
                 <td className="px-6 py-4 text-gray-400">
                     {db.identity.environment || 'N/A'}
@@ -165,7 +165,7 @@ function DatabaseRow({ db }: { db: DatabaseType }) {
                                     <span className="text-gray-500">SNOW Group:</span>
                                     <span className="text-cyan-400 font-mono text-xs">{service?.snow_group || "UNASSIGNED"}</span>
 
-                                    <span className="text-gray-500">Reperibilità:</span>
+                                    <span className="text-gray-500">On-call:</span>
                                     <span className="text-orange-400">{service?.reperibility || "N/A"}</span>
 
                                     <span className="text-gray-500">BAO:</span>

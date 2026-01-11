@@ -1,38 +1,13 @@
-# 📡 Monitor Agent
+# Monitor Agent
 
-Agente per la sincronizzazione degli alert da Checkmk al CMDB.
+## Scopo del progetto
+Placeholder for host level monitoring (future work).
 
-## 📋 Funzionalità
+## Installazione e Setup
+No setup. Module is reserved for future work.
 
-1. **Polling API**: Interroga l'API REST di Checkmk per gli stati dei servizi
-2. **Link CMDB**: Collega gli alert al `db_unique_name` in `inventory_databases`
-3. **Persistenza**: Scrive/aggiorna la collezione `monitoring_alerts`
+## Architettura
+Planned to collect host OS metrics and feed inventory.
 
-## ⏱️ Frequenza
-- **Ogni 1 minuto** per alert critici
-- **Ogni 5 minuti** per stati warning/ok
-
-## ⚙️ Configurazione
-
-```yaml
-# config/checkmk.yaml
-checkmk:
-  server: "https://checkmk.company.local/mysite"
-  username: "automation_user"
-  secret: "${CHECKMK_SECRET}"
-  
-filters:
-  host_labels: "cmdb:managed"
-  service_patterns:
-    - "Oracle*"
-    - "Postgres*"
-    - "Tablespace*"
-```
-
-## 🔗 Endpoint Utilizzati
-
-| Endpoint | Scopo |
-|----------|-------|
-| `GET /domain-types/host/...` | Lista host gestiti |
-| `GET /domain-types/service/...` | Stati servizi |
-| `GET .../show_service_metrics` | Dati metriche |
+## Utilizzo
+Not implemented in v3.
