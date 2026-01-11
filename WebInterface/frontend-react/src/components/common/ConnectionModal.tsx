@@ -90,16 +90,23 @@ export default function ConnectionModal({ isOpen, onClose, dbName, mode, status,
                         <div className={`relative ${status === 'connecting' ? 'animate-pulse' : ''}`}>
                             {status === 'connecting' ? (
                                 <div className="relative">
-                                    <Database className="w-20 h-20 text-purple-500" />
+                                    {/* Pulsing glow rings */}
                                     <div className="absolute inset-0 flex items-center justify-center">
-                                        <Loader2 className="w-10 h-10 text-cyan-400 animate-spin" />
+                                        <div className="w-24 h-24 rounded-full bg-purple-500/20 animate-ping" style={{ animationDuration: '2s' }} />
+                                    </div>
+                                    <div className="absolute inset-0 flex items-center justify-center">
+                                        <div className="w-20 h-20 rounded-full bg-cyan-500/10 animate-ping" style={{ animationDuration: '1.5s', animationDelay: '0.5s' }} />
+                                    </div>
+                                    {/* Database icon with glow */}
+                                    <div className="relative">
+                                        <Database className="w-20 h-20 text-purple-500 drop-shadow-[0_0_15px_rgba(168,85,247,0.5)]" />
                                     </div>
                                     {/* Orbiting dots */}
-                                    <div className="absolute inset-0 animate-spin" style={{ animationDuration: '3s' }}>
-                                        <div className="absolute top-0 left-1/2 w-2 h-2 bg-purple-500 rounded-full transform -translate-x-1/2 -translate-y-2" />
+                                    <div className="absolute inset-0 animate-spin" style={{ animationDuration: '4s' }}>
+                                        <div className="absolute top-0 left-1/2 w-2 h-2 bg-purple-400 rounded-full transform -translate-x-1/2 -translate-y-2 shadow-[0_0_8px_rgba(168,85,247,0.8)]" />
                                     </div>
-                                    <div className="absolute inset-0 animate-spin" style={{ animationDuration: '2s', animationDirection: 'reverse' }}>
-                                        <div className="absolute bottom-0 left-1/2 w-2 h-2 bg-cyan-500 rounded-full transform -translate-x-1/2 translate-y-2" />
+                                    <div className="absolute inset-0 animate-spin" style={{ animationDuration: '3s', animationDirection: 'reverse' }}>
+                                        <div className="absolute bottom-0 left-1/2 w-2 h-2 bg-emerald-400 rounded-full transform -translate-x-1/2 translate-y-2 shadow-[0_0_8px_rgba(52,211,153,0.8)]" />
                                     </div>
                                 </div>
                             ) : status === 'success' ? (
@@ -132,8 +139,8 @@ export default function ConnectionModal({ isOpen, onClose, dbName, mode, status,
                                 <div
                                     key={i}
                                     className={`flex items-center gap-3 text-sm transition-all duration-300 ${i < step ? 'text-green-400' :
-                                            i === step ? 'text-white' :
-                                                'text-gray-600'
+                                        i === step ? 'text-white' :
+                                            'text-gray-600'
                                         }`}
                                 >
                                     {i < step ? (
@@ -168,8 +175,8 @@ export default function ConnectionModal({ isOpen, onClose, dbName, mode, status,
                         <button
                             onClick={onClose}
                             className={`w-full mt-6 py-3 rounded-lg font-medium transition-all ${status === 'success'
-                                    ? 'bg-green-500/20 text-green-400 hover:bg-green-500/30'
-                                    : 'bg-red-500/20 text-red-400 hover:bg-red-500/30'
+                                ? 'bg-green-500/20 text-green-400 hover:bg-green-500/30'
+                                : 'bg-red-500/20 text-red-400 hover:bg-red-500/30'
                                 }`}
                         >
                             {status === 'success' ? 'Done' : 'Close'}
