@@ -74,44 +74,42 @@ def get_inventory():
         
         # 3. Create Lookup Map (DB Name -> Service Info)
         service_map = {}
+        default_svc = None
         for svc in services:
-            mappings = svc.get('technical_mapping', {}).get('db_unique_name', [])
-            # Handle both string and list
-            if isinstance(mappings, str):
-                if mappings == "ALL":
-                    # Catch-all service (apply to ALL dbs that don't have specific override?)
-                    # For now, treat as default. Logic: Specific overrides default.
-                    pass 
-                else:
-                    mappings = [mappings]
+            svc_info_obj = svc.get('service_info', svc)  # Support both flat and nested
+            service_entry = {
+                "name": svc_info_obj.get("name"),
+                "snow_group": svc_info_obj.get("snow_group"),
+                "reperibility": svc.get("contacts", {}).get("reperibilita_number"),
+                "contacts": svc.get("contacts")
+            }
             
-            if isinstance(mappings, list):
-                for db_name in mappings:
-                    service_map[db_name] = {
-                        "name": svc.get("name"),
-                        "snow_group": svc.get("snow_group"),
-                        "reperibility": svc.get("reperibility_number"),
-                        "contacts": svc.get("contacts")
-                    }
+            # technical_mapping can be a list of objects or a single object
+            mappings = svc.get('technical_mapping', [])
+            if isinstance(mappings, dict):
+                mappings = [mappings]
             
-            # Handle ALL keyword (simple implementation: if not in map, use this)
-            if svc.get('technical_mapping', {}).get('db_unique_name') == "ALL":
-                default_svc = {
-                        "name": svc.get("name"),
-                        "snow_group": svc.get("snow_group"),
-                        "reperibility": svc.get("reperibility_number"),
-                        "contacts": svc.get("contacts")
-                }
-                # We apply this later
+            for mapping in mappings:
+                if isinstance(mapping, dict):
+                    db_name = mapping.get('db_unique_name')
+                    if db_name == "ALL":
+                        default_svc = service_entry
+                    elif db_name:
+                        service_map[db_name.upper()] = service_entry
+                elif isinstance(mapping, str):
+                    if mapping == "ALL":
+                        default_svc = service_entry
+                    else:
+                        service_map[mapping.upper()] = service_entry
         
         # 4. Enrich DB objects
         for db in dbs:
-            db_name = db.get('identity', {}).get('db_unique_name')
+            db_name = db.get('identity', {}).get('db_unique_name', '').upper()
             # Exact match ?
             svc_info = service_map.get(db_name)
             
             # Fallback to ALL if available
-            if not svc_info and 'default_svc' in locals():
+            if not svc_info and default_svc:
                 svc_info = default_svc
                 
             if svc_info:
