@@ -41,10 +41,12 @@ class ScoutAgent:
             found_dbs = []
             
             # Pass 2: Identify Databases and check Gateway dependency
+            # V2 Support: Use GATEWAY_SUFFIX env var (default "" for V1, "2" for V2)
+            gw_suffix = os.environ.get("GATEWAY_SUFFIX", "")
             gateway_map = {
-                "MILANO": "nexi-gw-milano",
-                "BRATISLAVA": "nexi-gw-bratislava",
-                "CAIRO": "nexi-gw-cairo"
+                "MILANO": f"nexi-gw-milano{gw_suffix}",
+                "BRATISLAVA": f"nexi-gw-bratislava{gw_suffix}",
+                "CAIRO": f"nexi-gw-cairo{gw_suffix}"
             }
 
             for line in lines:
