@@ -135,11 +135,26 @@ Test-Port $EnvVars['MONGO_EXPRESS_PORT'] "Mongo Express V2"
 # -----------------------------------------------------------------------------
 # 5. Start Backend API
 # -----------------------------------------------------------------------------
+# -----------------------------------------------------------------------------
+# 5. Start Backend API
+# -----------------------------------------------------------------------------
 if (-not $SkipBackend) {
     Write-Host "`n[STEP 5] Starting Backend API (Port $($EnvVars['BACKEND_PORT']))..." -ForegroundColor Yellow
     
     $BackendDir = "$PSScriptRoot\..\WebInterface\backend"
     
+    # 5.1 Check Dependencies (Backend)
+    Write-Host "Checking Python dependencies..." -ForegroundColor Gray
+    if (-not (Test-Path "$BackendDir\venv") -and -not (Get-Command uvicorn -ErrorAction SilentlyContinue)) {
+        # Simple check: just run pip install every time to be safe, or check imports
+        Write-Host "Installing/Updating Python requirements..." -ForegroundColor Cyan
+        pip install -r "$BackendDir\requirements.txt" | Out-Null
+    }
+    else {
+        # Still run it to be sure new deps are there
+        pip install -r "$BackendDir\requirements.txt"
+    }
+
     # Pass critical env vars explicitly as args if needed, or rely on Process Env we set earlier
     # IMPORTANT: MongoProxy needs MONGO_CONTAINER which is likely 'nexi-mongodb2' from compose
     # We set these in Process Env in Step 0, so python should pick them up.
@@ -165,6 +180,12 @@ if (-not $SkipFrontend) {
     Write-Host "`n[STEP 6] Starting Frontend UI (Port $($EnvVars['FRONTEND_PORT']))..." -ForegroundColor Yellow
     
     $FrontendDir = "$PSScriptRoot\..\WebInterface\frontend-react"
+    
+    # Check node_modules
+    if (-not (Test-Path "$FrontendDir\node_modules")) {
+        Write-Host "Installing Frontend dependencies (npm install)... This may take a while." -ForegroundColor Cyan
+        Start-Process -FilePath "cmd.exe" -ArgumentList "/c npm install" -WorkingDirectory $FrontendDir -Wait
+    }
     
     # Start Vite with V2 config
     Start-Process -FilePath "cmd.exe" `
