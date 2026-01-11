@@ -1082,9 +1082,22 @@ def get_rag_status():
         "qdrant": {"connected": False, "collections": 0}
     }
     
+    # Get config from env (set by setup script or defaults)
+    ollama_host = os.getenv("OLLAMA_HOST", "http://localhost:11434")
+    # Handle case where OLLAMA_HOST might be just hostname/IP without protocol/port if set differently
+    # But for V2 script we use full URLs or ports. Let's rely on PORT env vars if HOST not full.
+    if not ollama_host.startswith("http"):
+         ollama_port = os.getenv("OLLAMA_PORT", "11434")
+         ollama_host = f"http://localhost:{ollama_port}"
+
+    qdrant_host = os.getenv("QDRANT_HOST", "http://localhost:6333")
+    if not qdrant_host.startswith("http"):
+         qdrant_port = os.getenv("QDRANT_PORT", "6333")
+         qdrant_host = f"http://localhost:{qdrant_port}"
+    
     # Check Ollama
     try:
-        resp = requests.get("http://localhost:11434/api/tags", timeout=5)
+        resp = requests.get(f"{ollama_host}/api/tags", timeout=5)
         if resp.status_code == 200:
             status["ollama"]["connected"] = True
             status["ollama"]["models"] = [m["name"] for m in resp.json().get("models", [])]
@@ -1093,7 +1106,7 @@ def get_rag_status():
     
     # Check Qdrant
     try:
-        resp = requests.get("http://localhost:6333/collections", timeout=5)
+        resp = requests.get(f"{qdrant_host}/collections", timeout=5)
         if resp.status_code == 200:
             collections = resp.json().get("result", {}).get("collections", [])
             status["qdrant"]["connected"] = True
