@@ -20,7 +20,7 @@ export default function SettingsPanel() {
 
     const loadSettings = async () => {
         try {
-            const res = await fetch('http://localhost:8000/api/config');
+            const res = await fetch('/api/config');
             const config = await res.json();
             const newSettings: Record<string, number> = {};
             AGENT_SETTINGS.forEach((agent) => {
@@ -39,7 +39,7 @@ export default function SettingsPanel() {
             Object.keys(settings).forEach((key) => {
                 config[`${key}_interval`] = settings[key];
             });
-            await fetch('http://localhost:8000/api/config', {
+            await fetch('/api/config', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(config),

@@ -5,7 +5,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import axios from 'axios';
 import { useState } from 'react';
 
-const API_BASE = 'http://localhost:8000/api';
+const API_BASE = '/api';  // Vite proxy routes to backend
 
 // --- Types ---
 interface AgentInfo {

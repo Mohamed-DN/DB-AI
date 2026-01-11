@@ -1,7 +1,7 @@
 import axios from 'axios';
 import type { Database } from '../types/database';
 
-const API_BASE = 'http://localhost:8000/api';
+const API_BASE = '/api';  // Relative URL - Vite proxy routes to backend (8000 for V1, 9000 for V2)
 
 const api = axios.create({
     baseURL: API_BASE,

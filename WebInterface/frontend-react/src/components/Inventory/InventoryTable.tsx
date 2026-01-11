@@ -259,7 +259,7 @@ export default function InventoryTable() {
     const handleRefresh = async () => {
         setIsRefreshing(true);
         try {
-            await fetch('http://localhost:8000/api/action/collect', { method: 'POST' });
+            await fetch('/api/action/collect', { method: 'POST' });
             // Wait 2 seconds for Collector to perform its check
             setTimeout(() => {
                 queryClient.invalidateQueries({ queryKey: ['databases'] });

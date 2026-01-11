@@ -10,7 +10,7 @@ export default function MailboxPanel() {
     const viewEmail = async (filename: string) => {
         setSelectedEmail(filename);
         try {
-            const res = await fetch(`http://localhost:8000/api/emails/content?filename=${filename}`);
+            const res = await fetch(`/api/emails/content?filename=${filename}`);
             const data = await res.json();
             setEmailContent(data.content || 'No content');
         } catch (e) {
@@ -20,7 +20,7 @@ export default function MailboxPanel() {
 
     const deleteEmail = async (filename: string) => {
         try {
-            await fetch(`http://localhost:8000/api/emails/${filename}`, { method: 'DELETE' });
+            await fetch(`/api/emails/${filename}`, { method: 'DELETE' });
             refetch();
             setSelectedEmail(null);
             setEmailContent('');
