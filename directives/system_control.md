@@ -1,19 +1,42 @@
 # Directive: system_control
 
-## Scopo del progetto
-Control global system state (running or paused).
+## Goal
+Control global system state (RUNNING or PAUSED) and manage Docker Lab containers.
 
-## Installazione e Setup
-No extra setup. Requires MongoDB and the backend service.
+## Inputs
+- **status**: "RUNNING" or "PAUSED"
+- **MongoDB system_config**: Stores `global_status` key
 
-## Architettura
-- API: POST /api/system/status
-- system_config key: global_status
-- Agents read global_status and pause when set to PAUSED.
+## Outputs
+- **global_status**: Updated in system_config
+- **Docker Containers**: Started or stopped based on status
 
-## Utilizzo
-Pause:
-POST /api/system/status { "status": "PAUSED" }
+## Tools/Scripts
+- `WebInterface/backend/main.py`: `/api/system/status` endpoint
 
-Resume:
-POST /api/system/status { "status": "RUNNING" }
+## Edge Cases
+- **Partial Container Failure**: Some containers may fail to start/stop
+- **Agent Behavior**: All agents check `global_status` before each iteration
+
+## API
+```
+GET /api/system/status   # Get current status
+POST /api/system/status  # Set status
+```
+
+## Usage
+```bash
+# Pause system
+curl -X POST http://localhost:9000/api/system/status \
+  -H "Content-Type: application/json" \
+  -d '{"status": true}'
+
+# Resume system
+curl -X POST http://localhost:9000/api/system/status \
+  -H "Content-Type: application/json" \
+  -d '{"status": false}'
+```
+
+## Notes
+- When PAUSED, agents sleep but don't exit
+- Frontend shows Pause/Play button in header

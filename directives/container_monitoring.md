@@ -1,13 +1,43 @@
 # Directive: container_monitoring
 
-## Scopo del progetto
-Monitor container logs and detect errors.
+## Goal
+Monitor container logs for anomalies and errors.
 
-## Installazione e Setup
-Watcher agent requires Docker access.
+## Inputs
+- **Docker Logs**: `docker logs` output from database containers
+- **Patterns**: Error patterns to detect (ORA-, FATAL, etc.)
 
-## Architettura
-Watcher tails container logs and writes alerts or analysis output.
+## Outputs
+- **monitoring_alerts**: Alerts for detected anomalies
+- **log_events**: Collection with log snippets
 
-## Utilizzo
-Start Watcher from the Agents panel or run its CLI entrypoint.
+## Tools/Scripts
+- `Agents/Watcher/main.py`: Log monitoring agent
+- `Agents/Watcher/ai_analyzer.py`: AI-powered log analysis
+
+## Edge Cases
+- **Log Rotation**: Track last position to avoid duplicates
+- **High Volume**: Rate limit to max 100 events per minute
+- **Container Restart**: Detect and create alert
+
+## API
+```
+# No direct API - runs as background agent
+```
+
+## Usage
+```powershell
+# CLI
+python Agents/Watcher/main.py --once
+
+# Continuous mode
+python Agents/Watcher/main.py
+```
+
+## Patterns Detected
+
+| Engine | Patterns |
+|--------|----------|
+| Oracle | ORA-\d{5}, TNS-\d{5} |
+| PostgreSQL | FATAL, ERROR, PANIC |
+| Generic | OutOfMemory, Segmentation fault |

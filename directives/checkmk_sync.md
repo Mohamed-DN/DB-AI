@@ -1,13 +1,39 @@
 # Directive: checkmk_sync
 
-## Scopo del progetto
-Import metrics and alerts from CheckMK.
+## Goal
+Import monitoring data from external CheckMK instance.
 
-## Installazione e Setup
-Configure CheckMK endpoint and credentials in env or config files.
+## Inputs
+- **CheckMK API**: URL and credentials
+- **Hosts**: List of hosts to sync
 
-## Architettura
-CheckMK Bridge fetches metrics and writes to monitoring_alerts and inventory_databases.
+## Outputs
+- **inventory_hosts**: Synced host information
+- **external_metrics**: CheckMK metrics stored
 
-## Utilizzo
-Start checkmk_bridge via Agents panel or POST /api/agents/start/checkmk_bridge
+## Tools/Scripts
+- `Agents/CheckMK_Bridge/main.py`: Sync agent
+
+## Edge Cases
+- **API Unreachable**: Retry with exponential backoff
+- **Rate Limiting**: Respect CheckMK API limits
+- **Schema Mismatch**: Log and skip incompatible fields
+
+## API
+```
+# No direct API - runs as background agent
+```
+
+## Usage
+```powershell
+# Requires CheckMK configuration
+export CHECKMK_URL=https://checkmk.example.com
+export CHECKMK_USER=automation
+export CHECKMK_SECRET=your_secret
+
+python Agents/CheckMK_Bridge/main.py --once
+```
+
+## Notes
+- Currently focused on host inventory sync
+- Metrics import is planned for future release

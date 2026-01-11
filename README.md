@@ -1,47 +1,59 @@
-# Nexi DBA AI (v3)
+# Nexi DBA AI (V3)
 
-## Scopo del progetto
-Nexi DBA AI is an AI assisted CMDB and database monitoring platform. It discovers databases, stores inventory and metrics, raises alerts, and provides a web dashboard and AI chat.
+AI-powered CMDB and database monitoring platform. Discovers databases, collects metrics, raises alerts, and provides an AI-assisted dashboard.
 
-## Installazione e Setup
-Prerequisites: Docker Desktop, Python 3.10+, Node.js 18+, Git.
+## Quick Start
 
-1) Clone the repository
-   git clone https://github.com/ThomasNexi/Nexi_DB_AI.git
-   cd Nexi_DB_AI
-2) Configure environment in .env (v3) or .env.v2 (shadow mode).
-   Key variables: MONGODB_HOST, MONGODB_DB, MONGO_USERNAME, MONGO_PASSWORD, OLLAMA_HOST, QDRANT_HOST, VITE_MONGO_EXPRESS_PORT, ALERT_EMAIL, SMTP_USER, SMTP_PASSWORD.
-3) Start lab infrastructure:
-   cd docker-lab
-   docker-compose up -d
-   Or run scripts/setup_v2.ps1 to bootstrap v3 ports.
-4) Backend:
-   pip install -r WebInterface/backend/requirements.txt
-   cd WebInterface/backend
-   uvicorn main:app --reload --port 9000
-5) Frontend:
-   cd WebInterface/frontend-react
-   npm install
-   npm run dev:v2
-6) Optional agents (CLI):
-   python Agents/Scout/main.py --once
-   python Agents/Collector/main.py --once
-   python Agents/CriticalAlert/main.py --once --email you@example.com
+```powershell
+# Clone and configure
+git clone https://github.com/ThomasNexi/Nexi_DB_AI.git
+cd Nexi_DB_AI
+cp .env.example .env.v2
 
-## Architettura
-- WebInterface/backend: FastAPI API and agent controls.
-- WebInterface/frontend-react: React dashboard and panels.
-- Agents: Scout, Collector, Watcher, CriticalAlert, CheckMK Bridge, Forensic Analyzer.
-- Orchestrator: LLM and RAG pipeline (Ollama + Qdrant).
-- MongoDB: CMDB collections and system_config.
-- docker-lab: local infra (MongoDB, Redis, Qdrant, Ollama, sample DBs).
+# Start everything (Zero-Config)
+.\scripts\setup_v2.ps1
+```
 
-Data flow: Agents -> MongoDB, Orchestrator -> LLM/Qdrant, UI -> Backend -> MongoDB/Agents.
+Dashboard: http://localhost:4002 | API Docs: http://localhost:9000/docs
 
-## Utilizzo
-- Open the dashboard at http://localhost:4002 (v3) or http://localhost:3002 (v1).
-- Run Auto-Discovery to populate inventory.
-- Use Agents panel to start and stop agents and tune intervals.
-- Use Explorer to browse collections and inspect documents.
-- Use AI Chat to query inventory and alerts.
-- Open Mongo Express at http://localhost:PORT from VITE_MONGO_EXPRESS_PORT.
+## Architecture
+
+This project follows a **3-Layer Architecture**. See [ARCHITECTURE.md](ARCHITECTURE.md) for details.
+
+| Layer | Location | Purpose |
+|-------|----------|---------|
+| Directives | `directives/*.md` | SOPs defining what to do |
+| Orchestration | `WebInterface/backend/` | Decision making & routing |
+| Execution | `execution/*.py` | Deterministic Python scripts |
+
+## Agents
+
+| Agent | Purpose | Command |
+|-------|---------|---------|
+| Scout | Auto-discovery | `python Agents/Scout/main.py --once` |
+| Collector | Metrics | `python Agents/Collector/main.py --once` |
+| CriticalAlert | Alerting | `python Agents/CriticalAlert/main.py --once` |
+
+Or use the **Agents Panel** in the web UI.
+
+## Configuration
+
+Copy `.env.example` to `.env.v2` and configure:
+
+- `MONGODB_*`: Database connection
+- `OLLAMA_*`: LLM settings
+- `ALERT_EMAIL`: DBA team email
+
+See [.env.example](.env.example) for all options.
+
+## Documentation
+
+- [ARCHITECTURE.md](ARCHITECTURE.md) - 3-Layer Architecture
+- [AGENTS.md](AGENTS.md) - Agent overview
+- [MANIFEST.md](MANIFEST.md) - Port mappings
+- [ROADMAP_V3.md](ROADMAP_V3.md) - Development roadmap
+- [FOR_AI/PROJECT_CONTEXT.md](FOR_AI/PROJECT_CONTEXT.md) - AI assistant context
+
+## License
+
+Internal use only - Nexi Group.
