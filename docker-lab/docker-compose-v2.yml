@@ -327,10 +327,22 @@ services:
     ports:
       - "${LANGFUSE_PORT:-3001}:3000"
     environment:
+      # Database
       DATABASE_URL: postgresql://langfuse:langfuse2024@langfuse-db:5432/langfuse
+      # Auth
       NEXTAUTH_URL: http://localhost:3001
       NEXTAUTH_SECRET: super-secret-langfuse-key-change-in-prod
       SALT: super-secret-salt-change-in-prod
+      # Headless Initialization - Auto-create org, project, user, API keys
+      LANGFUSE_INIT_ORG_ID: nexi-org
+      LANGFUSE_INIT_ORG_NAME: Nexi DBA
+      LANGFUSE_INIT_PROJECT_ID: nexi-dba-ai
+      LANGFUSE_INIT_PROJECT_NAME: Nexi DBA AI
+      LANGFUSE_INIT_PROJECT_PUBLIC_KEY: pk-lf-nexi-dba-ai-v2
+      LANGFUSE_INIT_PROJECT_SECRET_KEY: sk-lf-nexi-dba-ai-v2-secret
+      LANGFUSE_INIT_USER_EMAIL: admin@nexi.lab
+      LANGFUSE_INIT_USER_NAME: Nexi DBA Admin
+      LANGFUSE_INIT_USER_PASSWORD: NexiDBA2024!
     depends_on:
       - langfuse-db
     networks:
