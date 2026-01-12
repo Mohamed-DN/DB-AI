@@ -792,24 +792,26 @@ def set_system_status(item: dict):
     if status not in ["RUNNING", "PAUSED"]:
         raise HTTPException(status_code=400, detail="Invalid status")
     
-    # Containers to control (exclude frontend services)
+    # Containers to control - V2 names with suffix (exclude frontend services)
+    # Check GATEWAY_SUFFIX from environment
+    suffix = os.getenv('GATEWAY_SUFFIX', '2')
+    
     lab_containers = [
-        "nexi-mongodb",
-        "nexi-redis", 
-        "nexi-ollama",
-        "nexi-open-webui",
-        "nexi-qdrant",
-        "nexi-gw-milano",
-        "nexi-gw-bratislava",
-        "nexi-pg-milano-prod",
-        "nexi-pg-milano-stg",
-        "nexi-pg-milano-dev",
-        "nexi-mongo-express",
-        "nexi-pg-bratislava-prod",
-        "nexi-pg-bratislava-dev",
-        "nexi-gw-cairo",
-        "nexi-oracle-cairo-primary",
-        "nexi-oracle-cairo-replica"
+        f"nexi-mongodb{suffix}",
+        f"nexi-redis{suffix}", 
+        f"nexi-ollama{suffix}",
+        f"nexi-qdrant{suffix}",
+        f"nexi-gw-milano{suffix}",
+        f"nexi-gw-bratislava{suffix}",
+        f"nexi-gw-cairo{suffix}",
+        f"nexi-pglab-milano{suffix}",
+        f"nexi-pglab-bratislava{suffix}",
+        f"nexi-oracle-cairo-primary{suffix}",
+        f"nexi-oracle-cairo-replica{suffix}",
+        f"nexi-mongo-express{suffix}",
+        f"nexi-grafana{suffix}",
+        f"nexi-prometheus{suffix}",
+        f"nexi-langfuse{suffix}",
     ]
     
     results = []
