@@ -322,6 +322,27 @@
     gap: 8px;
 }
 
+/* Custom Tooltip */
+.customTooltip {
+    background: rgba(20, 20, 40, 0.95);
+    border: 1px solid rgba(139, 92, 246, 0.3);
+    border-radius: 10px;
+    padding: 12px 16px;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+}
+
+.customTooltip p {
+    margin: 0;
+    font-size: 12px;
+    color: #e0e0e0;
+}
+
+.tooltipLabel {
+    font-weight: 600;
+    margin-bottom: 6px !important;
+    color: #a0a0c0 !important;
+}
+
 /* Responsive */
 @media (max-width: 1200px) {
     .chartsGrid {
