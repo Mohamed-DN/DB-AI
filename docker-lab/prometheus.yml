@@ -1,0 +1,45 @@
+# Prometheus Configuration for Nexi DBA AI
+# Scrapes metrics from database exporters
+
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+  external_labels:
+    monitor: 'nexi-dba-ai'
+
+# Alerting configuration (optional - for future)
+alerting:
+  alertmanagers:
+    - static_configs:
+        - targets: []
+
+# Rule files (optional - for future)
+rule_files: []
+
+# Scrape configurations
+scrape_configs:
+  # Prometheus self-monitoring
+  - job_name: 'prometheus'
+    static_configs:
+      - targets: ['localhost:9090']
+        labels:
+          service: 'prometheus'
+
+  # PostgreSQL Exporter
+  - job_name: 'postgresql'
+    static_configs:
+      - targets: ['pg-exporter.nexi.lab:9187']
+        labels:
+          db_type: 'postgresql'
+          location: 'milano'
+    scrape_interval: 30s
+
+  # PostgreSQL Exporter - Multiple DBs (future)
+  # - job_name: 'postgresql-bratislava'
+  #   static_configs:
+  #     - targets: ['pg-exporter-bratislava.nexi.lab:9187']
+
+  # Node Exporter (optional - for host metrics)
+  # - job_name: 'node'
+  #   static_configs:
+  #     - targets: ['node-exporter.nexi.lab:9100']

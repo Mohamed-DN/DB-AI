@@ -13,7 +13,8 @@ import {
   RefreshCw,
   Pause,
   Play,
-  ExternalLink
+  ExternalLink,
+  BarChart3
 } from 'lucide-react';
 import DashboardStats from './components/Dashboard/DashboardStats';
 import InventoryTable from './components/Inventory/InventoryTable';
@@ -24,6 +25,7 @@ import MailboxPanel from './components/Mailbox/MailboxPanel';
 import ExplorerPanel from './components/Explorer/ExplorerPanel';
 import AgentsPanel from './components/Agents/AgentsPanel';
 import SettingsPanel from './components/Settings/SettingsPanel';
+import { MetricsPanel } from './components/Metrics';
 import { useAutoDiscovery, useSystemStatus, useSetSystemStatus } from './hooks/useDatabases';
 import './index.css';
 
@@ -37,7 +39,7 @@ const queryClient = new QueryClient({
   },
 });
 
-type Tab = 'dashboard' | 'inventory' | 'hosts' | 'alerts' | 'chat' | 'mailbox' | 'explorer' | 'agents' | 'settings';
+type Tab = 'dashboard' | 'inventory' | 'hosts' | 'alerts' | 'chat' | 'mailbox' | 'explorer' | 'agents' | 'metrics' | 'settings';
 
 const pageTitles: Record<Tab, string> = {
   dashboard: 'Dashboard Overview',
@@ -48,6 +50,7 @@ const pageTitles: Record<Tab, string> = {
   mailbox: 'Communications',
   explorer: 'Data Explorer',
   agents: 'Agent Control Panel',
+  metrics: 'Database Metrics',
   settings: 'Configuration',
 };
 
@@ -67,6 +70,7 @@ function Navigation({
     { id: 'mailbox', label: 'Mailbox', icon: Mail },
     { id: 'explorer', label: 'Explorer', icon: Compass },
     { id: 'agents', label: 'Agents', icon: Bot },
+    { id: 'metrics', label: 'Metrics', icon: BarChart3 },
     { id: 'settings', label: 'Settings', icon: Settings },
   ] as const;
 
@@ -153,6 +157,8 @@ function AppContent() {
         return <ExplorerPanel />;
       case 'agents':
         return <AgentsPanel />;
+      case 'metrics':
+        return <MetricsPanel />;
       case 'settings':
         return <SettingsPanel onNavigateToAgents={() => setActiveTab('agents')} />;
       default:

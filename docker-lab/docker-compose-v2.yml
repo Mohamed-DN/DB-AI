@@ -350,6 +350,70 @@ services:
         ipv4_address: 172.21.0.21
     restart: unless-stopped
 
+  # ===========================================================================
+  # MONITORING - Prometheus + Grafana Stack
+  # ===========================================================================
+
+  # Prometheus - Metrics Collection
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: nexi-prometheus2
+    hostname: prometheus.nexi.lab
+    ports:
+      - "${PROMETHEUS_PORT:-9090}:9090"
+    volumes:
+      - ./prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - prometheus_data_v2:/prometheus
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--web.enable-lifecycle'
+    networks:
+      nexi-lab2:
+        ipv4_address: 172.21.0.30
+    restart: unless-stopped
+
+  # Grafana - Dashboards
+  grafana:
+    image: grafana/grafana:latest
+    container_name: nexi-grafana2
+    hostname: grafana.nexi.lab
+    ports:
+      - "${GRAFANA_PORT:-3003}:3000"
+    environment:
+      GF_SECURITY_ADMIN_USER: admin
+      GF_SECURITY_ADMIN_PASSWORD: NexiGrafana2024!
+      GF_SECURITY_ALLOW_EMBEDDING: "true"
+      GF_AUTH_ANONYMOUS_ENABLED: "true"
+      GF_AUTH_ANONYMOUS_ORG_NAME: "Nexi DBA"
+      GF_AUTH_ANONYMOUS_ORG_ROLE: "Viewer"
+      GF_SERVER_ROOT_URL: "http://localhost:3003"
+    volumes:
+      - grafana_data_v2:/var/lib/grafana
+      - ./grafana/provisioning:/etc/grafana/provisioning:ro
+    depends_on:
+      - prometheus
+    networks:
+      nexi-lab2:
+        ipv4_address: 172.21.0.31
+    restart: unless-stopped
+
+  # PostgreSQL Exporter - Metrics for PostgreSQL
+  postgres-exporter:
+    image: prometheuscommunity/postgres-exporter:latest
+    container_name: nexi-pg-exporter2
+    hostname: pg-exporter.nexi.lab
+    ports:
+      - "${PG_EXPORTER_PORT:-9187}:9187"
+    environment:
+      DATA_SOURCE_NAME: "postgresql://nexi_app:app2024@pg-milano-prod2:5432/nexi_prod?sslmode=disable"
+    depends_on:
+      - pg-milano-prod2
+    networks:
+      nexi-lab2:
+        ipv4_address: 172.21.0.32
+    restart: unless-stopped
+
 volumes:
   mongodb_data_v2:
   ollama_data_v2:
@@ -364,5 +428,5 @@ volumes:
   oracle_cairo_repl_data_v2:
   langfuse_db_data_v2:
   langfuse_clickhouse_data_v2:
-
-
+  prometheus_data_v2:
+  grafana_data_v2:
