@@ -52,7 +52,7 @@ const tablespaceData = [
 ];
 
 // PostgreSQL database sizes
-const pgDatabaseData = generateDailyData(30, 50, 0.015).map((d, i) => ({
+const pgDatabaseData = generateDailyData(30, 50, 0.015).map((d, _i) => ({
     ...d,
     nexi_prod: d.value,
     nexi_dev: Math.round(d.value * 0.3),
@@ -87,7 +87,7 @@ const latencyData = [
 ];
 
 // PostgreSQL cache stats
-const cacheData = generateDailyData(24, 98.5, 0).map((d, i) => ({
+const cacheData = generateDailyData(24, 98.5, 0).map((_d, i) => ({
     time: `${String(i).padStart(2, '0')}:00`,
     hitRatio: 95 + Math.random() * 4.5,
     bufferHits: 10000 + Math.random() * 5000,
@@ -165,15 +165,6 @@ const GaugePanel: React.FC<{
         </div>
     );
 };
-
-const StatBadge: React.FC<{ label: string; value: string | number; color?: string }> = ({
-    label, value, color = '#8b5cf6'
-}) => (
-    <div className={styles.statBadge}>
-        <span className={styles.statBadgeLabel}>{label}</span>
-        <span className={styles.statBadgeValue} style={{ color }}>{value}</span>
-    </div>
-);
 
 // ============================================================================
 // MAIN COMPONENT
