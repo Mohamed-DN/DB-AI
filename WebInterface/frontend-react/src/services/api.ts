@@ -154,3 +154,44 @@ export const getGpuStatus = async (): Promise<any> => {
     const { data } = await api.get('/gpu/status');
     return data;
 };
+
+// Metrics
+export interface MetricsResponse {
+    summary: {
+        buffer_hit: number;
+        tps: number;
+        storage_gb: number;
+        total_connections: number;
+        avg_query_ms: number;
+        active_alerts: number;
+    };
+    connections_by_db: Array<{
+        name: string;
+        active: number;
+        idle: number;
+        engine: string;
+    }>;
+    pg_databases: Array<{
+        name: string;
+        size_gb: number;
+        connections: number;
+    }>;
+    oracle_tablespaces: Array<{
+        name: string;
+        used_pct: number;
+        used_gb: number;
+        max_gb: number;
+    }>;
+    database_count: number;
+}
+
+export const getMetrics = async (dbFilter?: string): Promise<MetricsResponse> => {
+    const params = dbFilter && dbFilter !== 'all' ? { db: dbFilter } : {};
+    const { data } = await api.get('/metrics', { params });
+    return data;
+};
+
+export const getDeepMetrics = async (): Promise<any> => {
+    const { data } = await api.get('/metrics/deep');
+    return data;
+};
