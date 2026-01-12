@@ -1,187 +1,288 @@
-import React, { useState, useEffect } from 'react';
-import { GrafanaDashboard } from './GrafanaDashboard';
-import { MetricCard } from './MetricCard';
+import React, { useState } from 'react';
+import {
+    BarChart3,
+    Activity,
+    HardDrive,
+    Zap,
+    Database,
+    RefreshCw,
+    ExternalLink,
+    TrendingUp,
+    Clock,
+    AlertTriangle,
+    Server
+} from 'lucide-react';
 import styles from './MetricsPanel.module.css';
 
-type ViewMode = 'overview' | 'capacity' | 'performance' | 'full';
-
-// Mock data for demo (replace with real API calls)
-const generateMockData = (points = 24) => {
-    return Array.from({ length: points }, (_, i) => ({
-        time: Date.now() - (points - i) * 3600000,
-        value: Math.random() * 50 + 50
-    }));
-};
-
 /**
- * MetricsPanel - Main metrics dashboard with tabs
- * Combines custom cards (overview) with embedded Grafana dashboards
+ * MetricsPanel - Comprehensive database metrics dashboard
+ * Integrates Grafana panels with native UI components
  */
 export const MetricsPanel: React.FC = () => {
-    const [viewMode, setViewMode] = useState<ViewMode>('overview');
-    const [metrics, setMetrics] = useState({
-        bufferHit: { value: 98.5, data: generateMockData() },
-        connections: { value: 42, data: generateMockData() },
-        dbSize: { value: 156.8, data: generateMockData() },
-        tps: { value: 1234, data: generateMockData() },
-        queryTime: { value: 12.3, data: generateMockData() },
-        alerts: { value: 3, data: generateMockData() }
-    });
+    const [selectedDb, setSelectedDb] = useState<string>('all');
+    const [timeRange, setTimeRange] = useState<string>('24h');
+    const [refreshing, setRefreshing] = useState(false);
 
-    // Auto-refresh metrics every 30s
-    useEffect(() => {
-        const interval = setInterval(() => {
-            setMetrics(prev => ({
-                bufferHit: { ...prev.bufferHit, value: 95 + Math.random() * 5 },
-                connections: { ...prev.connections, value: Math.floor(30 + Math.random() * 30) },
-                dbSize: { ...prev.dbSize, value: 150 + Math.random() * 20 },
-                tps: { ...prev.tps, value: Math.floor(1000 + Math.random() * 500) },
-                queryTime: { ...prev.queryTime, value: 5 + Math.random() * 20 },
-                alerts: { ...prev.alerts, value: Math.floor(Math.random() * 5) }
-            }));
-        }, 30000);
-        return () => clearInterval(interval);
-    }, []);
+    const grafanaUrl = import.meta.env.VITE_GRAFANA_URL || 'http://localhost:3003';
+
+    // Time range options
+    const timeRanges = [
+        { label: '1h', value: '1h' },
+        { label: '6h', value: '6h' },
+        { label: '24h', value: '24h' },
+        { label: '7d', value: '7d' },
+        { label: '30d', value: '30d' },
+    ];
+
+    // Database filter options
+    const databases = [
+        { label: 'All Databases', value: 'all' },
+        { label: 'PostgreSQL Milano', value: 'pg-milano' },
+        { label: 'PostgreSQL Bratislava', value: 'pg-bratislava' },
+        { label: 'Oracle Cairo', value: 'oracle-cairo' },
+    ];
+
+    const handleRefresh = () => {
+        setRefreshing(true);
+        setTimeout(() => setRefreshing(false), 1000);
+    };
+
+    // Build Grafana embed URL with parameters
+    const getGrafanaPanel = (panelId: number, height = 300) => {
+        const from = `now-${timeRange}`;
+        return `${grafanaUrl}/d-solo/nexi-overview?orgId=1&panelId=${panelId}&from=${from}&to=now&theme=dark&refresh=30s`;
+    };
 
     return (
         <div className={styles.container}>
-            {/* Header */}
+            {/* Header Section */}
             <div className={styles.header}>
                 <div className={styles.titleSection}>
-                    <h1 className={styles.title}>📊 Database Metrics</h1>
-                    <p className={styles.subtitle}>Real-time monitoring for PostgreSQL & Oracle</p>
+                    <div className={styles.titleIcon}>
+                        <BarChart3 size={24} />
+                    </div>
+                    <div>
+                        <h1 className={styles.title}>Database Metrics</h1>
+                        <p className={styles.subtitle}>Real-time performance monitoring for all databases</p>
+                    </div>
                 </div>
 
-                {/* Tab Navigation */}
-                <div className={styles.tabs}>
-                    {(['overview', 'capacity', 'performance', 'full'] as ViewMode[]).map(mode => (
-                        <button
-                            key={mode}
-                            className={`${styles.tab} ${viewMode === mode ? styles.active : ''}`}
-                            onClick={() => setViewMode(mode)}
-                        >
-                            {mode === 'overview' && '📈'}
-                            {mode === 'capacity' && '💾'}
-                            {mode === 'performance' && '⚡'}
-                            {mode === 'full' && '🖥️'}
-                            <span>{mode.charAt(0).toUpperCase() + mode.slice(1)}</span>
-                        </button>
-                    ))}
+                {/* Controls */}
+                <div className={styles.controls}>
+                    {/* Database Filter */}
+                    <select
+                        className={styles.select}
+                        value={selectedDb}
+                        onChange={(e) => setSelectedDb(e.target.value)}
+                    >
+                        {databases.map(db => (
+                            <option key={db.value} value={db.value}>{db.label}</option>
+                        ))}
+                    </select>
+
+                    {/* Time Range */}
+                    <div className={styles.timeRangeGroup}>
+                        {timeRanges.map(tr => (
+                            <button
+                                key={tr.value}
+                                className={`${styles.timeBtn} ${timeRange === tr.value ? styles.active : ''}`}
+                                onClick={() => setTimeRange(tr.value)}
+                            >
+                                {tr.label}
+                            </button>
+                        ))}
+                    </div>
+
+                    {/* Refresh Button */}
+                    <button
+                        className={styles.refreshBtn}
+                        onClick={handleRefresh}
+                        disabled={refreshing}
+                    >
+                        <RefreshCw size={16} className={refreshing ? styles.spinning : ''} />
+                    </button>
+
+                    {/* Open Grafana */}
+                    <a
+                        href={grafanaUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className={styles.externalBtn}
+                    >
+                        <ExternalLink size={16} />
+                        <span>Open Grafana</span>
+                    </a>
                 </div>
             </div>
 
-            {/* Content */}
-            <div className={styles.content}>
-                {/* Overview - Custom Metric Cards */}
-                {viewMode === 'overview' && (
-                    <>
-                        <div className={styles.grid}>
-                            <MetricCard
-                                title="Buffer Hit Ratio"
-                                value={metrics.bufferHit.value.toFixed(1)}
-                                unit="%"
-                                color="#10b981"
-                                icon="🎯"
-                                trend={metrics.bufferHit.value > 95 ? 'up' : 'down'}
-                                chartData={metrics.bufferHit.data}
-                            />
-                            <MetricCard
-                                title="Active Connections"
-                                value={metrics.connections.value}
-                                color="#8b5cf6"
-                                icon="🔗"
-                                trend="stable"
-                                chartData={metrics.connections.data}
-                            />
-                            <MetricCard
-                                title="Database Size"
-                                value={metrics.dbSize.value.toFixed(1)}
-                                unit="GB"
-                                color="#f59e0b"
-                                icon="💾"
-                                trend="up"
-                                chartData={metrics.dbSize.data}
-                            />
-                            <MetricCard
-                                title="Transactions/sec"
-                                value={metrics.tps.value.toLocaleString()}
-                                unit="TPS"
-                                color="#3b82f6"
-                                icon="⚡"
-                                trend="up"
-                                chartData={metrics.tps.data}
-                            />
-                            <MetricCard
-                                title="Avg Query Time"
-                                value={metrics.queryTime.value.toFixed(1)}
-                                unit="ms"
-                                color="#ec4899"
-                                icon="⏱️"
-                                trend={metrics.queryTime.value < 15 ? 'up' : 'down'}
-                                chartData={metrics.queryTime.data}
-                            />
-                            <MetricCard
-                                title="Active Alerts"
-                                value={metrics.alerts.value}
-                                color={metrics.alerts.value > 0 ? '#ef4444' : '#10b981'}
-                                icon="🚨"
-                                trend={metrics.alerts.value === 0 ? 'up' : 'down'}
-                                chartData={metrics.alerts.data}
-                            />
-                        </div>
+            {/* Quick Stats Row */}
+            <div className={styles.statsRow}>
+                <div className={styles.statCard}>
+                    <div className={styles.statIcon} style={{ background: 'rgba(16, 185, 129, 0.15)' }}>
+                        <Activity size={20} color="#10b981" />
+                    </div>
+                    <div className={styles.statContent}>
+                        <span className={styles.statValue}>98.7%</span>
+                        <span className={styles.statLabel}>Buffer Hit</span>
+                    </div>
+                    <TrendingUp size={16} className={styles.trendUp} />
+                </div>
 
-                        {/* Quick Actions */}
-                        <div className={styles.actions}>
-                            <button className={styles.actionBtn} onClick={() => setViewMode('full')}>
-                                🖥️ Open Full Dashboard
-                            </button>
-                            <a
-                                href={`${import.meta.env.VITE_GRAFANA_URL || 'http://localhost:3003'}`}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className={styles.actionBtn}
-                            >
-                                🔗 Open Grafana
-                            </a>
-                        </div>
-                    </>
-                )}
+                <div className={styles.statCard}>
+                    <div className={styles.statIcon} style={{ background: 'rgba(139, 92, 246, 0.15)' }}>
+                        <Zap size={20} color="#8b5cf6" />
+                    </div>
+                    <div className={styles.statContent}>
+                        <span className={styles.statValue}>1,247</span>
+                        <span className={styles.statLabel}>TPS</span>
+                    </div>
+                    <TrendingUp size={16} className={styles.trendUp} />
+                </div>
 
-                {/* Capacity Dashboard - Grafana Embed */}
-                {viewMode === 'capacity' && (
-                    <div className={styles.dashboardContainer}>
-                        <GrafanaDashboard
-                            dashboardUid="nexi-capacity"
-                            theme="dark"
-                            refresh="1m"
-                            height="calc(100vh - 200px)"
+                <div className={styles.statCard}>
+                    <div className={styles.statIcon} style={{ background: 'rgba(245, 158, 11, 0.15)' }}>
+                        <HardDrive size={20} color="#f59e0b" />
+                    </div>
+                    <div className={styles.statContent}>
+                        <span className={styles.statValue}>156.8 GB</span>
+                        <span className={styles.statLabel}>Total Size</span>
+                    </div>
+                    <TrendingUp size={16} className={styles.trendUp} />
+                </div>
+
+                <div className={styles.statCard}>
+                    <div className={styles.statIcon} style={{ background: 'rgba(59, 130, 246, 0.15)' }}>
+                        <Server size={20} color="#3b82f6" />
+                    </div>
+                    <div className={styles.statContent}>
+                        <span className={styles.statValue}>42</span>
+                        <span className={styles.statLabel}>Connections</span>
+                    </div>
+                </div>
+
+                <div className={styles.statCard}>
+                    <div className={styles.statIcon} style={{ background: 'rgba(236, 72, 153, 0.15)' }}>
+                        <Clock size={20} color="#ec4899" />
+                    </div>
+                    <div className={styles.statContent}>
+                        <span className={styles.statValue}>12.3 ms</span>
+                        <span className={styles.statLabel}>Avg Query</span>
+                    </div>
+                </div>
+
+                <div className={styles.statCard}>
+                    <div className={styles.statIcon} style={{ background: 'rgba(239, 68, 68, 0.15)' }}>
+                        <AlertTriangle size={20} color="#ef4444" />
+                    </div>
+                    <div className={styles.statContent}>
+                        <span className={styles.statValue}>2</span>
+                        <span className={styles.statLabel}>Alerts</span>
+                    </div>
+                </div>
+            </div>
+
+            {/* Main Charts Grid */}
+            <div className={styles.chartsGrid}>
+                {/* Performance Overview - Large Panel */}
+                <div className={`${styles.chartCard} ${styles.wide}`}>
+                    <div className={styles.chartHeader}>
+                        <h3>Performance Overview</h3>
+                        <span className={styles.chartSubtitle}>TPS, Query Time, Buffer Hit</span>
+                    </div>
+                    <div className={styles.chartContent}>
+                        <iframe
+                            src={getGrafanaPanel(1)}
+                            className={styles.grafanaFrame}
+                            title="Performance Overview"
                         />
                     </div>
-                )}
+                </div>
 
-                {/* Performance Dashboard - Grafana Embed */}
-                {viewMode === 'performance' && (
-                    <div className={styles.dashboardContainer}>
-                        <GrafanaDashboard
-                            dashboardUid="nexi-performance"
-                            theme="dark"
-                            refresh="30s"
-                            height="calc(100vh - 200px)"
+                {/* Connections */}
+                <div className={styles.chartCard}>
+                    <div className={styles.chartHeader}>
+                        <h3>Active Connections</h3>
+                        <span className={styles.chartSubtitle}>By database</span>
+                    </div>
+                    <div className={styles.chartContent}>
+                        <iframe
+                            src={getGrafanaPanel(2)}
+                            className={styles.grafanaFrame}
+                            title="Connections"
                         />
                     </div>
-                )}
+                </div>
 
-                {/* Full Dashboard */}
-                {viewMode === 'full' && (
-                    <div className={styles.dashboardContainer}>
-                        <GrafanaDashboard
-                            dashboardUid="nexi-overview"
-                            theme="dark"
-                            refresh="30s"
-                            height="calc(100vh - 200px)"
+                {/* Storage Usage */}
+                <div className={styles.chartCard}>
+                    <div className={styles.chartHeader}>
+                        <h3>Storage Usage</h3>
+                        <span className={styles.chartSubtitle}>Tablespace breakdown</span>
+                    </div>
+                    <div className={styles.chartContent}>
+                        <iframe
+                            src={getGrafanaPanel(3)}
+                            className={styles.grafanaFrame}
+                            title="Storage"
                         />
                     </div>
-                )}
+                </div>
+
+                {/* Query Latency Heatmap - Large Panel */}
+                <div className={`${styles.chartCard} ${styles.wide}`}>
+                    <div className={styles.chartHeader}>
+                        <h3>Query Latency Distribution</h3>
+                        <span className={styles.chartSubtitle}>Response time heatmap</span>
+                    </div>
+                    <div className={styles.chartContent}>
+                        <iframe
+                            src={getGrafanaPanel(4)}
+                            className={styles.grafanaFrame}
+                            title="Query Latency"
+                        />
+                    </div>
+                </div>
+
+                {/* IOPS */}
+                <div className={styles.chartCard}>
+                    <div className={styles.chartHeader}>
+                        <h3>Disk I/O</h3>
+                        <span className={styles.chartSubtitle}>Read/Write IOPS</span>
+                    </div>
+                    <div className={styles.chartContent}>
+                        <iframe
+                            src={getGrafanaPanel(5)}
+                            className={styles.grafanaFrame}
+                            title="IOPS"
+                        />
+                    </div>
+                </div>
+
+                {/* Lock Activity */}
+                <div className={styles.chartCard}>
+                    <div className={styles.chartHeader}>
+                        <h3>Lock Activity</h3>
+                        <span className={styles.chartSubtitle}>Locks & Deadlocks</span>
+                    </div>
+                    <div className={styles.chartContent}>
+                        <iframe
+                            src={getGrafanaPanel(6)}
+                            className={styles.grafanaFrame}
+                            title="Locks"
+                        />
+                    </div>
+                </div>
+            </div>
+
+            {/* Footer Info */}
+            <div className={styles.footer}>
+                <div className={styles.footerInfo}>
+                    <Database size={14} />
+                    <span>Data refreshes every 30 seconds</span>
+                </div>
+                <div className={styles.footerInfo}>
+                    <span>Powered by Prometheus + Grafana</span>
+                </div>
             </div>
         </div>
     );
