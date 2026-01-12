@@ -1,11 +1,14 @@
 .container {
+    display: flex;
+    flex-direction: column;
     position: relative;
 }
 
 .toggleBar {
-    position: fixed;
-    top: 80px;
-    right: 24px;
+    align-self: flex-end;
+    margin: 16px 24px -10px 0;
+    /* Negative bottom margin to overlap slightly with header space if needed, or just 0 */
+    position: relative;
     z-index: 100;
     display: flex;
     background: rgba(30, 30, 60, 0.9);
