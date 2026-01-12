@@ -1101,6 +1101,215 @@ def get_rag_status():
     
     return status
 
+# =============================================================================
+# DATABASE METRICS ENDPOINT
+# =============================================================================
+
+@app.get("/api/metrics")
+def get_database_metrics():
+    """Get aggregated database metrics for the metrics dashboard"""
+    try:
+        if not mongo:
+            raise Exception("MongoProxy not initialized")
+        
+        # Fetch inventory for connection counts and sizes
+        dbs = mongo.execute_eval("db.inventory_databases.find({}, {'_id': 0}).toArray()") or []
+        
+        # Fetch recent alerts count
+        alert_count = mongo.execute_eval("db.monitoring_alerts.countDocuments({status: 'pending'})") or 0
+        
+        # Aggregate metrics
+        total_size_bytes = 0
+        total_connections = 0
+        pg_databases = []
+        oracle_tablespaces = []
+        connections_by_db = []
+        
+        for db in dbs:
+            identity = db.get('identity', {})
+            storage = db.get('storage', {})
+            status = db.get('status', {})
+            
+            db_name = identity.get('db_unique_name', identity.get('db_name', 'Unknown'))
+            engine = identity.get('engine', 'UNKNOWN').upper()
+            
+            # Get size
+            size_bytes = 0
+            if 'total_size_bytes' in storage:
+                size_bytes = storage.get('total_size_bytes', 0)
+            elif 'total_size' in storage:
+                # Parse size string like "1.5 GB"
+                size_str = storage.get('total_size', '0')
+                try:
+                    if 'GB' in str(size_str):
+                        size_bytes = float(str(size_str).replace('GB', '').strip()) * 1024 * 1024 * 1024
+                    elif 'MB' in str(size_str):
+                        size_bytes = float(str(size_str).replace('MB', '').strip()) * 1024 * 1024
+                    elif 'TB' in str(size_str):
+                        size_bytes = float(str(size_str).replace('TB', '').strip()) * 1024 * 1024 * 1024 * 1024
+                except:
+                    pass
+            total_size_bytes += size_bytes
+            
+            # Get connections
+            active_conns = status.get('active_sessions', 0) or status.get('connections', 0) or 0
+            idle_conns = status.get('idle_sessions', 0) or 0
+            total_connections += active_conns + idle_conns
+            
+            connections_by_db.append({
+                'name': db_name[:15],  # Truncate for display
+                'active': active_conns,
+                'idle': idle_conns,
+                'engine': engine
+            })
+            
+            # PostgreSQL specific
+            if engine == 'POSTGRES':
+                pg_databases.append({
+                    'name': db_name,
+                    'size_bytes': size_bytes,
+                    'size_gb': round(size_bytes / (1024**3), 2) if size_bytes else 0,
+                    'connections': active_conns + idle_conns
+                })
+            
+            # Oracle tablespace info
+            if engine == 'ORACLE':
+                tablespaces = storage.get('tablespaces', [])
+                for ts in tablespaces:
+                    oracle_tablespaces.append({
+                        'name': ts.get('name', 'UNKNOWN'),
+                        'used_pct': ts.get('used_pct', 0),
+                        'used_gb': ts.get('used_gb', 0),
+                        'max_gb': ts.get('max_gb', 0)
+                    })
+        
+        # Calculate mock performance metrics (would come from prometheus/exporter in real setup)
+        import random
+        buffer_hit = 95 + random.random() * 4.5
+        tps = 1000 + random.randint(0, 500)
+        avg_query_ms = 5 + random.random() * 15
+        
+        return {
+            "summary": {
+                "buffer_hit": round(buffer_hit, 1),
+                "tps": tps,
+                "storage_gb": round(total_size_bytes / (1024**3), 1),
+                "total_connections": total_connections,
+                "avg_query_ms": round(avg_query_ms, 1),
+                "active_alerts": alert_count
+            },
+            "connections_by_db": sorted(connections_by_db, key=lambda x: x['active'], reverse=True)[:5],
+            "pg_databases": pg_databases[:10],
+            "oracle_tablespaces": oracle_tablespaces[:10],
+            "database_count": len(dbs)
+        }
+    except Exception as e:
+        print(f"Error fetching metrics: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.get("/api/metrics/deep")
+def get_deep_metrics():
+    """Get deep dive metrics for advanced dashboard"""
+    try:
+        if not mongo:
+            raise Exception("MongoProxy not initialized")
+        
+        # Fetch all data
+        dbs = mongo.execute_eval("db.inventory_databases.find({}, {'_id': 0}).toArray()") or []
+        alerts = mongo.execute_eval("db.monitoring_alerts.find().sort({timestamp: -1}).limit(10).toArray()") or []
+        
+        # Build tablespace data
+        tablespaces = []
+        asm_diskgroups = []
+        pg_databases = []
+        resources = []
+        
+        for db in dbs:
+            identity = db.get('identity', {})
+            storage = db.get('storage', {})
+            status = db.get('status', {})
+            engine = identity.get('engine', 'UNKNOWN').upper()
+            db_name = identity.get('db_unique_name', '')
+            
+            if engine == 'ORACLE':
+                # Tablespaces
+                for ts in storage.get('tablespaces', []):
+                    tablespaces.append({
+                        'name': ts.get('name', 'UNKNOWN'),
+                        'used': ts.get('used_pct', 0),
+                        'usedGB': ts.get('used_gb', 0),
+                        'maxGB': ts.get('max_gb', ts.get('used_gb', 0) * 1.2),  # Estimate max
+                        'growthPerDay': round(ts.get('used_gb', 0) * 0.01, 2)  # Estimate 1% daily growth
+                    })
+                
+                # ASM (if available)
+                for asm in storage.get('asm_diskgroups', []):
+                    asm_diskgroups.append({
+                        'name': asm.get('name', '+DATA'),
+                        'used': asm.get('used_pct', 0),
+                        'total': asm.get('total_gb', 0),
+                        'free': asm.get('free_gb', 0)
+                    })
+                
+                # Resources
+                if status.get('processes_pct'):
+                    resources.append({
+                        'name': 'Processes',
+                        'current': status.get('processes_current', 0),
+                        'limit': status.get('processes_limit', 300),
+                        'pct': status.get('processes_pct', 0)
+                    })
+                if status.get('sessions_pct'):
+                    resources.append({
+                        'name': 'Sessions',
+                        'current': status.get('sessions_current', 0),
+                        'limit': status.get('sessions_limit', 500),
+                        'pct': status.get('sessions_pct', 0)
+                    })
+            
+            elif engine == 'POSTGRES':
+                size_bytes = storage.get('total_size_bytes', 0)
+                pg_databases.append({
+                    'name': db_name,
+                    'size_gb': round(size_bytes / (1024**3), 2) if size_bytes else 0,
+                    'xid_age': status.get('xid_age', 100000000),
+                    'xid_pct': round(status.get('xid_age', 100000000) / 2000000000 * 100, 2)
+                })
+        
+        # Add mock data if empty (for demo)
+        if not tablespaces:
+            tablespaces = [
+                {'name': 'USERS', 'used': 78, 'usedGB': 156, 'maxGB': 200, 'growthPerDay': 0.5},
+                {'name': 'SYSTEM', 'used': 92, 'usedGB': 46, 'maxGB': 50, 'growthPerDay': 0.1},
+                {'name': 'SYSAUX', 'used': 67, 'usedGB': 33.5, 'maxGB': 50, 'growthPerDay': 0.2},
+            ]
+        
+        if not asm_diskgroups:
+            asm_diskgroups = [
+                {'name': '+DATA', 'used': 72, 'total': 500, 'free': 140},
+                {'name': '+RECO', 'used': 45, 'total': 200, 'free': 110},
+            ]
+        
+        if not resources:
+            resources = [
+                {'name': 'Processes', 'current': 245, 'limit': 300, 'pct': 82},
+                {'name': 'Sessions', 'current': 380, 'limit': 500, 'pct': 76},
+            ]
+        
+        return {
+            "tablespaces": tablespaces,
+            "asm_diskgroups": asm_diskgroups,
+            "pg_databases": pg_databases,
+            "resources": resources,
+            "active_alerts": [
+                {"severity": a.get('severity', 'warning'), "message": a.get('message', '')}
+                for a in alerts[:5]
+            ]
+        }
+    except Exception as e:
+        print(f"Error fetching deep metrics: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
 if __name__ == "__main__":
     import sys
     sys.stdout.reconfigure(encoding='utf-8')

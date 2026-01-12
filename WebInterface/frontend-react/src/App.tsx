@@ -25,7 +25,7 @@ import MailboxPanel from './components/Mailbox/MailboxPanel';
 import ExplorerPanel from './components/Explorer/ExplorerPanel';
 import AgentsPanel from './components/Agents/AgentsPanel';
 import SettingsPanel from './components/Settings/SettingsPanel';
-import { MetricsPanel } from './components/Metrics';
+import { MetricsContainer } from './components/Metrics';
 import { useAutoDiscovery, useSystemStatus, useSetSystemStatus } from './hooks/useDatabases';
 import './index.css';
 
@@ -158,7 +158,7 @@ function AppContent() {
       case 'agents':
         return <AgentsPanel />;
       case 'metrics':
-        return <MetricsPanel />;
+        return <MetricsContainer />;
       case 'settings':
         return <SettingsPanel onNavigateToAgents={() => setActiveTab('agents')} />;
       default:
