@@ -22,12 +22,19 @@ class MongoProxy:
         ] + self.auth_args + ["--quiet", "--eval", f"JSON.stringify({eval_js})"]
         
         try:
-            # print(f"Executing: {eval_js}")
-            result = subprocess.check_output(cmd, stderr=subprocess.PIPE).decode('utf-8')
-            print(f"MongoProxy Result: {result}")
-            return json.loads(result)
-        except subprocess.CalledProcessError as e:
-            print(f"MongoProxy Error: {e.stderr.decode('utf-8')}")
+            # Add timeout to avoid hanging the API
+            result = subprocess.run(cmd, capture_output=True, text=True, timeout=10)
+            
+            if result.returncode != 0:
+                print(f"MongoProxy Error: {result.stderr}")
+                return None
+                
+            stdout = result.stdout.strip()
+            # print(f"MongoProxy Result: {stdout}")
+            return json.loads(stdout)
+            
+        except subprocess.TimeoutExpired:
+            print(f"MongoProxy Timeout: Command took longer than 10s")
             return None
         except Exception as e:
             print(f"MongoProxy Exception: {e}")
@@ -76,6 +83,20 @@ class MongoProxy:
         if not name: return None
         
         js_cmd = f"db.inventory_databases.updateOne({{ 'identity.db_unique_name': '{name}' }}, {{ $set: {doc_json} }}, {{ upsert: true }})"
+        return self.execute_eval(js_cmd)
+
+    def upsert_storage(self, db_name, engine, storage_items):
+        """Upsert storage data to inventory_storage collection"""
+        storage_doc = {
+            "db_ref": db_name,
+            "engine": engine,
+            "items": storage_items,
+            "last_updated": "new Date()"
+        }
+        doc_json = json.dumps(storage_doc, default=str)
+        doc_json = doc_json.replace('"new Date()"', 'new Date()')
+        
+        js_cmd = f"db.inventory_storage.updateOne({{ 'db_ref': '{db_name}' }}, {{ $set: {doc_json} }}, {{ upsert: true }})"
         return self.execute_eval(js_cmd)
 
     def update_status(self, db_name, status):

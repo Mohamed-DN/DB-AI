@@ -26,7 +26,7 @@ import ExplorerPanel from './components/Explorer/ExplorerPanel';
 import AgentsPanel from './components/Agents/AgentsPanel';
 import SettingsPanel from './components/Settings/SettingsPanel';
 import { MetricsContainer } from './components/Metrics';
-import { useAutoDiscovery, useSystemStatus, useSetSystemStatus } from './hooks/useDatabases';
+import { useAutoDiscovery, useSystemStatus } from './hooks/useDatabases';
 import './index.css';
 
 const queryClient = new QueryClient({
@@ -109,12 +109,20 @@ function TelemetryPanel() {
   );
 }
 
+import SystemProgressModal, { type ProgressEvent } from './components/System/SystemProgressModal';
+
 function AppContent() {
   const [activeTab, setActiveTab] = useState<Tab>('dashboard');
   const autoDiscovery = useAutoDiscovery();
   const { data: systemStatus } = useSystemStatus();
-  const setSystemStatus = useSetSystemStatus();
+  // const setSystemStatus = useSetSystemStatus(); // Replaced by custom fetch implementation
   const [isPaused, setIsPaused] = useState(false);
+
+  // Progress Modal State
+  const [showProgressModal, setShowProgressModal] = useState(false);
+  const [progressEvents, setProgressEvents] = useState<ProgressEvent[]>([]);
+  const [isOperationComplete, setIsOperationComplete] = useState(false);
+  const [operationTitle, setOperationTitle] = useState('');
 
   useEffect(() => {
     if (systemStatus) {
@@ -122,10 +130,66 @@ function AppContent() {
     }
   }, [systemStatus]);
 
-  const handleTogglePause = () => {
-    const newState = !isPaused;
-    setIsPaused(newState);
-    setSystemStatus.mutate(newState);
+  const handleTogglePause = async () => {
+    const targetState = !isPaused; // If paused=true, we want to Resume (running). If paused=false, we want to Pause.
+    const statusStr = targetState ? 'PAUSED' : 'RUNNING';
+
+    // Setup Modal
+    setOperationTitle(targetState ? 'Pausing System Containers...' : 'Resuming System Containers...');
+    setProgressEvents([]);
+    setIsOperationComplete(false);
+    setShowProgressModal(true);
+
+    try {
+      const response = await fetch('/api/system/status', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ status: statusStr }),
+      });
+
+      if (!response.body) throw new Error('No response body');
+
+      const reader = response.body.getReader();
+      const decoder = new TextDecoder();
+
+      while (true) {
+        const { value, done } = await reader.read();
+        if (done) break;
+
+        const chunk = decoder.decode(value, { stream: true });
+        const lines = chunk.split('\n');
+
+        for (const line of lines) {
+          if (!line.trim()) continue;
+          try {
+            const event = JSON.parse(line) as ProgressEvent;
+            setProgressEvents(prev => [...prev, event]);
+
+            if (event.type === 'complete') {
+              setIsOperationComplete(true);
+              // Update local state to match final result
+              setIsPaused(event.status === 'PAUSED');
+            }
+          } catch (e) {
+            console.error("Error parsing stream event:", e);
+          }
+        }
+      }
+    } catch (error) {
+      console.error("Stream error:", error);
+      setProgressEvents(prev => [...prev, {
+        type: 'progress',
+        status: 'failed',
+        container: 'System',
+        message: String(error)
+      }]);
+      setIsOperationComplete(true);
+    }
+
+    // Invalidate query to refresh global status
+    queryClient.invalidateQueries({ queryKey: ['systemStatus'] });
   };
 
   const openMongoDB = () => {
@@ -169,6 +233,14 @@ function AppContent() {
 
   return (
     <div className="min-h-screen">
+      <SystemProgressModal
+        isOpen={showProgressModal}
+        onClose={() => setShowProgressModal(false)}
+        events={progressEvents}
+        isComplete={isOperationComplete}
+        title={operationTitle}
+      />
+
       {/* Header */}
       <header className="glass sticky top-0 z-50 px-4 py-3 mb-6">
         <div className="flex items-center justify-between flex-wrap gap-3">

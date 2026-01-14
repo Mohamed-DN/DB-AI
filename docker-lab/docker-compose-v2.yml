@@ -81,13 +81,13 @@ services:
       nexi-lab2:
         ipv4_address: 172.21.0.12
     restart: unless-stopped
-    deploy:
-      resources:
-        reservations:
-          devices:
-            - driver: nvidia
-              count: all
-              capabilities: [ gpu ]
+    # deploy:
+    #   resources:
+    #     reservations:
+    #       devices:
+    #         - driver: nvidia
+    #           count: all
+    #           capabilities: [ gpu ]
 
   # Open WebUI - ChatGPT-like interface for Ollama (V2)
   open-webui2:

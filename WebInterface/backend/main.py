@@ -1,10 +1,12 @@
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, Request, BackgroundTasks
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import JSONResponse, StreamingResponse
 import os
 import subprocess
 import json
 import sys
 import re
+import uvicorn
 from dotenv import load_dotenv
 from pydantic import BaseModel
 
@@ -163,6 +165,39 @@ def get_alerts():
     except Exception as e:
         print(f"Error fetching alerts: {e}")
         raise HTTPException(status_code=500, detail=str(e))
+
+@app.get("/api/storage")
+def get_all_storage():
+    """Get all storage inventory items"""
+    try:
+        if not mongo: raise Exception("MongoProxy not initialized")
+        storage = mongo.execute_eval("db.inventory_storage.find().toArray()") or []
+        for s in storage:
+            if "_id" in s:
+                s["_id"] = str(s["_id"])
+        return storage
+    except Exception as e:
+        print(f"Error fetching storage: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.get("/api/storage/{db_name}")
+def get_storage_for_db(db_name: str):
+    """Get storage inventory for a specific database"""
+    try:
+        if not mongo: raise Exception("MongoProxy not initialized")
+        db_name = validate_identifier(db_name, "database")
+        storage = mongo.execute_eval(f"db.inventory_storage.findOne({{db_ref: '{db_name}'}})")
+        if not storage:
+            raise HTTPException(status_code=404, detail=f"No storage found for {db_name}")
+        if "_id" in storage:
+            storage["_id"] = str(storage["_id"])
+        return storage
+    except HTTPException:
+        raise
+    except Exception as e:
+        print(f"Error fetching storage for {db_name}: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
 
 # --- HELPER FUNCTIONS ---
 def connect_db(db_name, mode="sql"):
@@ -742,9 +777,10 @@ def connect_db(db_name: str, mode: str = "sql"):
                     cmd = f'start powershell -NoExit -Command "Write-Host \'Connecting to PostgreSQL ({container}) as POSTGRES (superuser)...\' -ForegroundColor Yellow; docker exec -it {container} psql -U postgres"'
             else:
                 # SQL Mode - Direct exec into container with aiauto user
+                # SQL Mode - Direct exec into container
                 if engine == 'ORACLE':
-                    # Oracle Docker - direct exec with c##aiauto/root
-                    cmd = f'start powershell -NoExit -Command "Write-Host \'Starting Oracle Console as C##AIAUTO via Docker...\' -ForegroundColor Green; docker exec -it {container} sqlplus c##aiauto/root"'
+                    # Oracle Docker - Force SYSDBA as requested
+                    cmd = f'start powershell -NoExit -Command "Write-Host \'Starting Oracle Console as SYSDBA (Enforced)...\'-ForegroundColor Yellow; docker exec -it {container} sqlplus / as sysdba"'
                 else:
                     # PostgreSQL - direct exec into container with psql
                     # Connect locally inside the container (no network hop needed)
@@ -785,15 +821,12 @@ def get_system_status():
 
 @app.post("/api/system/status")
 def set_system_status(item: dict):
-    """Set global system status (RUNNING/PAUSED) - Controls Docker Lab containers"""
-    import subprocess
-    
+    """Set global system status (RUNNING/PAUSED) - Controls Docker Lab containers with Streaming Progress"""
     status = item.get("status", "RUNNING").upper()
     if status not in ["RUNNING", "PAUSED"]:
         raise HTTPException(status_code=400, detail="Invalid status")
     
     # Containers to control - V2 names with suffix (exclude frontend services)
-    # Check GATEWAY_SUFFIX from environment
     suffix = os.getenv('GATEWAY_SUFFIX', '2')
     
     lab_containers = [
@@ -804,8 +837,11 @@ def set_system_status(item: dict):
         f"nexi-gw-milano{suffix}",
         f"nexi-gw-bratislava{suffix}",
         f"nexi-gw-cairo{suffix}",
-        f"nexi-pglab-milano{suffix}",
-        f"nexi-pglab-bratislava{suffix}",
+        f"nexi-pg-milano-prod{suffix}",
+        f"nexi-pg-milano-dev{suffix}",
+        f"nexi-pg-milano-stg{suffix}",
+        f"nexi-pg-bratislava-prod{suffix}",
+        f"nexi-pg-bratislava-dev{suffix}",
         f"nexi-oracle-cairo-primary{suffix}",
         f"nexi-oracle-cairo-replica{suffix}",
         f"nexi-mongo-express{suffix}",
@@ -814,46 +850,67 @@ def set_system_status(item: dict):
         f"nexi-langfuse{suffix}",
     ]
     
-    results = []
-    action = "stop" if status == "PAUSED" else "start"
+    import shutil
+    import json
+    import time
     
-    try:
+    docker_cmd = shutil.which("docker") or "/usr/local/bin/docker"
+    action = "stop" if status == "PAUSED" else "start"
+
+    def event_generator():
+        # Update MongoDB global status first
+        try:
+            if mongo:
+                 mongo.execute_eval(f"db.system_config.updateOne({{key: 'global_status'}}, {{$set: {{value: '{status}'}}}}, {{upsert: true}})")
+        except:
+            pass
+
+        # Yield initial event
+        yield json.dumps({"type": "start", "action": action, "total": len(lab_containers)}) + "\n"
+
+        success_count = 0
+        
         for container in lab_containers:
             try:
+                # Notify starting action on container
+                yield json.dumps({"type": "progress", "container": container, "status": "pending"}) + "\n"
+                
+                # Execute Docker command
+                cmd = [docker_cmd, action, container]
                 result = subprocess.run(
-                    ["docker", action, container], 
+                    cmd, 
                     capture_output=True, 
                     timeout=30,
                     text=True
                 )
                 success = result.returncode == 0
-                results.append({
-                    "container": container,
-                    "action": action,
-                    "success": success,
+                if success: success_count += 1
+                
+                # Notify completion of action
+                yield json.dumps({
+                    "type": "progress", 
+                    "container": container, 
+                    "status": "done" if success else "failed",
                     "message": result.stdout.strip() if success else result.stderr.strip()
-                })
+                }) + "\n"
+                
             except Exception as e:
-                results.append({
-                    "container": container,
-                    "action": action,
-                    "success": False,
+                yield json.dumps({
+                    "type": "progress", 
+                    "container": container, 
+                    "status": "failed", 
                     "message": str(e)
-                })
+                }) + "\n"
         
-        # Update MongoDB status (if available)
-        try:
-            mongo.execute_eval(f"db.system_config.updateOne({{key: 'global_status'}}, {{$set: {{value: '{status}'}}}}, {{upsert: true}})")
-        except:
-            pass  # MongoDB might be stopped
-        
-        return {
+        # Yield final summary
+        yield json.dumps({
+            "type": "complete", 
             "status": status, 
-            "containers_affected": len(lab_containers),
-            "results": results
-        }
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+            "success_count": success_count,
+            "total": len(lab_containers)
+        }) + "\n"
+
+    return StreamingResponse(event_generator(), media_type="application/x-ndjson")
 
 @app.get("/api/emails")
 def get_emails():
