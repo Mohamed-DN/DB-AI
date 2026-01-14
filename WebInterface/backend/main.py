@@ -11,7 +11,19 @@ from dotenv import load_dotenv
 from pydantic import BaseModel
 
 # Load environment
-load_dotenv()
+# Load environment variables
+# Prioritize .env.v2 for V2 Shadow Mode
+env_v2_path = os.path.abspath(os.path.join(os.path.dirname(__file__), '../../.env.v2'))
+env_path = os.path.abspath(os.path.join(os.path.dirname(__file__), '../../.env'))
+
+if os.path.exists(env_v2_path):
+    print(f"Loading config from {env_v2_path}")
+    load_dotenv(env_v2_path, override=True)
+elif os.path.exists(env_path):
+    print(f"Loading config from {env_path}")
+    load_dotenv(env_path)
+else:
+    print("Warning: No .env file found")
 
 # Import MongoProxy
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '../../')))

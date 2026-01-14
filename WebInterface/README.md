@@ -2,18 +2,7 @@
 
 > Frontend (React) and Backend (FastAPI) for the dashboard.
 
----
-
-## 🎯 AI Context
-
-```yaml
-Purpose: User-facing dashboard and API layer
-Frontend: React + TypeScript + Vite (:4002)
-Backend: FastAPI + Python (:9000)
-Main Files:
-  - backend/main.py (~1000 lines)
-  - frontend-react/src/App.tsx
-```
+This directory contains the user-facing components of the Nexi DBA AI system. It is split into a modern React frontend and a Python FastAPI backend.
 
 ---
 
@@ -40,11 +29,11 @@ flowchart TB
     subgraph Backend["⚙️ Backend (FastAPI :9000)"]
         API[main.py]
         subgraph Endpoints["API Endpoints"]
-            E1[/api/inventory]
-            E2[/api/alerts]
-            E3[/api/agents]
-            E4[/api/chat]
-            E5[/api/auto-discovery]
+        E1[/api/inventory]
+        E2[/api/alerts]
+        E3[/api/agents]
+        E4[/api/chat]
+        E5[/api/auto-discovery]
         end
         MongoProxy[MongoProxy]
     end
@@ -66,6 +55,36 @@ flowchart TB
 
 ---
 
+## 📂 Directory Contents
+
+| Directory/File | Description | Status |
+|----------------|-------------|--------|
+| **`backend/`** | **FastAPI Backend**. The API server providing data to the frontend and handling tool execution. | ✅ Active |
+| **`frontend-react/`** | **React Dashboard**. The modern V2/V3 user interface built with Vite and TypeScript. | ✅ Active |
+| **`frontend/`** | **Legacy UI**. Old vanilla JS/HTML dashboard. Kept for reference or emergency fallback. | ⚠️ Legacy |
+| **`run_dashboard.ps1`** | Powershell script to quickly launch the frontend and backend locally. | ✅ Active |
+
+## 📁 Structure
+
+```
+WebInterface/
+├── backend/
+│   ├── main.py              # FastAPI app (~1000 lines)
+│   └── requirements.txt
+│
+├── frontend-react/          # Modern UI
+│   ├── src/
+│   ├── package.json
+│   └── vite.config.v2.ts
+│
+└── frontend/                # Legacy UI
+    ├── index.html
+    ├── app.js
+    └── style.css
+```
+
+---
+
 ## 📋 API Endpoints
 
 | Endpoint | Method | Purpose |
@@ -79,7 +98,7 @@ flowchart TB
 | `/api/config` | GET/POST | System config |
 | `/api/system/status` | GET/POST | Pause/Resume |
 
-Full docs: http://localhost:9000/docs
+Full docs: `http://localhost:9000/docs`
 
 ---
 
@@ -98,31 +117,6 @@ npm run dev:v2
 
 # Or use setup script
 .\scripts\setup_v2.ps1
-```
-
----
-
-## 📁 Structure
-
-```
-WebInterface/
-├── backend/
-│   ├── main.py              # FastAPI app (~1000 lines)
-│   └── requirements.txt
-│
-└── frontend-react/
-    ├── src/
-    │   ├── App.tsx          # Main component
-    │   ├── components/      # UI components
-    │   │   ├── Inventory/
-    │   │   ├── Alerts/
-    │   │   ├── Agents/
-    │   │   ├── Chat/
-    │   │   └── Explorer/
-    │   ├── hooks/           # React Query
-    │   └── services/        # API client
-    ├── package.json
-    └── vite.config.v2.ts
 ```
 
 ---

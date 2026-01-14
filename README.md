@@ -23,13 +23,21 @@ What commands do the agents run to get this data?
 
 ## 📂 Repository Structure
 
-| Directory | Component | "Who is this?" |
-|-----------|-----------|----------------|
-| **`Agents/`** | **The Hands** | Python scripts (`Scout`) that visit databases and "fish" for data. Now capable of **Deep Extraction** (Docker Exec). |
-| **`Orchestrator/`** | **The Brain** | LLM-powered logic that cleans raw data (Currently using direct extraction for V2). |
-| **`WebInterface/`** | **The Face** | React Frontend + FastAPI Backend. Where you verify the data. |
-| **`MongoDB/`** | **The Memory** | Stores the JSON inventory. |
-| **`docker-lab/`** | **The World** | Simulation of the Datacenter (Oracle RAC, Postgres Enterprise). |
+Below is a comprehensive guide to the repository's layout.
+
+| Directory | Role | Description |
+|-----------|------|-------------|
+| **`Agents/`** | **The Hands** | Contains the `Scout` (discovery), `Collector` (monitoring), and other agents that interact with databases. |
+| **`Orchestrator/`** | **The Brain** | Houses the LLM logic, RAG pipeline, and vector database interactions. |
+| **`WebInterface/`** | **The Face** | The User Interface. `backend/` (FastAPI) and `frontend-react/` (React Dashboard). |
+| **`MongoDB/`** | **The Memory** | Initialization scripts, schemas, and structure for the MongoDB metadata store. |
+| **`docker-lab/`** | **The World** | Simulation environment with Oracle, PostgreSQL, and other containers for testing. |
+| **`scripts/`** | **Tools** | Powershell and Shell scripts for system startup (`setup_v2.ps1`), cleanup, and maintenance. |
+| **`execution/`** | **Actions** | Deterministic Python scripts typically called by Agents or the Orchestrator for specific tasks. |
+| **`directives/`** | **SOPs** | Standard Operating Procedures and text protocols used to guide the AI Agents. |
+| **`Gateway/`** | **Network** | Configuration for the API Gateway and Redis services. |
+| **`Tests/`** | **Verification** | Integration and unit tests for the system. |
+| **`docs/`** | **Docs** | Detailed documentation like pipeline explanations and data specs. |
 
 ---
 

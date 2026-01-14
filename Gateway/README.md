@@ -1,25 +1,31 @@
 # Gateway
 
-> SSH gateways for secure database access.
+> SSH gateways and Network Services configuration.
 
 ## Purpose
 
-Gateways act as jump hosts to reach databases in isolated networks:
+Gateways act as jump hosts to reach databases in isolated networks, allowing the central application to access distributed resources securely.
 
 ```
 User → Gateway → Database
 ```
 
-## V2 Gateways
+## 📂 Directory Contents
+
+| Directory/File | Description |
+|----------------|-------------|
+| **`redis_config/`** | Configuration files for the Redis instance used by the Gateway or caching layer. |
+| **`README.md`** | This file. |
+
+## 🌍 V2 Gateways
 
 | Gateway | Location | Accessible DBs |
 |---------|----------|----------------|
-| nexi-gw-milano2 | Milan | pg-milano-* |
-| nexi-gw-bratislava2 | Bratislava | pg-bratislava-* |
-| nexi-gw-cairo2 | Cairo | oracle-cairo-* |
+| **nexi-gw-milano2** | Milan, Italy | `pg-milano-*` |
+| **nexi-gw-bratislava2** | Bratislava, Slovakia | `pg-bratislava-*` |
+| **nexi-gw-cairo2** | Cairo, Egypt | `oracle-cairo-*` |
 
-## Configuration
+## ⚙️ Usage
 
-Gateway info is stored in MongoDB `gateways` collection.
-
-Scout agent uses `GATEWAY_SUFFIX` env var to find V2 gateways.
+- Gateway info is stored in the MongoDB `gateways` collection.
+- The `Scout` agent uses the `GATEWAY_SUFFIX` environment variable to identify and connect through V2 gateways.

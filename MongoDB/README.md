@@ -2,18 +2,7 @@
 
 > Central data store for inventory, metrics, alerts, and configuration.
 
----
-
-## 🎯 AI Context
-
-```yaml
-Purpose: Configuration Management Database (CMDB)
-Container: nexi-mongodb2
-Port: 28017
-Database: nexi_cmdb_v2
-Credentials: admin / nexi2024
-UI: http://localhost:9081 (Mongo Express)
-```
+This directory serves as the "Memory" of the system, defining the data models and providing tools to interact with the MongoDB instance.
 
 ---
 
@@ -45,28 +34,21 @@ erDiagram
         datetime updated_at
     }
 
-    gateways {
-        string _id
-        object location
-        object info
-        object network
-        object reachability
-    }
-
-    business_services {
-        ObjectId _id
-        object service_info
-        object contacts
-        array technical_mapping
-        object compliance
-    }
-
     inventory_databases ||--o{ monitoring_alerts : "generates"
-    gateways ||--o{ inventory_databases : "accesses"
-    business_services ||--o{ inventory_databases : "maps to"
 ```
 
 ---
+
+## 📂 Directory Contents
+
+| Directory/File | Description |
+|----------------|-------------|
+| **`src/`** | **Python Access Layer**. Contains `connection.py` and repository patterns for programmatic access to the DB. |
+| **`scripts/`** | **Maintenance Scripts**. Python and JS scripts for fixing metadata (`fix_missing_container_names.py`), pruning inventory, etc. |
+| **`struttura_mongo/`** | **Schema Definitions**. Detailed breakdown of each collection's structure and valid fields. |
+| **`Schemas/`** | **JSON Schemas**. Validation schemas for data integrity. |
+| **`Script_oracle_to_mongo.sql`** | **Migration Tool**. SQL script for extracting data from Oracle to import into MongoDB. |
+| **`docker-compose.yml`** | Docker compose file for spinning up the MongoDB service. |
 
 ## 📋 Collections Reference
 
@@ -77,8 +59,6 @@ erDiagram
 | `system_config` | Settings | `key`, `value` |
 | `gateways` | SSH gateways | `_id`, `network.status` |
 | `business_services` | Service mapping | `service_info.name`, `technical_mapping` |
-| `agent_runs` | Execution logs | `agent_name`, `started_at` |
-| `baselines` | Performance baselines | `db_name`, `metrics` |
 
 ---
 
@@ -90,56 +70,7 @@ Start-Process http://localhost:9081
 
 # CLI access
 docker exec -it nexi-mongodb2 mongosh nexi_cmdb_v2 -u admin -p nexi2024
-
-# Seed collections (if empty)
-python execution/seed_mongodb.py
 ```
-
----
-
-## 💡 Common Queries
-
-```javascript
-// List all databases
-db.inventory_databases.find({}, {
-  "identity.db_unique_name": 1,
-  "state.status": 1
-})
-
-// Pending alerts
-db.monitoring_alerts.find({
-  processed: false,
-  state: "CRITICAL"
-})
-
-// Get agent intervals
-db.system_config.find({key: {$regex: /interval/}})
-
-// Update interval
-db.system_config.updateOne(
-  {key: "scout_interval"},
-  {$set: {value: 60, updated_at: new Date()}}
-)
-```
-
----
-
-## 📁 Schema Files
-
-```
-MongoDB/
-├── struttura_mongo/
-│   └── collections/
-│       ├── inventory_databases/
-│       ├── monitoring_alerts/
-│       ├── business_services/
-│       ├── gateways/
-│       └── system_config/
-└── scripts/
-    └── seed_data.js
-```
-
----
 
 ## 🔗 Related
 

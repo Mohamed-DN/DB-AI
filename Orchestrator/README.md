@@ -2,19 +2,7 @@
 
 > LLM and RAG pipeline for AI-powered chat and analysis.
 
----
-
-## 🎯 AI Context
-
-```yaml
-Purpose: LLM integration and RAG pipeline
-LLM: Ollama (qwen2.5:7b by default)
-Vector DB: Qdrant
-Key Files:
-  - config/llm_config.py
-  - src/mongo_proxy.py
-  - rag/
-```
+This directory contains the central logic ("The Brain") of the application, managing interactions with the Large Language Model (Ollama), the Vector Database (Qdrant), and the RAG (Retrieval-Augmented Generation) pipeline.
 
 ---
 
@@ -50,52 +38,23 @@ flowchart TB
 
 ---
 
-## 📋 LLM Configuration
+## 📂 Directory Contents
 
-```python
-# config/llm_config.py
-LLM_MODELS = {
-    "qwen2.5:7b": {"context": 32768, "speed": "fast"},
-    "llama3:8b": {"context": 8192, "speed": "medium"},
-    "mistral:7b": {"context": 32768, "speed": "fast"},
-}
+| Directory | Description |
+|-----------|-------------|
+| **`config/`** | Configuration files for LLM models, endpoints, and system behaviors. |
+| **`llm/`** | Core LLM client abstractions and interfaces (Ollama client). |
+| **`modules/`** | **AI Capabilities**. Specialized modules for different domains (e.g., `capacity`, `performance`, `tuning`) called by the LLM. |
+| **`rag/`** | **RAG Pipeline**. Scripts for Embeddings generation and Document Retrieval. |
+| **`src/`** | Helper scripts and utilities (e.g., `mongo_proxy.py` for resilient DB access). |
+| **`vector_db/`** | Interfaces for communicating with the Qdrant vector database. |
 
-OLLAMA_CONFIG = {
-    "base_url": "http://localhost:12434",
-    "timeout": 120,
-    "options": {"num_ctx": 8192}
-}
-```
+## 📄 Key Files
 
----
-
-## 🔧 MongoProxy
-
-When PyMongo fails (e.g., auth issues), use `MongoProxy` which wraps Docker CLI:
-
-```python
-from Orchestrator.src.mongo_proxy import MongoProxy
-
-mongo = MongoProxy()
-result = mongo.execute_eval("db.inventory_databases.find().toArray()")
-```
-
----
-
-## 📁 Structure
-
-```
-Orchestrator/
-├── config/
-│   └── llm_config.py      # Model settings
-├── src/
-│   └── mongo_proxy.py     # MongoDB via Docker
-├── rag/
-│   ├── embeddings.py      # Vector embeddings
-│   └── retriever.py       # Document retrieval
-└── prompts/
-    └── system_prompts.py
-```
+| File | Description |
+|------|-------------|
+| **`main.py`** | **Main Entry Point**. Orchestrates the flow between user input, RAG retrieval, tool execution, and LLM response. |
+| **`config/llm_config.py`** | Defines active models (e.g., `qwen2.5:7b`), context windows, and timeout settings. |
 
 ---
 

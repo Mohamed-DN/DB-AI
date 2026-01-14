@@ -2,17 +2,7 @@
 
 > Local infrastructure for development and testing.
 
----
-
-## 🎯 AI Context
-
-```yaml
-Purpose: Containerized infrastructure for V2 shadow mode
-Compose File: docker-compose-v2.yml
-Network: docker-lab_nexi-lab2 (172.21.0.0/16)
-Start: .\scripts\setup_v2.ps1
-Stop: .\scripts\cleanup_v2.ps1
-```
+This directory defines the containerized environment used to simulate a real datacenter, including databases, monitoring tools, and AI services.
 
 ---
 
@@ -35,7 +25,8 @@ flowchart TB
 
         subgraph Observability["📊 Observability"]
             Langfuse[Langfuse<br/>:3001]
-            LangfuseDB[(Langfuse PG)]
+            Grafana[Grafana<br/>:3000]
+            Prometheus[Prometheus<br/>:9090]
         end
 
         subgraph Gateways["🔗 Gateways"]
@@ -52,10 +43,21 @@ flowchart TB
     end
 
     MongoDB --- MongoExpress
-    Langfuse --- LangfuseDB
     GW1 --> PG1 & PG2
     GW3 --> Oracle1
 ```
+
+---
+
+## 📂 Directory Contents
+
+| Directory/File | Description |
+|----------------|-------------|
+| **`docker-compose-v2.yml`** | **V2 Stack**. The active Compose file for the shadow mode environment. |
+| **`docker-compose.yml`** | **V1 Stack**. Legacy configuration, kept for reference. |
+| **`gateway-ssh/`** | **Build Context**. Dockerfile and scripts for building the SSH Gateway containers. |
+| **`grafana/`** | **Grafana Config**. Dashboards and provisioning files for the Grafana instance. |
+| **`prometheus.yml`** | Configuration for Prometheus metrics scraping. |
 
 ---
 
@@ -106,23 +108,7 @@ docker-compose -f docker-compose-v2.yml up -d
 
 # Stop and remove everything
 .\scripts\cleanup_v2.ps1
-
-# View running containers
-docker ps --filter "name=nexi" --format "table {{.Names}}\t{{.Status}}\t{{.Ports}}"
 ```
-
----
-
-## 📁 Files
-
-```
-docker-lab/
-├── docker-compose-v2.yml    # V2 shadow mode
-├── docker-compose.yml       # V1 (legacy)
-└── init/                    # Init scripts
-```
-
----
 
 ## 🔗 Related
 
