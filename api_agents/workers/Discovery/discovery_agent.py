@@ -1,6 +1,8 @@
 """
-Discovery Agent - Finds NEW databases by scanning gateways and Docker environments.
-Scans for containers and network services, fingerprints database engines, creates inventory documents.
+Discovery Agent V2 - FULLY AUTONOMOUS Database Discovery
+==========================================================
+Connects to hosts from gateways via SSH, scans for databases,
+fingerprints engines, extracts metadata, and creates MongoDB documents.
 """
 import os
 import sys
@@ -8,6 +10,7 @@ import time
 import socket
 import argparse
 import subprocess
+import json
 from datetime import datetime
 from typing import Dict, Any, Optional, List, Set
 
@@ -27,24 +30,32 @@ except ImportError:
     TEMPLATE_AVAILABLE = False
     print("[WARN] template_loader not available - using basic document structure")
 
+# Optional SSH support
+try:
+    import paramiko
+    SSH_AVAILABLE = True
+except ImportError:
+    SSH_AVAILABLE = False
+    print("[WARN] paramiko not available - SSH discovery disabled. Install: pip install paramiko")
+
+# Database connection libraries
+try:
+    import psycopg2
+    PSYCOPG2_AVAILABLE = True
+except ImportError:
+    PSYCOPG2_AVAILABLE = False
+
 
 class PortScanner:
-    """Simple port scanner for database discovery"""
+    """Network port scanner for database discovery"""
     
-    # Common database ports
     DB_PORTS = {
-        5432: "POSTGRES",
-        5433: "POSTGRES",
-        5434: "POSTGRES",
-        5435: "POSTGRES",
-        5436: "POSTGRES",
-        5437: "POSTGRES",
-        5438: "POSTGRES",
-        1521: "ORACLE",
-        1522: "ORACLE",
-        3306: "MYSQL",
-        27017: "MONGODB",
-        6379: "REDIS",
+        5432: "POSTGRES", 5433: "POSTGRES", 5434: "POSTGRES", 
+        5435: "POSTGRES", 5436: "POSTGRES", 5437: "POSTGRES", 5438: "POSTGRES",
+        1521: "ORACLE", 1522: "ORACLE", 1523: "ORACLE",
+        3306: "MYSQL", 3307: "MYSQL",
+        27017: "MONGODB", 27018: "MONGODB",
+        6379: "REDIS", 6380: "REDIS",
         6333: "QDRANT"
     }
     
@@ -75,8 +86,213 @@ class PortScanner:
         return open_ports
 
 
+class SSHConnector:
+    """SSH connection handler for remote host access"""
+    
+    def __init__(self, host: str, username: str, password: str = None, key_path: str = None, port: int = 22):
+        self.host = host
+        self.port = port
+        self.username = username
+        self.password = password
+        self.key_path = key_path
+        self.client = None
+    
+    def connect(self) -> bool:
+        """Establish SSH connection"""
+        if not SSH_AVAILABLE:
+            print(f"   ❌ SSH not available (paramiko not installed)")
+            return False
+        
+        try:
+            self.client = paramiko.SSHClient()
+            self.client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+            
+            if self.key_path and os.path.exists(self.key_path):
+                self.client.connect(
+                    hostname=self.host,
+                    port=self.port,
+                    username=self.username,
+                    key_filename=self.key_path,
+                    timeout=10
+                )
+            else:
+                self.client.connect(
+                    hostname=self.host,
+                    port=self.port,
+                    username=self.username,
+                    password=self.password,
+                    timeout=10
+                )
+            
+            print(f"   ✅ SSH connected to {self.host}")
+            return True
+        except Exception as e:
+            print(f"   ❌ SSH connection failed: {e}")
+            return False
+    
+    def execute(self, command: str) -> Optional[str]:
+        """Execute command on remote host"""
+        if not self.client:
+            return None
+        
+        try:
+            stdin, stdout, stderr = self.client.exec_command(command, timeout=30)
+            output = stdout.read().decode('utf-8').strip()
+            return output
+        except Exception as e:
+            print(f"   ❌ SSH command error: {e}")
+            return None
+    
+    def close(self):
+        """Close SSH connection"""
+        if self.client:
+            self.client.close()
+            self.client = None
+
+
+class RemoteDiscovery:
+    """Discovers databases on remote hosts via SSH"""
+    
+    @staticmethod
+    def discover_docker_remote(ssh: SSHConnector) -> List[Dict]:
+        """Discover Docker containers on remote host"""
+        output = ssh.execute("docker ps -a --format '{{.Names}}|{{.Ports}}|{{.Image}}|{{.Status}}' 2>/dev/null")
+        
+        if not output:
+            return []
+        
+        containers = []
+        for line in output.split('\n'):
+            if not line:
+                continue
+            parts = line.split('|')
+            if len(parts) >= 4:
+                name, ports, image, status = parts[0], parts[1], parts[2], parts[3]
+                
+                # Identify engine from image
+                engine = None
+                image_lower = image.lower()
+                if "postgres" in image_lower:
+                    engine = "POSTGRES"
+                elif "oracle" in image_lower:
+                    engine = "ORACLE"
+                elif "mysql" in image_lower or "mariadb" in image_lower:
+                    engine = "MYSQL"
+                elif "mongo" in image_lower and "express" not in image_lower:
+                    engine = "MONGODB"
+                elif "redis" in image_lower:
+                    engine = "REDIS"
+                elif "qdrant" in image_lower:
+                    engine = "QDRANT"
+                
+                if engine:
+                    port = None
+                    if "->" in ports:
+                        try:
+                            port_part = ports.split("->")[0]
+                            port = int(port_part.split(":")[-1])
+                        except:
+                            pass
+                    
+                    containers.append({
+                        "name": name,
+                        "engine": engine,
+                        "port": port,
+                        "image": image,
+                        "running": "Up" in status
+                    })
+        
+        return containers
+    
+    @staticmethod
+    def discover_processes_remote(ssh: SSHConnector) -> List[Dict]:
+        """Discover database processes running on remote host"""
+        # Check common database processes
+        processes = []
+        
+        # PostgreSQL
+        output = ssh.execute("pgrep -f postgres && netstat -tlnp 2>/dev/null | grep postgres || ss -tlnp | grep postgres")
+        if output and "postgres" in output.lower():
+            # Try to get port from netstat/ss output
+            port = 5432  # default
+            if ":5432" in output:
+                port = 5432
+            elif ":543" in output:
+                try:
+                    port = int(output.split(":543")[1].split()[0][:1]) + 5430
+                except:
+                    pass
+            processes.append({"engine": "POSTGRES", "port": port, "type": "process"})
+        
+        # Oracle
+        output = ssh.execute("pgrep -f 'ora_|oracle' && netstat -tlnp 2>/dev/null | grep 1521 || ss -tlnp | grep 1521")
+        if output:
+            processes.append({"engine": "ORACLE", "port": 1521, "type": "process"})
+        
+        # MySQL
+        output = ssh.execute("pgrep -f mysql && netstat -tlnp 2>/dev/null | grep mysql || ss -tlnp | grep mysql")
+        if output:
+            processes.append({"engine": "MYSQL", "port": 3306, "type": "process"})
+        
+        return processes
+
+
+class DatabaseMetadataExtractor:
+    """Extracts metadata directly from database connections"""
+    
+    @staticmethod
+    def extract_postgres(host: str, port: int, user: str, password: str) -> Optional[Dict]:
+        """Extract PostgreSQL metadata by connecting to the database"""
+        if not PSYCOPG2_AVAILABLE:
+            print(f"   ⚠️ psycopg2 not available")
+            return None
+        
+        try:
+            conn = psycopg2.connect(
+                host=host, port=port, user=user, password=password,
+                database="postgres", connect_timeout=10
+            )
+            cursor = conn.cursor()
+            
+            data = {}
+            
+            # System identifier
+            try:
+                cursor.execute("SELECT system_identifier FROM pg_control_system();")
+                data["system_identifier"] = str(cursor.fetchone()[0])
+            except:
+                pass
+            
+            # Version
+            cursor.execute("SELECT version();")
+            data["version_full"] = cursor.fetchone()[0]
+            
+            # Recovery status
+            cursor.execute("SELECT pg_is_in_recovery();")
+            data["is_in_recovery"] = cursor.fetchone()[0]
+            
+            # Max connections
+            cursor.execute("SHOW max_connections;")
+            data["max_connections"] = int(cursor.fetchone()[0])
+            
+            # Extensions
+            cursor.execute("SELECT extname, extversion FROM pg_extension;")
+            data["extensions"] = [{"name": r[0], "version": r[1]} for r in cursor.fetchall()]
+            
+            # Database size
+            cursor.execute("SELECT pg_database_size(current_database());")
+            data["size_bytes"] = cursor.fetchone()[0]
+            
+            conn.close()
+            return data
+            
+        except Exception as e:
+            print(f"   ⚠️ PostgreSQL extraction failed: {e}")
+            return None
+
+
 class DockerDiscovery:
-    """Discovers database containers in Docker"""
+    """Discovers database containers in local Docker"""
     
     @staticmethod
     def list_containers() -> List[Dict]:
@@ -93,7 +309,6 @@ class DockerDiscovery:
                 if len(parts) >= 4:
                     name, ports, image, status = parts[0], parts[1], parts[2], parts[3]
                     
-                    # Identify engine from image name
                     engine = None
                     if "postgres" in image.lower():
                         engine = "POSTGRES"
@@ -109,7 +324,6 @@ class DockerDiscovery:
                         engine = "QDRANT"
                     
                     if engine:
-                        # Parse port from ports string (e.g., "0.0.0.0:5432->5432/tcp")
                         port = None
                         if "->" in ports:
                             try:
@@ -133,11 +347,26 @@ class DockerDiscovery:
 
 
 class DiscoveryAgent:
-    """Main Discovery Agent - finds new databases via gateway/Docker scanning"""
+    """
+    FULLY AUTONOMOUS Discovery Agent
+    =================================
+    1. Reads gateways from MongoDB
+    2. For each host on gateway → SSH connects
+    3. Scans for databases (Docker, processes, port scan)
+    4. Fingerprints DB engine
+    5. Connects to DB and extracts metadata
+    6. Creates hierarchical JSON document
+    7. Inserts into MongoDB
+    """
     
     def __init__(self):
         self.mongo = MongoProxy()
-        print("✅ DiscoveryAgent initialized")
+        self.default_pg_user = os.getenv("POSTGRES_USER", "postgres")
+        self.default_pg_password = os.getenv("POSTGRES_PASSWORD", "nexi2024")
+        self.default_ssh_user = os.getenv("SSH_USER", "root")
+        self.default_ssh_password = os.getenv("SSH_PASSWORD", "")
+        self.default_ssh_key = os.getenv("SSH_KEY_PATH", os.path.expanduser("~/.ssh/id_rsa"))
+        print("✅ DiscoveryAgent V2 initialized (Autonomous Mode)")
     
     def get_gateways(self) -> List[Dict]:
         """Get all gateways from MongoDB"""
@@ -147,6 +376,26 @@ class DiscoveryAgent:
         except Exception as e:
             print(f"❌ Error fetching gateways: {e}")
             return []
+    
+    def get_gateway_hosts(self, gateway: Dict) -> List[Dict]:
+        """Get all target hosts from a gateway"""
+        hosts = []
+        
+        # Check for hosts in gateway config
+        target_hosts = gateway.get("target_hosts", [])
+        for host in target_hosts:
+            if isinstance(host, str):
+                hosts.append({"ip_address": host, "ssh_user": self.default_ssh_user})
+            elif isinstance(host, dict):
+                hosts.append(host)
+        
+        # Check reachability section
+        reachability = gateway.get("reachability", {})
+        for db_info in reachability.get("accessible_dbs", []):
+            if isinstance(db_info, dict) and "host" in db_info:
+                hosts.append({"ip_address": db_info["host"]})
+        
+        return hosts
     
     def get_existing_db_names(self) -> Set[str]:
         """Get set of existing database unique names"""
@@ -162,9 +411,9 @@ class DiscoveryAgent:
             print(f"❌ Error fetching existing DBs: {e}")
             return set()
     
-    def discover_docker(self) -> List[Dict]:
-        """Discover databases from Docker containers"""
-        print("\n🐳 Scanning Docker for database containers...")
+    def discover_local_docker(self) -> List[Dict]:
+        """Discover databases from local Docker containers"""
+        print("\n🐳 Scanning LOCAL Docker for database containers...")
         containers = DockerDiscovery.list_containers()
         
         existing_names = self.get_existing_db_names()
@@ -172,7 +421,6 @@ class DiscoveryAgent:
         
         for container in containers:
             name = container["name"]
-            # Normalize name to match db_unique_name format
             normalized_name = name.upper().replace("-", "_")
             
             if normalized_name in existing_names:
@@ -184,35 +432,86 @@ class DiscoveryAgent:
                 continue
             
             print(f"   🆕 NEW: {name} ({container['engine']})")
+            
+            # Try to extract metadata immediately
+            if container["engine"] == "POSTGRES" and container["port"]:
+                metadata = DatabaseMetadataExtractor.extract_postgres(
+                    "127.0.0.1", container["port"],
+                    self.default_pg_user, self.default_pg_password
+                )
+                if metadata:
+                    container["extracted_metadata"] = metadata
+                    print(f"      📊 Extracted: version={metadata.get('version_full', 'N/A')[:30]}...")
+            
             new_dbs.append(container)
         
         return new_dbs
     
-    def discover_via_gateway(self, gateway: Dict) -> List[Dict]:
-        """Discover databases via gateway port scanning"""
-        gateway_id = gateway.get("_id", "UNKNOWN")
-        host_info = gateway.get("info", {})
-        ip = host_info.get("ip_address", "127.0.0.1")
+    def discover_remote_host(self, host_info: Dict, gateway_id: str) -> List[Dict]:
+        """Discover databases on a remote host via SSH"""
+        ip = host_info.get("ip_address", "")
+        ssh_user = host_info.get("ssh_user", self.default_ssh_user)
+        ssh_password = host_info.get("ssh_password", self.default_ssh_password)
+        ssh_key = host_info.get("ssh_key_path", self.default_ssh_key)
         
-        print(f"\n🌉 Scanning gateway: {gateway_id} ({ip})...")
+        if not ip or ip == "127.0.0.1":
+            return []
         
-        # Get reachable hosts from gateway config
-        reachable = gateway.get("reachability", {}).get("accessible_dbs", [])
-        print(f"   📋 Known reachable DBs: {len(reachable)}")
+        print(f"\n🔐 SSH connecting to {ip}...")
         
-        # For now, just scan the gateway host itself
-        open_ports = PortScanner.scan_host(ip)
+        ssh = SSHConnector(ip, ssh_user, ssh_password, ssh_key)
+        if not ssh.connect():
+            # Fallback to port scan
+            print(f"   ⚠️ SSH failed, falling back to port scan...")
+            open_ports = PortScanner.scan_host(ip)
+            return [{"host": ip, "port": p, "engine": e, "gateway_ref": gateway_id} 
+                    for p, e in open_ports.items()]
         
         discovered = []
-        for port, engine in open_ports.items():
-            print(f"   🔍 Found {engine} on port {port}")
-            discovered.append({
-                "host": ip,
-                "port": port,
-                "engine": engine,
-                "gateway_ref": gateway_id
-            })
+        existing_names = self.get_existing_db_names()
         
+        # 1. Docker containers on remote host
+        docker_containers = RemoteDiscovery.discover_docker_remote(ssh)
+        for container in docker_containers:
+            name = container["name"]
+            normalized = name.upper().replace("-", "_")
+            if normalized not in existing_names and container["running"]:
+                container["host"] = ip
+                container["gateway_ref"] = gateway_id
+                discovered.append(container)
+                print(f"   🆕 Docker: {name} ({container['engine']})")
+        
+        # 2. Database processes
+        processes = RemoteDiscovery.discover_processes_remote(ssh)
+        for proc in processes:
+            db_name = f"{ip.replace('.', '-')}-{proc['engine'].lower()}-{proc['port']}"
+            normalized = db_name.upper().replace("-", "_")
+            if normalized not in existing_names:
+                proc["name"] = db_name
+                proc["host"] = ip
+                proc["gateway_ref"] = gateway_id
+                discovered.append(proc)
+                print(f"   🆕 Process: {proc['engine']} on port {proc['port']}")
+        
+        # 3. Port scan for any missed databases
+        open_ports = PortScanner.scan_host(ip)
+        for port, engine in open_ports.items():
+            db_name = f"{ip.replace('.', '-')}-{engine.lower()}-{port}"
+            normalized = db_name.upper().replace("-", "_")
+            if normalized not in existing_names:
+                # Check if we already found this via Docker/process
+                already_found = any(d.get("port") == port for d in discovered)
+                if not already_found:
+                    discovered.append({
+                        "name": db_name,
+                        "host": ip,
+                        "port": port,
+                        "engine": engine,
+                        "gateway_ref": gateway_id
+                    })
+                    print(f"   🆕 Port scan: {engine} on port {port}")
+        
+        ssh.close()
         return discovered
     
     def create_inventory_document(self, discovery_info: Dict) -> Dict:
@@ -220,6 +519,7 @@ class DiscoveryAgent:
         name = discovery_info.get("name", f"discovered-{discovery_info.get('port', 0)}")
         engine = discovery_info.get("engine", "UNKNOWN")
         port = discovery_info.get("port", 5432)
+        host = discovery_info.get("host", "127.0.0.1")
         
         # Determine environment from name
         if "dev" in name.lower():
@@ -229,11 +529,11 @@ class DiscoveryAgent:
         elif "prod" in name.lower():
             environment = "PRODUCTION"
         else:
-            environment = "UNKNOWN"
+            environment = "DISCOVERED"
         
-        # Use template loader if available
+        # Build base document
         if TEMPLATE_AVAILABLE:
-            return build_document(
+            doc = build_document(
                 engine=engine,
                 container_name=name,
                 port=port,
@@ -241,8 +541,7 @@ class DiscoveryAgent:
                 gateway_ref=discovery_info.get("gateway_ref")
             )
         else:
-            # Basic document structure
-            return {
+            doc = {
                 "metadata": {
                     "extraction_timestamp": datetime.now().isoformat(),
                     "agent_version": "2.0.0",
@@ -255,13 +554,13 @@ class DiscoveryAgent:
                     "db_name": name,
                     "family": engine,
                     "engine": engine,
-                    "host": discovery_info.get("host", "127.0.0.1"),
+                    "host": host,
                     "gateway_ref": discovery_info.get("gateway_ref")
                 },
                 "connection": {
                     "port": port,
                     "container": name,
-                    "type": "DOCKER"
+                    "type": discovery_info.get("type", "DOCKER")
                 },
                 "state": {
                     "status": "DISCOVERED",
@@ -269,26 +568,48 @@ class DiscoveryAgent:
                 },
                 "created_at": datetime.now().isoformat()
             }
+        
+        # Merge extracted metadata if available
+        extracted = discovery_info.get("extracted_metadata", {})
+        if extracted:
+            if engine == "POSTGRES":
+                if "system_identifier" in extracted:
+                    doc.setdefault("cluster_identity", {})["system_identifier"] = extracted["system_identifier"]
+                if "version_full" in extracted:
+                    doc.setdefault("cluster_identity", {})["version_full"] = extracted["version_full"]
+                if "is_in_recovery" in extracted:
+                    doc.setdefault("instance_details", {})["is_in_recovery"] = extracted["is_in_recovery"]
+                if "max_connections" in extracted:
+                    doc.setdefault("resource_config", {}).setdefault("connections", {})["max_connections"] = extracted["max_connections"]
+                if "extensions" in extracted:
+                    doc["extensions_installed"] = extracted["extensions"]
+                if "size_bytes" in extracted:
+                    doc.setdefault("storage_info", {})["database_size_bytes"] = extracted["size_bytes"]
+        
+        # Update host in identity if different
+        doc.setdefault("identity", {})["host"] = host
+        
+        return doc
     
     def insert_new_database(self, doc: Dict) -> bool:
         """Insert a new database document into MongoDB"""
         try:
-            import json
             doc_json = json.dumps(doc, default=str)
-            
             js_cmd = f"db.inventory_databases.insertOne({doc_json})"
             self.mongo.execute_eval(js_cmd)
             
             name = doc.get("identity", {}).get("db_unique_name", "UNKNOWN")
             print(f"   ✅ Inserted {name} into inventory")
             
-            # Create alert for new discovery
+            # Create alert
             alert = {
                 "severity": "INFO",
                 "state": "INFO",
                 "type": "NEW_DB_DISCOVERED",
                 "message": f"DiscoveryAgent found new database: {name}",
                 "database": name,
+                "host": doc.get("identity", {}).get("host"),
+                "engine": doc.get("identity", {}).get("engine"),
                 "timestamp": datetime.now().isoformat(),
                 "processed": False
             }
@@ -300,30 +621,42 @@ class DiscoveryAgent:
             return False
     
     def run_once(self):
-        """Run one discovery cycle"""
-        print(f"\n{'='*60}")
-        print(f"🔍 Discovery Agent - {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
-        print(f"{'='*60}")
+        """Run one complete discovery cycle"""
+        print(f"\n{'='*70}")
+        print(f"🔍 Discovery Agent V2 (AUTONOMOUS) - {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
+        print(f"{'='*70}")
         
         discovered_count = 0
         
-        # 1. Docker Discovery
-        docker_dbs = self.discover_docker()
+        # 1. Local Docker Discovery
+        docker_dbs = self.discover_local_docker()
         for db_info in docker_dbs:
+            db_info["host"] = "127.0.0.1"
             doc = self.create_inventory_document(db_info)
             if self.insert_new_database(doc):
                 discovered_count += 1
         
-        # 2. Gateway Discovery
+        # 2. Gateway-based Remote Discovery
         gateways = self.get_gateways()
         print(f"\n📡 Found {len(gateways)} gateways to scan")
         
         for gateway in gateways:
-            gateway_dbs = self.discover_via_gateway(gateway)
-            # Note: Gateway discovery returns port-based info, would need more logic
-            # to create unique documents and avoid duplicates
+            gateway_id = str(gateway.get("_id", "UNKNOWN"))
+            print(f"\n🌉 Gateway: {gateway_id}")
+            
+            # Get target hosts from gateway
+            hosts = self.get_gateway_hosts(gateway)
+            print(f"   📋 {len(hosts)} target hosts configured")
+            
+            for host_info in hosts:
+                remote_dbs = self.discover_remote_host(host_info, gateway_id)
+                for db_info in remote_dbs:
+                    doc = self.create_inventory_document(db_info)
+                    if self.insert_new_database(doc):
+                        discovered_count += 1
         
-        print(f"\n✅ Discovery complete. Found {discovered_count} new databases.")
+        print(f"\n✅ Discovery complete. Found and inserted {discovered_count} new databases.")
+        return discovered_count
     
     def get_interval(self, default: int = 600) -> int:
         """Get discovery interval from config"""
@@ -345,7 +678,7 @@ class DiscoveryAgent:
     
     def run_continuous(self, interval: int = 600):
         """Run continuous discovery"""
-        print("🔄 Discovery Agent starting continuous mode...")
+        print("🔄 Discovery Agent V2 starting AUTONOMOUS continuous mode...")
         while True:
             try:
                 if self.check_pause():
@@ -366,7 +699,7 @@ class DiscoveryAgent:
 
 
 def main():
-    parser = argparse.ArgumentParser(description="Discovery Agent - Finds new databases")
+    parser = argparse.ArgumentParser(description="Discovery Agent V2 - Autonomous Database Discovery")
     parser.add_argument("--once", action="store_true", help="Run once and exit")
     parser.add_argument("--interval", type=int, default=600, help="Discovery interval (seconds)")
     args = parser.parse_args()
