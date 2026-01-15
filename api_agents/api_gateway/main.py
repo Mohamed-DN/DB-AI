@@ -342,12 +342,15 @@ def start_agent_endpoint(agent_name: str):
              raise HTTPException(status_code=500, detail="Script path not defined")
              
         script_path = os.path.abspath(os.path.join(os.path.dirname(__file__), script_rel_path))
+        script_dir = os.path.dirname(script_path)  # Set working directory to script's folder
         
-        # Spawn process (continuous mode)
+        # Spawn process with correct working directory
         proc = subprocess.Popen(
             [sys.executable, script_path],
-            stdout=subprocess.DEVNULL,
-            stderr=subprocess.DEVNULL
+            cwd=script_dir,  # Critical: set correct working directory
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            text=True
         )
         
         AGENTS_STATE[agent_key]["running"] = True
