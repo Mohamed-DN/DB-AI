@@ -164,9 +164,9 @@ fi
 
 # 7. Seed MongoDB
 echo -e "\n[STEP 7] Seeding MongoDB Collections..."
-SEED_SCRIPT="$ROOT_DIR/execution/seed_mongodb.py"
+SEED_SCRIPT="$ROOT_DIR/mongo/seeds/seed_mongodb.py"
 if [ -f "$SEED_SCRIPT" ]; then
-    source "$ROOT_DIR/WebInterface/backend/venv/bin/activate"
+    source "$ROOT_DIR/api_agents/api_gateway/venv/bin/activate"
     python "$SEED_SCRIPT"
 else
     echo "⚠️  Seed script not found, skipping."

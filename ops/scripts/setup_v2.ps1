@@ -205,7 +205,7 @@ if (-not $SkipFrontend) {
 # 7. Seed MongoDB (if empty)
 # -----------------------------------------------------------------------------
 Write-Host "`n[STEP 7] Seeding MongoDB Collections..." -ForegroundColor Yellow
-$SeedScript = "$PSScriptRoot\..\execution\seed_mongodb.py"
+$SeedScript = "$PSScriptRoot\..\..\mongo\seeds\seed_mongodb.py"
 if (Test-Path $SeedScript) {
     python $SeedScript
 }

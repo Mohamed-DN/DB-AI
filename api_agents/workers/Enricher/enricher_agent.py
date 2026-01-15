@@ -205,6 +205,67 @@ class OracleEnricher:
             except:
                 pass
             
+            # 9. ASM Diskgroups
+            try:
+                cursor.execute("""
+                    SELECT NAME, TOTAL_MB, FREE_MB, STATE, TYPE, REDUNDANCY
+                    FROM V$ASM_DISKGROUP
+                """)
+                asm_diskgroups = []
+                for dg in cursor.fetchall():
+                    asm_diskgroups.append({
+                        "name": dg[0],
+                        "total_gb": round(dg[1] / 1024, 2) if dg[1] else 0,
+                        "free_gb": round(dg[2] / 1024, 2) if dg[2] else 0,
+                        "state": dg[3],
+                        "type": dg[4],
+                        "redundancy": dg[5]
+                    })
+                data["asm_diskgroups"] = asm_diskgroups
+            except:
+                pass  # ASM not accessible from DB instance
+            
+            # 10. RAC Instances (GV$ views)
+            try:
+                cursor.execute("""
+                    SELECT INST_ID, INSTANCE_NAME, HOST_NAME, STATUS, 
+                           LOGINS, ACTIVE_STATE
+                    FROM GV$INSTANCE
+                    ORDER BY INST_ID
+                """)
+                rac_instances = []
+                for inst in cursor.fetchall():
+                    rac_instances.append({
+                        "inst_id": inst[0],
+                        "instance_name": inst[1],
+                        "host_name": inst[2],
+                        "status": inst[3],
+                        "logins": inst[4],
+                        "active_state": inst[5]
+                    })
+                data["rac_instances"] = rac_instances
+                data["is_rac"] = len(rac_instances) > 1
+            except:
+                data["is_rac"] = False
+            
+            # 11. VIP and SCAN info (from listener config)
+            try:
+                cursor.execute("""
+                    SELECT INST_ID, NETWORK_NUMBER, NAME, IP_ADDRESS 
+                    FROM GV$LISTENER_NETWORK
+                """)
+                network_info = []
+                for row in cursor.fetchall():
+                    network_info.append({
+                        "inst_id": row[0],
+                        "network": row[1],
+                        "name": row[2],
+                        "ip_address": row[3]
+                    })
+                data["listener_networks"] = network_info
+            except:
+                pass
+            
             conn.close()
             return data
             
