@@ -3,61 +3,93 @@
 > **Status**: Active Development (Shadow Mode on V2)
 > **Goal**: AI-powered Autonomous Database Administration & CMDB
 
-## 🗺️ Start Here: The "Big Picture"
+## 🧠 System Architecture
 
-This repository builds an AI Agent that autonomously monitors, documents, and eventually manages enterprise databases (Oracle & PostgreSQL).
+```mermaid
+graph TD
+    %% Users & Entry
+    User((User)) -->|HTTP/Browsing| Frontend[Frontend Dashboard :4002]
+    
+    %% Web Layer
+    subgraph "Web Interface Layer"
+        Frontend -->|REST API| Backend[FastAPI Backend :9000]
+    end
+    
+    %% Data Layer
+    subgraph "Data Persistence"
+        Backend <-->|Read/Write| MongoDB[(MongoDB :28017)]
+        Agents <-->|Write Metrics| MongoDB
+        Orchestrator <-->|Context Caching| MongoDB
+    end
+    
+    %% Agent Layer
+    subgraph "Autonomous Agents"
+        Agents{Agents Manager}
+        Agents -->|Discovery| Scout[Scout Agent]
+        Agents -->|Monitoring| Collector[Collector Agent]
+        Agents -->|Analysis| Watcher[Watcher Agent]
+    end
+    
+    %% Target Infrastructure
+    subgraph "Infrastructure"
+        Scout -.->|Scan| Docker[Docker Containers]
+        Collector -.->|Query| Docker
+    end
+    
+    %% Intelligence Layer
+    subgraph "AI Core (Orchestrator)"
+        Backend <-->|Query| Orchestrator[AI Orchestrator]
+        Orchestrator <-->|RAG| Qdrant[(Qdrant Vector DB)]
+        Orchestrator <-->|Inference| Ollama[Local LLM (Ollama)]
+    end
 
-### 1. The Pipeline ("From Chaos to Order")
-How do we turn raw SQL output into intelligent dashboards?
-👉 **[Read: PIPELINE_EXPLAINED.md](docs/pipeline_explained.md)** (Essential context)
+    %% Class Definitions for Styling
+    classDef web fill:#1f77b4,stroke:#fff,stroke-width:2px,color:#fff;
+    classDef db fill:#ff7f0e,stroke:#fff,stroke-width:2px,color:#fff;
+    classDef agent fill:#2ca02c,stroke:#fff,stroke-width:2px,color:#fff;
+    classDef ai fill:#9467bd,stroke:#fff,stroke-width:2px,color:#fff;
+    
+    class Frontend,Backend web;
+    class MongoDB,Qdrant,Docker db;
+    class Agents,Scout,Collector,Watcher agent;
+    class Orchestrator,Ollama ai;
+```
 
-### 2. The Data Model ("The Contract")
-What exactly are we collecting? (WAL, RMAN, ASM, Replication Stats)
-👉 **[Read: Data Ingestion Specs](docs/data_ingestion_specs.md)**
+## 🗺️ Navigation & Directory Structure
 
-### 3. The "How-To" for Agents
-What commands do the agents run to get this data?
-👉 **[Read: Agent Extraction Commands](docs/agent_extraction_commands.md)**
+Click on the module name to view detailed documentation and diagrams.
+
+| Module | Icon | Role | Description |
+|--------|:----:|------|-------------|
+| **[Agents](./Agents/README.md)** | 🤖 | **The Hands** | Autonomous workers that discover (`Scout`), monitor (`Collector`), and analyze (`Watcher`) database infrastructure. |
+| **[Orchestrator](./Orchestrator/README.md)** | 🧠 | **The Brain** | The AI Core handling LLM interactions, RAG pipelines, and decision-making logic. |
+| **[WebInterface](./WebInterface/README.md)** | 💻 | **The Face** | The user-facing dashboard (React) and the API server (FastAPI) enabling control and visibility. |
+| **[MongoDB](./MongoDB/README.md)** | 💾 | **The Memory** | Central data store schemas, initialization scripts, and state management. |
+| **[docker-lab](./docker-lab)** | 🐳 | **Simulation** | Sandbox environment with Oracle, Postgres, and other containers for safe testing. |
+| **[scripts](./scripts)** | 🛠️ | **Tools** | Essential automation scripts for setup, cleanup, and maintenance `setup_v2.ps1`. |
 
 ---
 
-## 📂 Repository Structure
+## 🚀 Quick Start (Windows)
 
-Below is a comprehensive guide to the repository's layout.
-
-| Directory | Role | Description |
-|-----------|------|-------------|
-| **`Agents/`** | **The Hands** | Contains the `Scout` (discovery), `Collector` (monitoring), and other agents that interact with databases. |
-| **`Orchestrator/`** | **The Brain** | Houses the LLM logic, RAG pipeline, and vector database interactions. |
-| **`WebInterface/`** | **The Face** | The User Interface. `backend/` (FastAPI) and `frontend-react/` (React Dashboard). |
-| **`MongoDB/`** | **The Memory** | Initialization scripts, schemas, and structure for the MongoDB metadata store. |
-| **`docker-lab/`** | **The World** | Simulation environment with Oracle, PostgreSQL, and other containers for testing. |
-| **`scripts/`** | **Tools** | Powershell and Shell scripts for system startup (`setup_v2.ps1`), cleanup, and maintenance. |
-| **`execution/`** | **Actions** | Deterministic Python scripts typically called by Agents or the Orchestrator for specific tasks. |
-| **`directives/`** | **SOPs** | Standard Operating Procedures and text protocols used to guide the AI Agents. |
-| **`Gateway/`** | **Network** | Configuration for the API Gateway and Redis services. |
-| **`Tests/`** | **Verification** | Integration and unit tests for the system. |
-| **`docs/`** | **Docs** | Detailed documentation like pipeline explanations and data specs. |
-
----
-
-## 🚀 Quick Start (Mac/Linux)
-
-1.  **Setup Environment**:
-    ```bash
-    ./scripts/setup_v2.sh
+1.  **Start System**:
+    ```powershell
+    .\scripts\setup_v2.ps1
     ```
 2.  **Access Dashboard**:
-    Open `http://localhost:4002`
-3.  **Run Discovery (Manual Trigger)**:
-    ```bash
+    Open [http://localhost:4002](http://localhost:4002)
+3.  **Run Manual Discovery** (Optional):
+    ```powershell
     python Agents/Scout/main.py --once
     ```
 
 ---
 
-## 🛠️ Developer Notes / Roadmap
+## 📚 Essential Reading
 
-*   **Phase 1 (Done)**: Foundations, Docker Lab, Schemas.
-*   **Phase 2 (Active)**: Agent Autonomy. Agents now autonomously extract deep metadata (RMAN, WAL) without human help.
-*   **Phase 3**: AI ETL & Self-Healing.
+- **[Pipeline Architecture](docs/pipeline_explained.md)**: How raw data becomes insights.
+- **[Data Ingestion Specs](docs/data_ingestion_specs.md)**: Details on WAL, RMAN, and ASM data collection.
+
+---
+
+> _"From Chaos to Order" - Built for Nexi by the Advanced Agentic Coding Team_
