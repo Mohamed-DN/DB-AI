@@ -1,0 +1,76 @@
+{
+    "metadata": {
+        "extraction_timestamp": "2026-01-13T12:00:00Z",
+        "agent_version": "1.0.0",
+        "db_technology": "ORACLE",
+        "environment": "INTEGRATION"
+    },
+    "infrastructure": {
+        "host": {
+            "alias": "maamdba2ucrti01",
+            "ip_address": "10.158.133.6",
+            "os": "OracleLinux 8.10",
+            "cloud_provider": "AZURE",
+            "tenant": "NEXI"
+        },
+        "hardware": {
+            "type": "Microsoft Corporation Virtual Machine",
+            "resources": {
+                "cpu_sockets": 1,
+                "cores": 4,
+                "ram_gb": 62
+            }
+        }
+    },
+    "database_core": {
+        "identity": {
+            "dbid": 242648470,
+            "db_name": "PAUNRTODSI",
+            "db_unique_name": "CAUNRAZ2I",
+            "service_name": "UNRTODSI_PRY",
+            "instance_name": "PAUNRTODSI"
+        },
+        "version_info": {
+            "full_version": "19.23.0.0.240416",
+            "patch_level": "36233263 applied 22-08-2024",
+            "compatibility": "19.0.0"
+        },
+        "configuration": {
+            "type": "CDB",
+            "pdb_status": "PDB",
+            "charset": "AL32UTF8",
+            "performance_mode": "MAXIMUM PERFORMANCE"
+        }
+    },
+    "network": {
+        "listeners": [
+            {
+                "port": 1521,
+                "protocol": "TCP"
+            }
+        ],
+        "cluster_interconnect": {
+            "scan_name": "scan-prod-cluster",
+            "scan_ips": [
+                "10.158.133.20",
+                "10.158.133.21",
+                "10.158.133.22"
+            ],
+            "node_vips": [
+                "10.158.133.30",
+                "10.158.133.31"
+            ]
+        }
+    },
+    "ha_dr": {
+        "cluster_roles": [
+            "HAS",
+            "RAC"
+        ],
+        "dataguard": {
+            "role": "PRIMARY",
+            "target": "CAUNRAZ3I",
+            "transport_type": "ASYNC"
+        }
+    }
+}

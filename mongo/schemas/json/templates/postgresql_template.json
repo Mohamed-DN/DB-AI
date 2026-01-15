@@ -1,0 +1,86 @@
+{
+    "metadata": {
+        "extraction_timestamp": "2026-01-13T12:05:00Z",
+        "agent_version": "1.0.0",
+        "db_technology": "POSTGRESQL",
+        "environment": "PRODUCTION"
+    },
+    "cluster_identity": {
+        "system_identifier": "73459128374659102",
+        "timeline_id": 4,
+        "cluster_name": "pg-payment-cluster-01",
+        "version_major": 15,
+        "version_full": "PostgreSQL 15.4 on x86_64-pc-linux-gnu",
+        "uptime_seconds": 450230
+    },
+    "instance_details": {
+        "role": "LEADER",
+        "inet_server_addr": "10.20.30.55",
+        "inet_server_port": 5432,
+        "is_in_recovery": false
+    },
+    "resource_config": {
+        "connections": {
+            "max_connections": 500,
+            "current_active": 124
+        },
+        "memory": {
+            "shared_buffers": "16GB",
+            "effective_cache_size": "48GB",
+            "work_mem": "64MB",
+            "maintenance_work_mem": "2GB"
+        },
+        "wal": {
+            "wal_level": "logical",
+            "max_wal_size": "4GB"
+        }
+    },
+    "replication_ha": {
+        "manager": "Patroni",
+        "sync_standby_names": "pg-payment-node-02",
+        "replication_slots": [
+            {
+                "slot_name": "standby_node_02",
+                "plugin": "physical",
+                "active": true,
+                "restart_lsn": "0/18000060",
+                "lag_bytes": 0
+            },
+            {
+                "slot_name": "debezium_cdc_connector",
+                "plugin": "pgoutput",
+                "active": true,
+                "restart_lsn": "0/180000A0",
+                "lag_bytes": 1024
+            }
+        ]
+    },
+    "storage_info": {
+        "database_size_bytes": 4509812300,
+        "temp_file_limit": "10GB",
+        "tablespaces": [
+            {
+                "name": "pg_default",
+                "path": "base/16384",
+                "size_mb": 4200
+            },
+            {
+                "name": "ssd_nvme_idx",
+                "path": "/mnt/nvme/pg_idx",
+                "size_mb": 300
+            }
+        ]
+    },
+    "extensions_installed": [
+        {
+            "name": "pg_stat_statements",
+            "version": "1.10",
+            "schema": "public"
+        },
+        {
+            "name": "pg_repack",
+            "version": "1.4.8",
+            "schema": "maintenance"
+        }
+    ]
+}
