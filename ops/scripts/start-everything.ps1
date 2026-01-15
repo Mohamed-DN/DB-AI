@@ -21,10 +21,10 @@ docker compose up -d
 
 # 2. Start Backend
 Write-Host "[3/3] Starting Web Interface..." -ForegroundColor Yellow
-Start-Process powershell -ArgumentList "-NoExit", "-Command", "cd '$ProjectRoot\api_agents\api_gateway'; Write-Host 'Backend API - Port 8000' -ForegroundColor Green; python main.py"
+Start-Process powershell -ArgumentList "-NoExit", "-Command", "cd '$ProjectRoot\api_agents\api_gateway'; Write-Host 'Backend API - Port 8000' -ForegroundColor Green; python -m uvicorn main:app --host 0.0.0.0 --port 8000 --reload"
 
 # 3. Start Frontend
-Start-Process powershell -ArgumentList "-NoExit", "-Command", "cd '$ProjectRoot\web\dashboard'; Write-Host 'React Frontend - Port 3002' -ForegroundColor Green; npm run dev"
+Start-Process powershell -ArgumentList "-NoExit", "-Command", "cd '$ProjectRoot\web\dashboard'; Write-Host 'React Frontend - Port 3002' -ForegroundColor Green; npm run dev:v2"
 
 Write-Host ""
 Write-Host "✅ EVERYTHING STARTED!" -ForegroundColor Green
