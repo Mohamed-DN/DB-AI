@@ -19,7 +19,7 @@ sys.stdout.reconfigure(encoding='utf-8')
 
 # Add path for shared modules
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '../../')))
-from Orchestrator.src.mongo_proxy import MongoProxy
+from orchestrator.core.mongo_proxy import MongoProxy
 
 class LogStreamer(threading.Thread):
     """Thread to tail a single container's log and detect errors"""

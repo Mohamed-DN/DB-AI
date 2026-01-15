@@ -12,7 +12,7 @@ from datetime import datetime
 
 sys.stdout.reconfigure(encoding='utf-8')
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '../../')))
-from Orchestrator.src.mongo_proxy import MongoProxy
+from orchestrator.core.mongo_proxy import MongoProxy
 
 class MetricSimulator:
     def __init__(self):

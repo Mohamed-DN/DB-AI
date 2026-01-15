@@ -20,7 +20,7 @@ from typing import Dict, List, Any
 # Add project root to path
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '../../')))
 
-from Orchestrator.src.mongo_proxy import MongoProxy
+from orchestrator.core.mongo_proxy import MongoProxy
 
 
 class DailyAuditAgent:

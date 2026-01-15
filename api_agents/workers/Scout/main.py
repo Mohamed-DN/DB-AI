@@ -12,9 +12,9 @@ import time
 sys.stdout.reconfigure(encoding='utf-8')
 
 # Add path for shared modules
-sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '../../')))
-from Orchestrator.src.mongo_proxy import MongoProxy
-from Agents.Scout.user_provisioner import UserProvisioner
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '../../../')))
+from orchestrator.core.mongo_proxy import MongoProxy
+from api_agents.workers.Scout.user_provisioner import UserProvisioner
 
 class ScoutAgent:
     def __init__(self):

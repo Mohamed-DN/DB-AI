@@ -95,7 +95,113 @@ business_services_docs = [
     }
 ]
 
-# 4. Empty collections with indexes
+# 4. inventory_databases - The core database inventory
+inventory_databases_docs = [
+    # PostgreSQL Instances
+    {
+        "identity": {"db_unique_name": "NEXI-PG-MILANO-PROD2", "family": "POSTGRESQL", "engine": "POSTGRES", "role": "PRIMARY", "environment": "PRODUCTION", "host": "127.0.0.1"},
+        "connection": {"port": 5432, "max_connections": 500, "container": "nexi-pg-milano-prod2"},
+        "business_service_ref": "Payments Platform",
+        "created_at": datetime.now()
+    },
+    {
+        "identity": {"db_unique_name": "NEXI-PG-MILANO-DEV2", "family": "POSTGRESQL", "engine": "POSTGRES", "role": "DEV", "environment": "DEVELOPMENT", "host": "127.0.0.1"},
+        "connection": {"port": 5433, "max_connections": 100, "container": "nexi-pg-milano-dev2"},
+        "created_at": datetime.now()
+    },
+    {
+        "identity": {"db_unique_name": "NEXI-PG-MILANO-STG2", "family": "POSTGRESQL", "engine": "POSTGRES", "role": "STAGING", "environment": "STAGING", "host": "127.0.0.1"},
+        "connection": {"port": 5434, "max_connections": 200, "container": "nexi-pg-milano-stg2"},
+        "created_at": datetime.now()
+    },
+    {
+        "identity": {"db_unique_name": "NEXI-PG-BRATISLAVA-PROD2", "family": "POSTGRESQL", "engine": "POSTGRES", "role": "PRIMARY", "environment": "PRODUCTION", "host": "127.0.0.1"},
+        "connection": {"port": 5437, "container": "nexi-pg-bratislava-prod2"},
+        "created_at": datetime.now()
+    },
+    {
+        "identity": {"db_unique_name": "NEXI-PG-BRATISLAVA-DEV2", "family": "POSTGRESQL", "engine": "POSTGRES", "role": "DEV", "environment": "DEVELOPMENT", "host": "127.0.0.1"},
+        "connection": {"port": 5438, "container": "nexi-pg-bratislava-dev2"},
+        "created_at": datetime.now()
+    },
+    # Oracle Instances
+    {
+        "identity": {"db_unique_name": "NEXI-ORACLE-CAIRO-PRIMARY2", "family": "ORACLE", "engine": "ORACLE", "role": "PRIMARY", "environment": "PRODUCTION", "host": "127.0.0.1"},
+        "connection": {"port": 1521, "service_name": "ORCL", "container": "nexi-oracle-cairo-primary2"},
+        "created_at": datetime.now()
+    },
+    {
+        "identity": {"db_unique_name": "NEXI-ORACLE-CAIRO-REPLICA2", "family": "ORACLE", "engine": "ORACLE", "role": "REPLICA", "environment": "DISASTER_RECOVERY", "host": "127.0.0.1"},
+        "connection": {"port": 1522, "service_name": "ORCL", "container": "nexi-oracle-cairo-replica2"},
+        "created_at": datetime.now()
+    },
+    # NoSQL Instances
+    {
+        "identity": {"db_unique_name": "NEXI-MONGODB2", "family": "MONGODB", "engine": "MONGODB", "role": "PRIMARY", "environment": "INFRASTRUCTURE", "host": "127.0.0.1"},
+        "connection": {"port": 27017, "container": "nexi-mongodb2"},
+        "created_at": datetime.now()
+    },
+    {
+        "identity": {"db_unique_name": "NEXI-REDIS2", "family": "REDIS", "engine": "REDIS", "role": "PRIMARY", "environment": "INFRASTRUCTURE", "host": "127.0.0.1"},
+        "connection": {"port": 6379, "container": "nexi-redis2"},
+        "created_at": datetime.now()
+    },
+    {
+        "identity": {"db_unique_name": "NEXI-QDRANT2", "family": "VECTOR", "engine": "QDRANT", "role": "PRIMARY", "environment": "AI_INFRASTRUCTURE", "host": "127.0.0.1"},
+        "connection": {"port": 6333, "container": "nexi-qdrant2"},
+        "created_at": datetime.now()
+    }
+]
+
+# 5. Guide Templates - JSON Schemas for Users
+guide_templates_docs = [
+    {
+        "_id": "template_database_inventory",
+        "title": "Database Inventory Template",
+        "description": "Schema for adding new databases to 'inventory_databases' collection",
+        "template": {
+            "identity": {
+                "db_unique_name": "UNIQUE_IDENTIFIER_UPPERCASE",
+                "family": "POSTGRESQL|ORACLE|MONGODB|REDIS|MYSQL",
+                "engine": "Specific version or engine subtype",
+                "role": "PRIMARY|REPLICA|STANDBY|DEV",
+                "environment": "PRODUCTION|STAGING|DEVELOPMENT",
+                "host": "IP address or hostname"
+            },
+            "connection": {
+                "port": 5432,
+                "schema": "public",
+                "service_name": "ORCL (for Oracle)",
+                "container": "docker-container-name (if applicable)"
+            },
+            "configuration": {
+                "ha_enabled": False,
+                "dr_enabled": False
+            }
+        },
+        "required_fields": ["identity.db_unique_name", "identity.host", "identity.engine"],
+        "example": {
+            "identity": {"db_unique_name": "NEXI-PG-ROME-01", "family": "POSTGRESQL", "engine": "POSTGRES", "role": "PRIMARY", "environment": "PRODUCTION", "host": "10.0.0.50"},
+            "connection": {"port": 5432, "schema": "payments"}
+        }
+    },
+    {
+        "_id": "template_monitoring_alert",
+        "title": "Monitoring Alert Template",
+        "description": "Structure for alerts inserted by agents into 'monitoring_alerts'",
+        "template": {
+            "severity": "CRITICAL|WARNING|INFO",
+            "type": "DATABASE_DOWN|HIGH_CPU|STORAGE_FULL|SLOW_QUERY",
+            "message": "Human readable description",
+            "database": "DB_UNIQUE_NAME reference",
+            "timestamp": "ISO Date",
+            "processed": False,
+            "state": "OPEN|ACKNOWLEDGED|RESOLVED"
+        }
+    }
+]
+
+# 6. Empty collections with indexes
 empty_collections = [
     "discovery_queue",
     "agent_runs",
@@ -125,6 +231,8 @@ def ensure_collection(name):
 seed_collection("system_config", system_config_docs)
 seed_collection("gateways", gateways_docs)
 seed_collection("business_services", business_services_docs)
+seed_collection("inventory_databases", inventory_databases_docs)
+seed_collection("guide_templates", guide_templates_docs)
 
 for coll_name in empty_collections:
     ensure_collection(coll_name)

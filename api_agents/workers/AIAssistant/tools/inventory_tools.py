@@ -8,7 +8,7 @@ from langchain_core.tools import tool
 
 # Add project root
 sys.path.insert(0, str(Path(__file__).parent.parent.parent.parent))
-from Orchestrator.src.mongo_proxy import MongoProxy
+from orchestrator.core.mongo_proxy import MongoProxy
 
 mongo = MongoProxy()
 

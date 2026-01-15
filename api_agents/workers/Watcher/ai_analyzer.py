@@ -15,8 +15,8 @@ sys.stdout.reconfigure(encoding='utf-8')
 # Add paths
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '../../')))
 
-from Orchestrator.src.mongo_proxy import MongoProxy
-from Orchestrator.rag.rag_pipeline import RAGPipeline
+from orchestrator.core.mongo_proxy import MongoProxy
+from orchestrator.rag.rag_pipeline import RAGPipeline
 
 
 class ForensicAnalyzer:

@@ -7,7 +7,7 @@ import re
 # Add project root to path
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '../../')))
 
-from Orchestrator.src.mongo_proxy import MongoProxy
+from orchestrator.core.mongo_proxy import MongoProxy
 
 class DailyAuditAgent:
     def __init__(self):

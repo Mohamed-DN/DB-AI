@@ -172,8 +172,8 @@ class CriticalAlertAgent:
         
         # Connect to MongoDB via Proxy
         try:
-            sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '../../')))
-            from Orchestrator.src.mongo_proxy import MongoProxy
+            sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '../../../')))
+            from orchestrator.core.mongo_proxy import MongoProxy
             self.mongo_proxy = MongoProxy()
             print("Connected to MongoDB (Proxy)")
             

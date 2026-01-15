@@ -15,7 +15,7 @@ from dotenv import load_dotenv
 sys.stdout.reconfigure(encoding='utf-8')
 
 # Load MongoDB Environment Variables
-env_path = os.path.abspath(os.path.join(os.path.dirname(__file__), '../../MongoDB/.env'))
+env_path = os.path.abspath(os.path.join(os.path.dirname(__file__), '../../../.env.v2'))
 load_dotenv(env_path)
 print(f"DEBUG: MONGO_URI Loaded: {os.getenv('MONGO_URI')}")
 
@@ -23,8 +23,8 @@ print(f"DEBUG: MONGO_URI Loaded: {os.getenv('MONGO_URI')}")
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), 'src')))
 
 # Link to Shared Modules (ROOT)
-sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '../../')))
-from Orchestrator.src.mongo_proxy import MongoProxy
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '../../../')))
+from orchestrator.core.mongo_proxy import MongoProxy
 
 # Local Imports
 try:
