@@ -17,12 +17,12 @@ $env:Path = [System.Environment]::GetEnvironmentVariable("Path", "Machine") + ";
 
 # 1. Start Backend API (port 8000)
 Write-Host "[1/2] Starting Backend API (port 8000)..." -ForegroundColor Yellow
-Start-Process powershell -ArgumentList "-NoExit", "-Command", "cd '$ProjectRoot\WebInterface\backend'; Write-Host 'Backend API - Port 8000' -ForegroundColor Green; python main.py"
+Start-Process powershell -ArgumentList "-NoExit", "-Command", "cd '$ProjectRoot\api_agents\api_gateway'; Write-Host 'Backend API - Port 8000' -ForegroundColor Green; python main.py"
 Start-Sleep -Seconds 3
 
 # 2. Start React Frontend (port 3002)
 Write-Host "[2/2] Starting React Frontend (port 3002)..." -ForegroundColor Yellow
-Start-Process powershell -ArgumentList "-NoExit", "-Command", "cd '$ProjectRoot\WebInterface\frontend-react'; Write-Host 'React Frontend - Port 3002' -ForegroundColor Green; npm run dev"
+Start-Process powershell -ArgumentList "-NoExit", "-Command", "cd '$ProjectRoot\web\dashboard'; Write-Host 'React Frontend - Port 3002' -ForegroundColor Green; npm run dev"
 Start-Sleep -Seconds 3
 
 Write-Host ""

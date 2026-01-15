@@ -28,7 +28,7 @@ Write-Host "=================================================================" -
 # -----------------------------------------------------------------------------
 # 0. Load Configuration
 # -----------------------------------------------------------------------------
-$EnvFile = "$PSScriptRoot\..\.env.v2"
+$EnvFile = "$PSScriptRoot\..\..\.env.v2"
 if (-not (Test-Path $EnvFile)) {
     Write-Error "Configuration file .env.v2 not found at $EnvFile"
     exit 1
@@ -146,7 +146,7 @@ Test-Port $EnvVars['MONGO_EXPRESS_PORT'] "Mongo Express V2"
 if (-not $SkipBackend) {
     Write-Host "`n[STEP 5] Starting Backend API (Port $($EnvVars['BACKEND_PORT']))..." -ForegroundColor Yellow
     
-    $BackendDir = "$PSScriptRoot\..\WebInterface\backend"
+    $BackendDir = "$PSScriptRoot\..\..\api_agents\api_gateway"
     
     # 5.1 Check Dependencies (Backend)
     Write-Host "Checking Python dependencies..." -ForegroundColor Gray
@@ -185,7 +185,7 @@ if (-not $SkipBackend) {
 if (-not $SkipFrontend) {
     Write-Host "`n[STEP 6] Starting Frontend UI (Port $($EnvVars['FRONTEND_PORT']))..." -ForegroundColor Yellow
     
-    $FrontendDir = "$PSScriptRoot\..\WebInterface\frontend-react"
+    $FrontendDir = "$PSScriptRoot\..\..\web\dashboard"
     
     # Check node_modules
     if (-not (Test-Path "$FrontendDir\node_modules")) {

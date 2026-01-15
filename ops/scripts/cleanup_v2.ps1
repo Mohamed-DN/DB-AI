@@ -11,7 +11,7 @@ Write-Host "   NEXI AI CMDB V2 - FULL CLEANUP (DELETE EVERYTHING)" -ForegroundCo
 Write-Host "=================================================================" -ForegroundColor Red
 
 # 1. Load Config to know ports/project details
-$EnvFile = "$PSScriptRoot\..\.env.v2"
+$EnvFile = "$PSScriptRoot\..\..\.env.v2"
 if (-not (Test-Path $EnvFile)) {
     Write-Warning "Configuration file .env.v2 not found. Proceeding with defaults/assumptions might differ."
     # We proceed anyway to try cleaning up based on compose file

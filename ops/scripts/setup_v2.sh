@@ -73,7 +73,7 @@ if [ -n "$FRONTEND_PORT" ]; then kill_port $FRONTEND_PORT "Frontend"; fi
 # 3. Docker Infrastructure (V2)
 if [[ "$*" != *"--skip-docker"* ]]; then
     echo -e "\n[STEP 3] Starting V2 Infrastructure (Docker)..."
-    COMPOSE_FILE="$ROOT_DIR/docker-lab/docker-compose-v2.yml"
+    COMPOSE_FILE="$ROOT_DIR/ops/docker-lab/docker-compose-v2.yml"
     
     echo "Running docker-compose with .env.v2..."
     # Pull first to avoid timeouts/crashes during up
@@ -110,7 +110,7 @@ check_port "${QDRANT_PORT:-7333}" "Qdrant V2"
 # 5. Start Backend API
 if [[ "$*" != *"--skip-backend"* ]]; then
     echo -e "\n[STEP 5] Starting Backend API (Port ${BACKEND_PORT})..."
-    BACKEND_DIR="$ROOT_DIR/WebInterface/backend"
+    BACKEND_DIR="$ROOT_DIR/api_agents/api_gateway"
     
     cd "$BACKEND_DIR"
     
@@ -143,7 +143,7 @@ fi
 # 6. Start Frontend
 if [[ "$*" != *"--skip-frontend"* ]]; then
     echo -e "\n[STEP 6] Starting Frontend UI (Port ${FRONTEND_PORT})..."
-    FRONTEND_DIR="$ROOT_DIR/WebInterface/frontend-react"
+    FRONTEND_DIR="$ROOT_DIR/web/dashboard"
     
     cd "$FRONTEND_DIR"
     
