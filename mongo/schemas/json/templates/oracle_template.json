@@ -1,76 +1,329 @@
 {
+    "_comment": "Oracle Database Template with CDB/PDB Support - For Data Architects",
     "metadata": {
-        "extraction_timestamp": "2026-01-13T12:00:00Z",
-        "agent_version": "1.0.0",
+        "extraction_timestamp": "2026-01-15T12:00:00Z",
+        "agent_version": "2.0.0",
         "db_technology": "ORACLE",
-        "environment": "INTEGRATION"
+        "environment": "PRODUCTION"
     },
     "infrastructure": {
         "host": {
-            "alias": "maamdba2ucrti01",
-            "ip_address": "10.158.133.6",
+            "alias": "oracle-prod-01",
+            "ip_address": "192.168.1.100",
             "os": "OracleLinux 8.10",
-            "cloud_provider": "AZURE",
+            "cloud_provider": "ON_PREMISE",
             "tenant": "NEXI"
         },
         "hardware": {
-            "type": "Microsoft Corporation Virtual Machine",
+            "type": "Physical Server",
             "resources": {
-                "cpu_sockets": 1,
-                "cores": 4,
-                "ram_gb": 62
+                "cpu_sockets": 2,
+                "cores": 16,
+                "ram_gb": 128
             }
+        },
+        "virtualbox": {
+            "vm_name": null,
+            "vm_state": null,
+            "host_os": null
         }
     },
     "database_core": {
         "identity": {
-            "dbid": 242648470,
-            "db_name": "PAUNRTODSI",
-            "db_unique_name": "CAUNRAZ2I",
-            "service_name": "UNRTODSI_PRY",
-            "instance_name": "PAUNRTODSI"
+            "dbid": 1234567890,
+            "db_name": "ORCL",
+            "db_unique_name": "ORCL_PRIMARY",
+            "service_name": "ORCL_SERVICE",
+            "instance_name": "ORCL1",
+            "instance_number": 1
         },
         "version_info": {
             "full_version": "19.23.0.0.240416",
-            "patch_level": "36233263 applied 22-08-2024",
+            "banner": "Oracle Database 19c Enterprise Edition",
+            "patch_level": "RU 19.23",
+            "patch_date": "2024-08-22",
             "compatibility": "19.0.0"
         },
+        "startup_time": "2026-01-15T08:00:00Z",
+        "uptime_seconds": 86400,
         "configuration": {
             "type": "CDB",
-            "pdb_status": "PDB",
+            "cdb_name": "ORCL",
             "charset": "AL32UTF8",
-            "performance_mode": "MAXIMUM PERFORMANCE"
+            "nls_characterset": "AL32UTF8",
+            "national_charset": "AL16UTF16",
+            "performance_mode": "MAXIMUM PERFORMANCE",
+            "log_mode": "ARCHIVELOG",
+            "force_logging": true,
+            "flashback_on": true,
+            "platform": "Linux x86 64-bit"
         }
+    },
+    "pluggable_databases": [
+        {
+            "pdb_id": 3,
+            "pdb_name": "PDB_PAYMENTS",
+            "pdb_guid": "ABCD1234567890EF",
+            "status": "READ WRITE",
+            "open_mode": "READ WRITE",
+            "restricted": false,
+            "con_id": 3,
+            "creation_time": "2024-01-15T10:00:00Z",
+            "total_size_gb": 50.5,
+            "allocated_size_gb": 45.2,
+            "max_size_gb": 100,
+            "recovery_status": "ENABLED",
+            "snapshot_parent": null,
+            "application_root": null,
+            "services": [
+                {
+                    "service_name": "PDB_PAYMENTS_SVC",
+                    "network_name": "PDB_PAYMENTS_SVC.nexi.com",
+                    "enabled": true
+                }
+            ],
+            "tablespaces": [
+                {
+                    "name": "SYSTEM",
+                    "size_mb": 500,
+                    "used_mb": 450,
+                    "status": "ONLINE"
+                },
+                {
+                    "name": "SYSAUX",
+                    "size_mb": 300,
+                    "used_mb": 280,
+                    "status": "ONLINE"
+                },
+                {
+                    "name": "USERS",
+                    "size_mb": 1024,
+                    "used_mb": 800,
+                    "status": "ONLINE"
+                },
+                {
+                    "name": "DATA_TBS",
+                    "size_mb": 10240,
+                    "used_mb": 8000,
+                    "status": "ONLINE"
+                }
+            ],
+            "temp_tablespace": {
+                "name": "TEMP",
+                "size_mb": 2048
+            },
+            "undo_tablespace": {
+                "name": "UNDOTBS1",
+                "size_mb": 1024
+            }
+        },
+        {
+            "pdb_id": 4,
+            "pdb_name": "PDB_ANALYTICS",
+            "pdb_guid": "EFGH5678901234AB",
+            "status": "READ WRITE",
+            "open_mode": "READ WRITE",
+            "restricted": false,
+            "con_id": 4,
+            "creation_time": "2024-02-20T14:30:00Z",
+            "total_size_gb": 120.0,
+            "allocated_size_gb": 95.5,
+            "max_size_gb": 200,
+            "recovery_status": "ENABLED",
+            "snapshot_parent": null,
+            "application_root": null,
+            "services": [
+                {
+                    "service_name": "PDB_ANALYTICS_SVC",
+                    "network_name": "PDB_ANALYTICS_SVC.nexi.com",
+                    "enabled": true
+                }
+            ],
+            "tablespaces": [
+                {
+                    "name": "SYSTEM",
+                    "size_mb": 500,
+                    "used_mb": 400,
+                    "status": "ONLINE"
+                },
+                {
+                    "name": "SYSAUX",
+                    "size_mb": 300,
+                    "used_mb": 250,
+                    "status": "ONLINE"
+                },
+                {
+                    "name": "ANALYTICS_DATA",
+                    "size_mb": 51200,
+                    "used_mb": 45000,
+                    "status": "ONLINE"
+                }
+            ],
+            "temp_tablespace": {
+                "name": "TEMP",
+                "size_mb": 4096
+            },
+            "undo_tablespace": {
+                "name": "UNDOTBS1",
+                "size_mb": 2048
+            }
+        }
+    ],
+    "pdb_seed": {
+        "pdb_name": "PDB$SEED",
+        "status": "READ ONLY",
+        "con_id": 2,
+        "size_gb": 1.2
     },
     "network": {
         "listeners": [
             {
+                "name": "LISTENER",
                 "port": 1521,
-                "protocol": "TCP"
+                "protocol": "TCP",
+                "host": "0.0.0.0",
+                "status": "READY"
+            },
+            {
+                "name": "LISTENER_SCAN1",
+                "port": 1521,
+                "protocol": "TCP",
+                "host": "scan-cluster.nexi.com",
+                "status": "READY"
             }
         ],
         "cluster_interconnect": {
-            "scan_name": "scan-prod-cluster",
+            "scan_name": "scan-prod-cluster.nexi.com",
             "scan_ips": [
                 "10.158.133.20",
                 "10.158.133.21",
                 "10.158.133.22"
             ],
             "node_vips": [
-                "10.158.133.30",
-                "10.158.133.31"
+                {
+                    "node": "node1",
+                    "vip": "10.158.133.30"
+                },
+                {
+                    "node": "node2",
+                    "vip": "10.158.133.31"
+                }
+            ],
+            "interconnect_ips": [
+                "192.168.100.1",
+                "192.168.100.2"
             ]
+        },
+        "services": [
+            {
+                "service_name": "ORCL_SERVICE",
+                "pdb": null,
+                "enabled": true,
+                "preferred_instances": [
+                    "ORCL1",
+                    "ORCL2"
+                ]
+            }
+        ]
+    },
+    "storage": {
+        "asm_diskgroups": [
+            {
+                "name": "+DATA",
+                "type": "EXTERN",
+                "total_gb": 500,
+                "free_gb": 200,
+                "redundancy": "EXTERNAL",
+                "state": "MOUNTED"
+            },
+            {
+                "name": "+RECO",
+                "type": "EXTERN",
+                "total_gb": 200,
+                "free_gb": 150,
+                "redundancy": "EXTERNAL",
+                "state": "MOUNTED"
+            }
+        ],
+        "datafiles_count": 45,
+        "total_size_gb": 350.5,
+        "used_size_gb": 280.2,
+        "redo_logs": {
+            "groups": 3,
+            "members_per_group": 2,
+            "size_mb": 200
+        },
+        "archive_logs": {
+            "destination": "+RECO",
+            "retention_days": 7
         }
     },
     "ha_dr": {
-        "cluster_roles": [
-            "HAS",
-            "RAC"
+        "cluster_type": "RAC",
+        "cluster_nodes": [
+            {
+                "instance": "ORCL1",
+                "node": "node1",
+                "status": "OPEN"
+            },
+            {
+                "instance": "ORCL2",
+                "node": "node2",
+                "status": "OPEN"
+            }
         ],
         "dataguard": {
+            "enabled": true,
             "role": "PRIMARY",
-            "target": "CAUNRAZ3I",
-            "transport_type": "ASYNC"
+            "protection_mode": "MAXIMUM PERFORMANCE",
+            "standbys": [
+                {
+                    "db_unique_name": "ORCL_STANDBY",
+                    "host": "oracle-dr-01",
+                    "role": "PHYSICAL STANDBY",
+                    "apply_lag": "0 seconds",
+                    "transport_lag": "0 seconds",
+                    "sync_status": "IN SYNC"
+                }
+            ],
+            "fast_start_failover": false,
+            "broker_status": "ENABLED"
+        },
+        "backup": {
+            "last_full_backup": "2026-01-14T02:00:00Z",
+            "last_incremental": "2026-01-15T02:00:00Z",
+            "retention_policy": "RECOVERY WINDOW OF 14 DAYS"
         }
+    },
+    "performance": {
+        "sga_target_gb": 64,
+        "pga_aggregate_target_gb": 16,
+        "db_cache_size_gb": 48,
+        "shared_pool_gb": 12,
+        "current_sessions": 150,
+        "active_sessions": 25,
+        "blocked_sessions": 0,
+        "cpu_usage_percent": 35.5,
+        "io_wait_percent": 5.2
+    },
+    "identity": {
+        "db_unique_name": "ORCL_PRIMARY",
+        "db_name": "ORCL",
+        "family": "ORACLE",
+        "engine": "ORACLE",
+        "role": "PRIMARY",
+        "environment": "PRODUCTION",
+        "host": "192.168.1.100",
+        "gateway_ref": null
+    },
+    "connection": {
+        "port": 1521,
+        "service_name": "ORCL_SERVICE",
+        "container": null,
+        "type": "VIRTUALBOX"
+    },
+    "state": {
+        "status": "UP",
+        "last_seen": "2026-01-15T12:00:00Z"
     }
 }

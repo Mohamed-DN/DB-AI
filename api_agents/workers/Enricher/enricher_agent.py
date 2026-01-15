@@ -26,11 +26,191 @@ except ImportError:
     print("[WARN] psycopg2 not available - PostgreSQL enrichment disabled")
 
 try:
-    import cx_Oracle
-    CX_ORACLE_AVAILABLE = True
+    import oracledb
+    oracledb.init_oracle_client()  # Try to initialize Oracle Instant Client
+    ORACLEDB_AVAILABLE = True
 except ImportError:
-    CX_ORACLE_AVAILABLE = False
-    print("[INFO] cx_Oracle not available - Oracle enrichment via oracledb only")
+    ORACLEDB_AVAILABLE = False
+    print("[INFO] oracledb not available - Oracle enrichment disabled")
+except Exception as e:
+    ORACLEDB_AVAILABLE = True  # Module available but Instant Client may not be
+    print(f"[INFO] oracledb available (thin mode): {e}")
+
+
+class OracleEnricher:
+    """Enriches Oracle database documents with live CDB/PDB data"""
+    
+    def __init__(self, host: str, port: int, service_name: str, user: str, password: str):
+        self.host = host
+        self.port = port
+        self.service_name = service_name
+        self.user = user
+        self.password = password
+    
+    def collect(self) -> Optional[Dict[str, Any]]:
+        """Connect to Oracle and collect CDB/PDB metadata"""
+        if not ORACLEDB_AVAILABLE:
+            print("   ⚠️ oracledb not available")
+            return None
+        
+        try:
+            # Use thin mode (no Oracle client needed)
+            dsn = f"{self.host}:{self.port}/{self.service_name}"
+            conn = oracledb.connect(
+                user=self.user,
+                password=self.password,
+                dsn=dsn,
+                mode=oracledb.DEFAULT_AUTH
+            )
+            cursor = conn.cursor()
+            
+            data = {}
+            
+            # 1. Database Identity
+            cursor.execute("""
+                SELECT DBID, NAME, DB_UNIQUE_NAME, PLATFORM_NAME, 
+                       LOG_MODE, FORCE_LOGGING, FLASHBACK_ON
+                FROM V$DATABASE
+            """)
+            row = cursor.fetchone()
+            if row:
+                data["dbid"] = row[0]
+                data["db_name"] = row[1]
+                data["db_unique_name"] = row[2]
+                data["platform"] = row[3]
+                data["log_mode"] = row[4]
+                data["force_logging"] = row[5] == "YES"
+                data["flashback_on"] = row[6] == "YES"
+            
+            # 2. Instance Info
+            cursor.execute("""
+                SELECT INSTANCE_NAME, INSTANCE_NUMBER, STATUS, 
+                       STARTUP_TIME, VERSION_FULL
+                FROM V$INSTANCE
+            """)
+            row = cursor.fetchone()
+            if row:
+                data["instance_name"] = row[0]
+                data["instance_number"] = row[1]
+                data["status"] = row[2]
+                data["startup_time"] = row[3].isoformat() if row[3] else None
+                data["version_full"] = row[4]
+            
+            # 3. Version Banner
+            cursor.execute("SELECT BANNER_FULL FROM V$VERSION WHERE ROWNUM = 1")
+            row = cursor.fetchone()
+            if row:
+                data["banner"] = row[0]
+            
+            # 4. Check if CDB
+            cursor.execute("SELECT CDB FROM V$DATABASE")
+            row = cursor.fetchone()
+            is_cdb = row and row[0] == "YES"
+            data["is_cdb"] = is_cdb
+            data["configuration_type"] = "CDB" if is_cdb else "NON-CDB"
+            
+            # 5. PDB Information (only for CDB)
+            pdbs = []
+            if is_cdb:
+                cursor.execute("""
+                    SELECT p.PDB_ID, p.PDB_NAME, p.CON_ID, p.STATUS, p.OPEN_MODE,
+                           p.RESTRICTED, p.CREATION_TIME,
+                           ROUND(SUM(d.BYTES)/1024/1024/1024, 2) as SIZE_GB
+                    FROM V$PDBS p
+                    LEFT JOIN CDB_DATA_FILES d ON p.CON_ID = d.CON_ID
+                    WHERE p.PDB_NAME != 'PDB$SEED'
+                    GROUP BY p.PDB_ID, p.PDB_NAME, p.CON_ID, p.STATUS, 
+                             p.OPEN_MODE, p.RESTRICTED, p.CREATION_TIME
+                """)
+                for row in cursor.fetchall():
+                    pdb = {
+                        "pdb_id": row[0],
+                        "pdb_name": row[1],
+                        "con_id": row[2],
+                        "status": row[3],
+                        "open_mode": row[4],
+                        "restricted": row[5] == "YES",
+                        "creation_time": row[6].isoformat() if row[6] else None,
+                        "total_size_gb": float(row[7]) if row[7] else 0,
+                        "tablespaces": [],
+                        "services": []
+                    }
+                    
+                    # Get tablespaces for this PDB
+                    try:
+                        cursor.execute(f"""
+                            SELECT TABLESPACE_NAME, 
+                                   ROUND(SUM(BYTES)/1024/1024, 2) as SIZE_MB,
+                                   STATUS
+                            FROM CDB_DATA_FILES 
+                            WHERE CON_ID = {row[2]}
+                            GROUP BY TABLESPACE_NAME, STATUS
+                        """)
+                        for ts_row in cursor.fetchall():
+                            pdb["tablespaces"].append({
+                                "name": ts_row[0],
+                                "size_mb": float(ts_row[1]) if ts_row[1] else 0,
+                                "status": ts_row[2] or "ONLINE"
+                            })
+                    except:
+                        pass
+                    
+                    # Get services for this PDB
+                    try:
+                        cursor.execute(f"""
+                            SELECT NAME, NETWORK_NAME, ENABLED
+                            FROM CDB_SERVICES 
+                            WHERE CON_ID = {row[2]}
+                        """)
+                        for svc_row in cursor.fetchall():
+                            pdb["services"].append({
+                                "service_name": svc_row[0],
+                                "network_name": svc_row[1],
+                                "enabled": svc_row[2] == "YES"
+                            })
+                    except:
+                        pass
+                    
+                    pdbs.append(pdb)
+            
+            data["pluggable_databases"] = pdbs
+            data["pdb_count"] = len(pdbs)
+            
+            # 6. SGA/PGA Info
+            try:
+                cursor.execute("SELECT NAME, VALUE FROM V$SGA WHERE NAME IN ('Fixed Size', 'Variable Size', 'Database Buffers')")
+                sga_info = {}
+                for row in cursor.fetchall():
+                    sga_info[row[0]] = int(row[1])
+                data["sga_info"] = sga_info
+            except:
+                pass
+            
+            # 7. Session Info
+            try:
+                cursor.execute("SELECT COUNT(*) FROM V$SESSION WHERE STATUS = 'ACTIVE'")
+                data["active_sessions"] = cursor.fetchone()[0]
+                cursor.execute("SELECT COUNT(*) FROM V$SESSION")
+                data["total_sessions"] = cursor.fetchone()[0]
+            except:
+                pass
+            
+            # 8. Data Guard Status
+            try:
+                cursor.execute("SELECT DATABASE_ROLE, PROTECTION_MODE FROM V$DATABASE")
+                row = cursor.fetchone()
+                if row:
+                    data["dataguard_role"] = row[0]
+                    data["protection_mode"] = row[1]
+            except:
+                pass
+            
+            conn.close()
+            return data
+            
+        except Exception as e:
+            print(f"   ❌ Oracle connection error: {e}")
+            return None
 
 
 class PostgresEnricher:
@@ -223,6 +403,80 @@ class EnricherAgent:
             print(f"   ❌ Update error for {name}: {e}")
             return False
     
+    def enrich_oracle(self, db_doc: Dict) -> bool:
+        """Enrich an Oracle document with live CDB/PDB data"""
+        identity = db_doc.get("identity", {})
+        connection = db_doc.get("connection", {})
+        
+        name = identity.get("db_unique_name", "UNKNOWN")
+        host = identity.get("host", "127.0.0.1")
+        port = connection.get("port", 1521)
+        service_name = connection.get("service_name", "ORCL")
+        
+        print(f"   🔌 Connecting to Oracle: {host}:{port}/{service_name}...")
+        
+        # Get Oracle credentials
+        oracle_user = os.getenv("ORACLE_USER", "system")
+        oracle_password = os.getenv("ORACLE_PASSWORD", "oracle")
+        
+        enricher = OracleEnricher(
+            host=host,
+            port=port,
+            service_name=service_name,
+            user=oracle_user,
+            password=oracle_password
+        )
+        
+        data = enricher.collect()
+        if not data:
+            print(f"   ⚠️ Could not collect data from {name}")
+            return False
+        
+        # Build update document with CDB/PDB structure
+        update_fields = {
+            "database_core.identity.dbid": data.get("dbid"),
+            "database_core.identity.db_name": data.get("db_name"),
+            "database_core.identity.instance_name": data.get("instance_name"),
+            "database_core.identity.instance_number": data.get("instance_number"),
+            "database_core.version_info.full_version": data.get("version_full"),
+            "database_core.version_info.banner": data.get("banner"),
+            "database_core.startup_time": data.get("startup_time"),
+            "database_core.configuration.type": data.get("configuration_type"),
+            "database_core.configuration.log_mode": data.get("log_mode"),
+            "database_core.configuration.force_logging": data.get("force_logging"),
+            "database_core.configuration.flashback_on": data.get("flashback_on"),
+            "database_core.configuration.platform": data.get("platform"),
+            "pluggable_databases": data.get("pluggable_databases", []),
+            "pdb_count": data.get("pdb_count", 0),
+            "performance.active_sessions": data.get("active_sessions"),
+            "performance.total_sessions": data.get("total_sessions"),
+            "ha_dr.dataguard.role": data.get("dataguard_role"),
+            "ha_dr.dataguard.protection_mode": data.get("protection_mode"),
+            "state.status": "UP",
+            "state.last_seen": datetime.now().isoformat(),
+            "metadata.last_enriched": datetime.now().isoformat()
+        }
+        
+        # Execute update
+        try:
+            import json
+            set_obj = {k: v for k, v in update_fields.items() if v is not None}
+            set_json = json.dumps(set_obj, default=str)
+            
+            js_cmd = f"""
+            db.inventory_databases.updateOne(
+                {{ "identity.db_unique_name": "{name}" }},
+                {{ $set: {set_json} }}
+            )
+            """
+            self.mongo.execute_eval(js_cmd)
+            pdb_count = data.get("pdb_count", 0)
+            print(f"   ✅ Enriched {name} with {len(set_obj)} fields, {pdb_count} PDBs")
+            return True
+        except Exception as e:
+            print(f"   ❌ Update error for {name}: {e}")
+            return False
+    
     def run_once(self):
         """Run one enrichment cycle"""
         print(f"\n{'='*60}")
@@ -244,7 +498,8 @@ class EnricherAgent:
                 if self.enrich_postgres(db):
                     enriched_count += 1
             elif engine == "ORACLE":
-                print(f"   ⏭️ Oracle enrichment not yet implemented")
+                if self.enrich_oracle(db):
+                    enriched_count += 1
             else:
                 print(f"   ⏭️ Skipping {engine} (no enricher available)")
         
