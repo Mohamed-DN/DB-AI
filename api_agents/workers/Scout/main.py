@@ -15,6 +15,7 @@ sys.stdout.reconfigure(encoding='utf-8')
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '../../../')))
 from orchestrator.core.mongo_proxy import MongoProxy
 from api_agents.workers.Scout.user_provisioner import UserProvisioner
+from api_agents.workers.Scout.template_loader import build_document
 
 class ScoutAgent:
     def __init__(self):
@@ -96,21 +97,22 @@ class ScoutAgent:
                         except:
                             pass
                     
-                    db_info = {
-                        "identity": {
-                            "db_unique_name": name.upper(),
-                            "db_name": name,
-                            "engine": engine,
-                            "environment": "DEV" if "dev" in name.lower() else "PROD",
-                            "host": "127.0.0.1",
-                            "gateway_ref": gateway_ref
-                        },
-                        "configuration": {
-                            "port": port,
-                            "version": "Unknown"
-                        },
-                        "last_scanned": "NOW"
-                    }
+                    # Determine environment
+                    if "dev" in name.lower():
+                        environment = "DEVELOPMENT"
+                    elif "stg" in name.lower():
+                        environment = "STAGING"
+                    else:
+                        environment = "PRODUCTION"
+                    
+                    # Build hierarchical document using template
+                    db_info = build_document(
+                        engine=engine,
+                        container_name=name,
+                        port=port,
+                        environment=environment,
+                        gateway_ref=gateway_ref
+                    )
                     found_dbs.append(db_info)
                     
             return found_dbs
