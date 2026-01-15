@@ -290,7 +290,9 @@ AGENTS_STATE = {
     "watcher": {"running": False, "process": None},
     "criticalalert": {"running": False, "process": None},
     "forensicanalyzer": {"running": False, "process": None},
-    "checkmk_bridge": {"running": False, "process": None}
+    "checkmk_bridge": {"running": False, "process": None},
+    "enricher": {"running": False, "process": None},
+    "discovery": {"running": False, "process": None}
 }
 # Map agent names to script paths (using specific agent filenames)
 AGENT_SCRIPTS = {
@@ -299,7 +301,9 @@ AGENT_SCRIPTS = {
     "watcher": "../workers/Watcher/watcher_agent.py",
     "criticalalert": "../workers/CriticalAlert/critical_alert_agent.py",
     "forensicanalyzer": "../workers/Watcher/ai_analyzer.py",
-    "checkmk_bridge": "../workers/CheckMK_Bridge/main.py"
+    "checkmk_bridge": "../workers/CheckMK_Bridge/main.py",
+    "enricher": "../workers/Enricher/enricher_agent.py",
+    "discovery": "../workers/Discovery/discovery_agent.py"
 }
 
 @app.get("/api/agents/status")

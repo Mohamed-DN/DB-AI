@@ -36,6 +36,16 @@ AGENT_REGISTRY: Dict[str, dict] = {
         "module": "api_agents.workers.DailyAudit.daily_audit_agent",
         "class": "DailyAuditAgent",
         "description": "Performs daily compliance audits"
+    },
+    "enricher": {
+        "module": "api_agents.workers.Enricher.enricher_agent",
+        "class": "EnricherAgent",
+        "description": "Updates existing DB records with live data"
+    },
+    "discovery": {
+        "module": "api_agents.workers.Discovery.discovery_agent",
+        "class": "DiscoveryAgent",
+        "description": "Finds new databases via gateway scanning"
     }
 }
 
