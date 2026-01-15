@@ -95,62 +95,198 @@ business_services_docs = [
     }
 ]
 
-# 4. inventory_databases - The core database inventory
-inventory_databases_docs = [
-    # PostgreSQL Instances
-    {
-        "identity": {"db_unique_name": "NEXI-PG-MILANO-PROD2", "family": "POSTGRESQL", "engine": "POSTGRES", "role": "PRIMARY", "environment": "PRODUCTION", "host": "127.0.0.1"},
-        "connection": {"port": 5432, "max_connections": 500, "container": "nexi-pg-milano-prod2"},
-        "business_service_ref": "Payments Platform",
-        "created_at": datetime.now()
-    },
-    {
-        "identity": {"db_unique_name": "NEXI-PG-MILANO-DEV2", "family": "POSTGRESQL", "engine": "POSTGRES", "role": "DEV", "environment": "DEVELOPMENT", "host": "127.0.0.1"},
-        "connection": {"port": 5433, "max_connections": 100, "container": "nexi-pg-milano-dev2"},
-        "created_at": datetime.now()
-    },
-    {
-        "identity": {"db_unique_name": "NEXI-PG-MILANO-STG2", "family": "POSTGRESQL", "engine": "POSTGRES", "role": "STAGING", "environment": "STAGING", "host": "127.0.0.1"},
-        "connection": {"port": 5434, "max_connections": 200, "container": "nexi-pg-milano-stg2"},
-        "created_at": datetime.now()
-    },
-    {
-        "identity": {"db_unique_name": "NEXI-PG-BRATISLAVA-PROD2", "family": "POSTGRESQL", "engine": "POSTGRES", "role": "PRIMARY", "environment": "PRODUCTION", "host": "127.0.0.1"},
-        "connection": {"port": 5437, "container": "nexi-pg-bratislava-prod2"},
-        "created_at": datetime.now()
-    },
-    {
-        "identity": {"db_unique_name": "NEXI-PG-BRATISLAVA-DEV2", "family": "POSTGRESQL", "engine": "POSTGRES", "role": "DEV", "environment": "DEVELOPMENT", "host": "127.0.0.1"},
-        "connection": {"port": 5438, "container": "nexi-pg-bratislava-dev2"},
-        "created_at": datetime.now()
-    },
-    # Oracle Instances
-    {
-        "identity": {"db_unique_name": "NEXI-ORACLE-CAIRO-PRIMARY2", "family": "ORACLE", "engine": "ORACLE", "role": "PRIMARY", "environment": "PRODUCTION", "host": "127.0.0.1"},
-        "connection": {"port": 1521, "service_name": "ORCL", "container": "nexi-oracle-cairo-primary2"},
-        "created_at": datetime.now()
-    },
-    {
-        "identity": {"db_unique_name": "NEXI-ORACLE-CAIRO-REPLICA2", "family": "ORACLE", "engine": "ORACLE", "role": "REPLICA", "environment": "DISASTER_RECOVERY", "host": "127.0.0.1"},
-        "connection": {"port": 1522, "service_name": "ORCL", "container": "nexi-oracle-cairo-replica2"},
-        "created_at": datetime.now()
-    },
-    # NoSQL Instances
-    {
-        "identity": {"db_unique_name": "NEXI-MONGODB2", "family": "MONGODB", "engine": "MONGODB", "role": "PRIMARY", "environment": "INFRASTRUCTURE", "host": "127.0.0.1"},
-        "connection": {"port": 27017, "container": "nexi-mongodb2"},
-        "created_at": datetime.now()
-    },
-    {
-        "identity": {"db_unique_name": "NEXI-REDIS2", "family": "REDIS", "engine": "REDIS", "role": "PRIMARY", "environment": "INFRASTRUCTURE", "host": "127.0.0.1"},
-        "connection": {"port": 6379, "container": "nexi-redis2"},
-        "created_at": datetime.now()
-    },
-    {
-        "identity": {"db_unique_name": "NEXI-QDRANT2", "family": "VECTOR", "engine": "QDRANT", "role": "PRIMARY", "environment": "AI_INFRASTRUCTURE", "host": "127.0.0.1"},
-        "connection": {"port": 6333, "container": "nexi-qdrant2"},
+# 4. inventory_databases - The core database inventory (HIERARCHICAL FORMAT)
+# Following the Oracle/PostgreSQL templates defined in mongo/schemas/json/templates/
+
+def build_postgres_doc(container_name, port, environment, role, gateway="nexi-gw-milano2"):
+    """Build a full hierarchical PostgreSQL document"""
+    return {
+        "metadata": {
+            "extraction_timestamp": datetime.now().isoformat(),
+            "agent_version": "2.0.0",
+            "db_technology": "POSTGRESQL",
+            "environment": environment
+        },
+        "cluster_identity": {
+            "system_identifier": None,
+            "timeline_id": None,
+            "cluster_name": container_name,
+            "version_major": 15,
+            "version_full": "PostgreSQL 15.x",
+            "uptime_seconds": None
+        },
+        "instance_details": {
+            "role": role,
+            "inet_server_addr": "127.0.0.1",
+            "inet_server_port": port,
+            "is_in_recovery": False if role == "PRIMARY" else None
+        },
+        "resource_config": {
+            "connections": {"max_connections": 500 if "prod" in container_name.lower() else 100, "current_active": None},
+            "memory": {"shared_buffers": None, "effective_cache_size": None, "work_mem": None, "maintenance_work_mem": None},
+            "wal": {"wal_level": None, "max_wal_size": None}
+        },
+        "replication_ha": {
+            "manager": None,
+            "sync_standby_names": None,
+            "replication_slots": []
+        },
+        "storage_info": {
+            "database_size_bytes": None,
+            "temp_file_limit": None,
+            "tablespaces": []
+        },
+        "extensions_installed": [],
+        # Backward compatibility fields
+        "identity": {
+            "db_unique_name": container_name.upper().replace("-", "_"),
+            "db_name": container_name,
+            "family": "POSTGRESQL",
+            "engine": "POSTGRES",
+            "role": role,
+            "environment": environment,
+            "host": "127.0.0.1",
+            "gateway_ref": gateway
+        },
+        "connection": {
+            "port": port,
+            "container": container_name,
+            "type": "DOCKER"
+        },
+        "state": {
+            "status": "UP",
+            "last_seen": datetime.now().isoformat()
+        },
         "created_at": datetime.now()
     }
+
+def build_oracle_doc(container_name, port, environment, role, gateway="nexi-gw-cairo2"):
+    """Build a full hierarchical Oracle document"""
+    return {
+        "metadata": {
+            "extraction_timestamp": datetime.now().isoformat(),
+            "agent_version": "2.0.0",
+            "db_technology": "ORACLE",
+            "environment": environment
+        },
+        "infrastructure": {
+            "host": {
+                "alias": container_name,
+                "ip_address": "127.0.0.1",
+                "os": "OracleLinux",
+                "cloud_provider": "Docker",
+                "tenant": "NEXI"
+            },
+            "hardware": {
+                "type": "Docker Container",
+                "resources": {"cpu_sockets": 1, "cores": 4, "ram_gb": 8}
+            }
+        },
+        "database_core": {
+            "identity": {
+                "dbid": None,
+                "db_name": container_name.split("-")[-1] if "-" in container_name else container_name,
+                "db_unique_name": container_name.upper().replace("-", "_"),
+                "service_name": "ORCL",
+                "instance_name": None
+            },
+            "version_info": {
+                "full_version": "19.x",
+                "patch_level": None,
+                "compatibility": "19.0.0"
+            },
+            "configuration": {
+                "type": "NON-CDB",
+                "pdb_status": None,
+                "charset": "AL32UTF8",
+                "performance_mode": "MAXIMUM PERFORMANCE"
+            }
+        },
+        "network": {
+            "listeners": [{"port": port, "protocol": "TCP"}],
+            "cluster_interconnect": {
+                "scan_name": None,
+                "scan_ips": [],
+                "node_vips": []
+            }
+        },
+        "ha_dr": {
+            "cluster_roles": ["HAS"] if role == "PRIMARY" else [],
+            "dataguard": {
+                "role": role,
+                "target": "nexi-oracle-cairo-replica2" if role == "PRIMARY" else "nexi-oracle-cairo-primary2",
+                "transport_type": "ASYNC"
+            }
+        },
+        # Backward compatibility fields
+        "identity": {
+            "db_unique_name": container_name.upper().replace("-", "_"),
+            "db_name": container_name,
+            "family": "ORACLE",
+            "engine": "ORACLE",
+            "role": role,
+            "environment": environment,
+            "host": "127.0.0.1",
+            "gateway_ref": gateway
+        },
+        "connection": {
+            "port": port,
+            "container": container_name,
+            "service_name": "ORCL",
+            "type": "DOCKER"
+        },
+        "state": {
+            "status": "UP",
+            "last_seen": datetime.now().isoformat()
+        },
+        "created_at": datetime.now()
+    }
+
+def build_nosql_doc(container_name, port, engine, environment="INFRASTRUCTURE"):
+    """Build a document for NoSQL databases"""
+    return {
+        "metadata": {
+            "extraction_timestamp": datetime.now().isoformat(),
+            "agent_version": "2.0.0",
+            "db_technology": engine.upper(),
+            "environment": environment
+        },
+        "identity": {
+            "db_unique_name": container_name.upper().replace("-", "_"),
+            "db_name": container_name,
+            "family": engine.upper(),
+            "engine": engine.upper(),
+            "role": "PRIMARY",
+            "environment": environment,
+            "host": "127.0.0.1"
+        },
+        "connection": {
+            "port": port,
+            "container": container_name,
+            "type": "DOCKER"
+        },
+        "state": {
+            "status": "UP",
+            "last_seen": datetime.now().isoformat()
+        },
+        "created_at": datetime.now()
+    }
+
+# Generate hierarchical documents
+inventory_databases_docs = [
+    # PostgreSQL Instances
+    build_postgres_doc("nexi-pg-milano-prod2", 5432, "PRODUCTION", "PRIMARY"),
+    build_postgres_doc("nexi-pg-milano-dev2", 5433, "DEVELOPMENT", "DEV"),
+    build_postgres_doc("nexi-pg-milano-stg2", 5434, "STAGING", "STAGING"),
+    build_postgres_doc("nexi-pg-bratislava-prod2", 5437, "PRODUCTION", "PRIMARY", "nexi-gw-bratislava2"),
+    build_postgres_doc("nexi-pg-bratislava-dev2", 5438, "DEVELOPMENT", "DEV", "nexi-gw-bratislava2"),
+    # Oracle Instances
+    build_oracle_doc("nexi-oracle-cairo-primary2", 1521, "PRODUCTION", "PRIMARY"),
+    build_oracle_doc("nexi-oracle-cairo-replica2", 1522, "DISASTER_RECOVERY", "REPLICA"),
+    # NoSQL Instances
+    build_nosql_doc("nexi-mongodb2", 27017, "MONGODB"),
+    build_nosql_doc("nexi-redis2", 6379, "REDIS"),
+    build_nosql_doc("nexi-qdrant2", 6333, "QDRANT", "AI_INFRASTRUCTURE"),
 ]
 
 # 5. Guide Templates - JSON Schemas for Users
