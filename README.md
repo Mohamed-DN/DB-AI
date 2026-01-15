@@ -70,25 +70,29 @@ Click on the module name to view detailed documentation and diagrams.
 
 ---
 
-## 🚀 Quick Start (Windows)
+## 🎮 System Control
 
-1.  **Start System**:
-    ```powershell
-    .\scripts\setup_v2.ps1
-    ```
-2.  **Access Dashboard**:
-    Open [http://localhost:4002](http://localhost:4002)
-3.  **Run Manual Discovery** (Optional):
-    ```powershell
-    python Agents/Scout/main.py --once
-    ```
+### 1. Requirements
+- **Docker Desktop** (running)
+- **Python 3.10+**
+- **PowerShell** (Admin recommended)
+
+### 2. Commands (Ops)
+All scripts are located in `ops/scripts/`.
+
+| Action | Command | Description |
+|--------|---------|-------------|
+| **🚀 START** | `.\ops\scripts\setup_v2.ps1` | Starts the full stack (Containers, API, Frontend). |
+| **🛑 STOP** | `.\ops\scripts\cleanup_v2.ps1` | Stops all containers and kills python processes. |
+| **🧹 CLEAN** | `docker system prune -f` | **Warning**: Removes all stopped containers (Use with caution). |
 
 ---
 
 ## 📚 Essential Reading
 
-- **[Pipeline Architecture](docs/pipeline_explained.md)**: How raw data becomes insights.
-- **[Data Ingestion Specs](docs/data_ingestion_specs.md)**: Details on WAL, RMAN, and ASM data collection.
+- **[System Architecture](docs/architecture/system_architecture.md)**: High-level design and component interaction.
+- **[Agents Overview](docs/architecture/agents_overview.md)**: Details on the autonomous workers.
+- **[Qdrant Basics](docs/references/qdrant_basics.md)**: Understanding the Vector DB.
 
 ---
 
