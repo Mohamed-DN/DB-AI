@@ -40,7 +40,7 @@ graph TD
     subgraph "AI Core (Orchestrator)"
         Backend <-->|Query| Orchestrator[AI Orchestrator]
         Orchestrator <-->|RAG| Qdrant[(Qdrant Vector DB)]
-        Orchestrator <-->|Inference| Ollama[Local LLM (Ollama)]
+        Orchestrator <-->|Inference| Ollama["Local LLM (Ollama)"]
     end
 
     %% Class Definitions for Styling
@@ -61,12 +61,12 @@ Click on the module name to view detailed documentation and diagrams.
 
 | Module | Icon | Role | Description |
 |--------|:----:|------|-------------|
-| **[Agents](./Agents/README.md)** | 🤖 | **The Hands** | Autonomous workers that discover (`Scout`), monitor (`Collector`), and analyze (`Watcher`) database infrastructure. |
-| **[Orchestrator](./Orchestrator/README.md)** | 🧠 | **The Brain** | The AI Core handling LLM interactions, RAG pipelines, and decision-making logic. |
-| **[WebInterface](./WebInterface/README.md)** | 💻 | **The Face** | The user-facing dashboard (React) and the API server (FastAPI) enabling control and visibility. |
-| **[MongoDB](./MongoDB/README.md)** | 💾 | **The Memory** | Central data store schemas, initialization scripts, and state management. |
-| **[docker-lab](./docker-lab)** | 🐳 | **Simulation** | Sandbox environment with Oracle, Postgres, and other containers for safe testing. |
-| **[scripts](./scripts)** | 🛠️ | **Tools** | Essential automation scripts for setup, cleanup, and maintenance `setup_v2.ps1`. |
+| **[api_agents](./api_agents/README.md)** | 🤖 | **Backend & Agents** | Unified backend layer with FastAPI Gateway and Autonomous Workers (`Scout`, `Collector`, `Watcher`). |
+| **[orchestrator](./orchestrator/README.md)** | 🧠 | **The Brain** | The AI Core handling LLM interactions, RAG pipelines, and decision-making logic. |
+| **[web](./web/README.md)** | 💻 | **The Face** | The user-facing dashboard (`web/dashboard`) and legacy interfaces. |
+| **[mongo](./mongo/README.md)** | 💾 | **The Memory** | Central data store schemas, scripts, and seeds. |
+| **[ops](./ops/README.md)** | 🛠️ | **Operations** | Infrastructure tools, Docker Lab (`ops/docker-lab`), and Scripts (`ops/scripts`). |
+| **[llm](./llm/README.md)** | 🗣️ | **Intelligence** | Configuration and clients for Large Language Models. |
 
 ---
 
