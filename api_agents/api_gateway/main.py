@@ -292,12 +292,12 @@ AGENTS_STATE = {
     "forensicanalyzer": {"running": False, "process": None},
     "checkmk_bridge": {"running": False, "process": None}
 }
-# Map agent names to script paths
+# Map agent names to script paths (using specific agent filenames)
 AGENT_SCRIPTS = {
-    "scout": "../workers/Scout/main.py",
-    "collector": "../workers/Collector/main.py",
-    "watcher": "../workers/Watcher/main.py",
-    "criticalalert": "../workers/CriticalAlert/main.py",
+    "scout": "../workers/Scout/scout_agent.py",
+    "collector": "../workers/Collector/collector_agent.py",
+    "watcher": "../workers/Watcher/watcher_agent.py",
+    "criticalalert": "../workers/CriticalAlert/critical_alert_agent.py",
     "forensicanalyzer": "../workers/Watcher/ai_analyzer.py",
     "checkmk_bridge": "../workers/CheckMK_Bridge/main.py"
 }
