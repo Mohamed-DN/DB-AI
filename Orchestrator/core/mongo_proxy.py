@@ -1,6 +1,20 @@
 import subprocess
 import json
 import os
+import re
+
+# Pattern for safe identifiers (alphanumeric, underscore, dash, dot)
+SAFE_ID_PATTERN = re.compile(r'^[A-Za-z0-9_\-\.]+$')
+
+def sanitize_identifier(value: str, field_name: str = "value") -> str:
+    """Validate and sanitize identifiers to prevent injection attacks."""
+    if not value or not isinstance(value, str):
+        raise ValueError(f"Invalid {field_name}: must be a non-empty string")
+    if len(value) > 128:
+        raise ValueError(f"Invalid {field_name}: too long (max 128 chars)")
+    if not SAFE_ID_PATTERN.match(value):
+        raise ValueError(f"Invalid {field_name}: contains unsafe characters")
+    return value
 
 class MongoProxy:
     """Proxy to interact with MongoDB via Docker CLI when PyMongo fails"""
@@ -58,11 +72,8 @@ class MongoProxy:
         return self.execute_eval(js_cmd)
 
     def mark_as_processed(self, alert_id, analysis):
-        # alert_id from JSON is string if ObjectId. 
-        # Need to wrap in ObjectId() if it's an ID.
-        # But wait, find().toArray() returns _id as string? 
-        # mongosh JSON.stringify might return specific format.
-        # Let's assume input id is string.
+        # Validate alert_id to prevent injection
+        alert_id = sanitize_identifier(str(alert_id), "alert_id")
         analysis_json = json.dumps(analysis)
         js_cmd = f"db.monitoring_alerts.updateOne({{_id: ObjectId('{alert_id}')}}, {{$set: {{processed: true, ai_analysis: {analysis_json}}}}})"
         return self.execute_eval(js_cmd)
@@ -72,6 +83,8 @@ class MongoProxy:
         return self.execute_eval(js) or []
 
     def update_metrics(self, db_name, metrics):
+        # Validate db_name to prevent injection
+        db_name = sanitize_identifier(db_name, "db_name")
         m_json = json.dumps(metrics)
         js = f"db.inventory_databases.updateOne({{ 'identity.db_unique_name': '{db_name}' }}, {{ $set: {{ 'state.metrics': {m_json}, 'state.last_metric_update': new Date() }} }})"
         return self.execute_eval(js)
@@ -82,11 +95,17 @@ class MongoProxy:
         name = db_doc.get('identity', {}).get('db_unique_name')
         if not name: return None
         
+        # Validate name to prevent injection
+        name = sanitize_identifier(name, "db_unique_name")
         js_cmd = f"db.inventory_databases.updateOne({{ 'identity.db_unique_name': '{name}' }}, {{ $set: {doc_json} }}, {{ upsert: true }})"
         return self.execute_eval(js_cmd)
 
     def upsert_storage(self, db_name, engine, storage_items):
         """Upsert storage data to inventory_storage collection"""
+        # Validate inputs to prevent injection
+        db_name = sanitize_identifier(db_name, "db_name")
+        engine = sanitize_identifier(engine, "engine")
+        
         storage_doc = {
             "db_ref": db_name,
             "engine": engine,
@@ -101,5 +120,9 @@ class MongoProxy:
 
     def update_status(self, db_name, status):
         """Update just the status field"""
+        # Validate inputs to prevent injection
+        db_name = sanitize_identifier(db_name, "db_name")
+        status = sanitize_identifier(status, "status")
         js = f"db.inventory_databases.updateOne({{ 'identity.db_unique_name': '{db_name}' }}, {{ $set: {{ 'state.status': '{status}', 'state.last_check': new Date() }} }})"
         return self.execute_eval(js)
+
