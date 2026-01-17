@@ -2,7 +2,7 @@
 Nexi AI CMDB - API Gateway
 FastAPI application with modular router architecture.
 
-Version: 3.0.0
+Version: 3.1.0
 """
 import sys
 import os
@@ -12,6 +12,7 @@ sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '../.
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
 
 # Import configuration
 from .config import ALLOWED_ORIGINS
@@ -25,6 +26,7 @@ from .routers.system import router as system_router
 from .routers.metrics import router as metrics_router
 from .routers.emails import router as emails_router
 from .routers.connection import router as connection_router
+from .routers.tasks import router as tasks_router
 
 # =============================================================================
 # FastAPI Application
@@ -32,8 +34,10 @@ from .routers.connection import router as connection_router
 
 app = FastAPI(
     title="Nexi AI CMDB",
-    version="3.0.0",
-    description="AI-Powered Database Management - Modular Architecture"
+    version="3.1.0",
+    description="AI-Powered Database Management - Modular Architecture",
+    docs_url="/docs",
+    redoc_url="/redoc"
 )
 
 # =============================================================================
@@ -63,6 +67,7 @@ app.include_router(llm_router, prefix="/api", tags=["LLM"])
 app.include_router(metrics_router, prefix="/api", tags=["Metrics"])
 app.include_router(emails_router, prefix="/api", tags=["Emails"])
 app.include_router(connection_router, prefix="/api", tags=["Connection"])
+app.include_router(tasks_router, prefix="/api", tags=["Tasks"])
 
 # =============================================================================
 # Startup Event
@@ -71,8 +76,8 @@ app.include_router(connection_router, prefix="/api", tags=["Connection"])
 @app.on_event("startup")
 async def startup_event():
     print("=" * 60)
-    print("🚀 Nexi AI CMDB v3.0.0 - Modular Architecture")
-    print(f"📁 Routers loaded: inventory, alerts, agents, llm, system, metrics, emails, connection")
+    print("🚀 Nexi AI CMDB v3.1.0 - Modular Architecture")
+    print(f"📁 Routers loaded: inventory, alerts, agents, llm, system, metrics, emails, connection, tasks")
     print(f"🌐 CORS Origins: {ALLOWED_ORIGINS}")
     print("=" * 60)
 
