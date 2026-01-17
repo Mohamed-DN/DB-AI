@@ -27,6 +27,7 @@ from .routers.metrics import router as metrics_router
 from .routers.emails import router as emails_router
 from .routers.connection import router as connection_router
 from .routers.tasks import router as tasks_router
+from .routers.workflows import router as workflows_router
 
 # =============================================================================
 # FastAPI Application
@@ -68,6 +69,7 @@ app.include_router(metrics_router, prefix="/api", tags=["Metrics"])
 app.include_router(emails_router, prefix="/api", tags=["Emails"])
 app.include_router(connection_router, prefix="/api", tags=["Connection"])
 app.include_router(tasks_router, prefix="/api", tags=["Tasks"])
+app.include_router(workflows_router, prefix="/api", tags=["Workflows"])
 
 # =============================================================================
 # Startup Event
@@ -77,7 +79,7 @@ app.include_router(tasks_router, prefix="/api", tags=["Tasks"])
 async def startup_event():
     print("=" * 60)
     print("🚀 Nexi AI CMDB v3.1.0 - Modular Architecture")
-    print(f"📁 Routers loaded: inventory, alerts, agents, llm, system, metrics, emails, connection, tasks")
+    print(f"📁 Routers loaded: inventory, alerts, agents, llm, system, metrics, emails, connection, tasks, workflows")
     print(f"🌐 CORS Origins: {ALLOWED_ORIGINS}")
     print("=" * 60)
 
