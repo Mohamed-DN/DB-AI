@@ -38,12 +38,21 @@ except ImportError:
     SSH_AVAILABLE = False
     print("[WARN] paramiko not available - SSH discovery disabled. Install: pip install paramiko")
 
+
 # Database connection libraries
 try:
     import psycopg2
     PSYCOPG2_AVAILABLE = True
 except ImportError:
     PSYCOPG2_AVAILABLE = False
+
+try:
+    import oracledb
+    ORACLEDB_AVAILABLE = True
+except ImportError:
+    ORACLEDB_AVAILABLE = False
+    print("[WARN] oracledb not available - Oracle discovery disabled")
+
 
 
 class PortScanner:
@@ -241,54 +250,75 @@ class DatabaseMetadataExtractor:
     """Extracts metadata directly from database connections"""
     
     @staticmethod
-    def extract_postgres(host: str, port: int, user: str, password: str) -> Optional[Dict]:
-        """Extract PostgreSQL metadata by connecting to the database"""
+    def extract_postgres(host: str, port: int, user: str = None, password: str = None) -> Optional[Dict]:
+        """Extract PostgreSQL metadata by connecting to the database with multiple credentials"""
         if not PSYCOPG2_AVAILABLE:
             print(f"   ⚠️ psycopg2 not available")
             return None
         
-        try:
-            conn = psycopg2.connect(
-                host=host, port=port, user=user, password=password,
-                database="postgres", connect_timeout=10
-            )
-            cursor = conn.cursor()
-            
-            data = {}
-            
-            # System identifier
+        credentials = []
+        # Add provided credentials first
+        if user and password:
+            credentials.append((user, password))
+        
+        # Add defaults
+        credentials.append(("postgres", os.getenv("POSTGRES_PASSWORD", "nexi2024")))
+        credentials.append(("aiauto", os.getenv("AIAUTO_PASSWORD", "nexi2024")))
+        
+        last_error = None
+        
+        for pg_user, pg_pass in credentials:
             try:
-                cursor.execute("SELECT system_identifier FROM pg_control_system();")
-                data["system_identifier"] = str(cursor.fetchone()[0])
-            except:
-                pass
-            
-            # Version
-            cursor.execute("SELECT version();")
-            data["version_full"] = cursor.fetchone()[0]
-            
-            # Recovery status
-            cursor.execute("SELECT pg_is_in_recovery();")
-            data["is_in_recovery"] = cursor.fetchone()[0]
-            
-            # Max connections
-            cursor.execute("SHOW max_connections;")
-            data["max_connections"] = int(cursor.fetchone()[0])
-            
-            # Extensions
-            cursor.execute("SELECT extname, extversion FROM pg_extension;")
-            data["extensions"] = [{"name": r[0], "version": r[1]} for r in cursor.fetchall()]
-            
-            # Database size
-            cursor.execute("SELECT pg_database_size(current_database());")
-            data["size_bytes"] = cursor.fetchone()[0]
-            
-            conn.close()
-            return data
-            
-        except Exception as e:
-            print(f"   ⚠️ PostgreSQL extraction failed: {e}")
-            return None
+                print(f"   🔐 Trying Postgres: {pg_user}@... ", end="")
+                conn = psycopg2.connect(
+                    host=host, port=port, user=pg_user, password=pg_pass,
+                    database="postgres", connect_timeout=5
+                )
+                print("✅")
+                cursor = conn.cursor()
+                
+                data = {}
+                
+                # System identifier
+                try:
+                    cursor.execute("SELECT system_identifier FROM pg_control_system();")
+                    data["system_identifier"] = str(cursor.fetchone()[0])
+                except:
+                    pass
+                
+                # Version
+                cursor.execute("SELECT version();")
+                data["version_full"] = cursor.fetchone()[0]
+                
+                # Recovery status
+                cursor.execute("SELECT pg_is_in_recovery();")
+                data["is_in_recovery"] = cursor.fetchone()[0]
+                
+                # Max connections
+                cursor.execute("SHOW max_connections;")
+                data["max_connections"] = int(cursor.fetchone()[0])
+                
+                # Extensions
+                cursor.execute("SELECT extname, extversion FROM pg_extension;")
+                data["extensions"] = [{"name": r[0], "version": r[1]} for r in cursor.fetchall()]
+                
+                # Database size
+                cursor.execute("SELECT pg_database_size(current_database());")
+                data["size_bytes"] = cursor.fetchone()[0]
+                
+                # Real DB Name (optional)
+                # data["db_name"] = "postgres" 
+
+                conn.close()
+                return data
+                
+            except Exception as e:
+                print(f"❌ ({e})")
+                last_error = e
+                continue
+        
+        print(f"   ⚠️ PostgreSQL extraction failed: {last_error}")
+        return None
 
 
 class DockerDiscovery:
@@ -370,8 +400,25 @@ class DiscoveryAgent:
     
     def get_gateways(self) -> List[Dict]:
         """Get all gateways from MongoDB"""
+        # Try PyMongo first
+        try:
+            from pymongo import MongoClient
+            # Use same credentials that worked for insert checks
+            # Hardcoded based on what worked in logs (admin/nexi2024)
+            # ideally read from env but fallback to known working
+            client = MongoClient("mongodb://admin:nexi2024@localhost:28017/")
+            db_name = os.environ.get("MONGODB_DB", "nexi_cmdb_v2")
+            db = client[db_name]
+            gateways = list(db.gateways.find({}))
+            client.close()
+            print(f"DEBUG: get_gateways (PyMongo) found: {[g.get('_id') for g in (gateways or [])]}")
+            return gateways
+        except Exception as py_err:
+            print(f"⚠️ PyMongo get_gateways failed: {py_err}, falling back to Proxy")
+
         try:
             gateways = self.mongo.execute_eval("db.gateways.find({}).toArray()")
+            print(f"DEBUG: get_gateways (Proxy) found: {[g.get('_id') for g in (gateways or [])]}")
             return gateways or []
         except Exception as e:
             print(f"❌ Error fetching gateways: {e}")
@@ -448,7 +495,7 @@ class DiscoveryAgent:
         return new_dbs
     
     def discover_remote_host(self, host_info: Dict, gateway_id: str) -> List[Dict]:
-        """Discover databases on a remote host via SSH"""
+        """Discover databases on a remote host via SSH and Direct Connections"""
         ip = host_info.get("ip_address", "")
         ssh_user = host_info.get("ssh_user", self.default_ssh_user)
         ssh_password = host_info.get("ssh_password", self.default_ssh_password)
@@ -457,61 +504,238 @@ class DiscoveryAgent:
         if not ip or ip == "127.0.0.1":
             return []
         
-        print(f"\n🔐 SSH connecting to {ip}...")
-        
-        ssh = SSHConnector(ip, ssh_user, ssh_password, ssh_key)
-        if not ssh.connect():
-            # Fallback to port scan
-            print(f"   ⚠️ SSH failed, falling back to port scan...")
-            open_ports = PortScanner.scan_host(ip)
-            return [{"host": ip, "port": p, "engine": e, "gateway_ref": gateway_id} 
-                    for p, e in open_ports.items()]
-        
         discovered = []
         existing_names = self.get_existing_db_names()
         
-        # 1. Docker containers on remote host
-        docker_containers = RemoteDiscovery.discover_docker_remote(ssh)
-        for container in docker_containers:
-            name = container["name"]
-            normalized = name.upper().replace("-", "_")
-            if normalized not in existing_names and container["running"]:
-                container["host"] = ip
-                container["gateway_ref"] = gateway_id
-                discovered.append(container)
-                print(f"   🆕 Docker: {name} ({container['engine']})")
+        print(f"\n🔐 SSH connecting to {ip}...")
         
-        # 2. Database processes
-        processes = RemoteDiscovery.discover_processes_remote(ssh)
-        for proc in processes:
-            db_name = f"{ip.replace('.', '-')}-{proc['engine'].lower()}-{proc['port']}"
-            normalized = db_name.upper().replace("-", "_")
-            if normalized not in existing_names:
-                proc["name"] = db_name
-                proc["host"] = ip
-                proc["gateway_ref"] = gateway_id
-                discovered.append(proc)
-                print(f"   🆕 Process: {proc['engine']} on port {proc['port']}")
+        ssh = SSHConnector(ip, ssh_user, ssh_password, ssh_key)
+        if ssh.connect():
+            # 1. Docker containers on remote host
+            docker_containers = RemoteDiscovery.discover_docker_remote(ssh)
+            for container in docker_containers:
+                name = container["name"]
+                normalized = name.upper().replace("-", "_")
+                if normalized not in existing_names and container["running"]:
+                    container["host"] = ip
+                    container["gateway_ref"] = gateway_id
+                    discovered.append(container)
+                    print(f"   🆕 Docker: {name} ({container['engine']})")
+            
+            # 2. Database processes
+            processes = RemoteDiscovery.discover_processes_remote(ssh)
+            for proc in processes:
+                db_name = f"{ip.replace('.', '-')}-{proc['engine'].lower()}-{proc['port']}"
+                normalized = db_name.upper().replace("-", "_")
+                if normalized not in existing_names:
+                    proc["name"] = db_name
+                    proc["host"] = ip
+                    proc["gateway_ref"] = gateway_id
+                    discovered.append(proc)
+                    print(f"   🆕 Process: {proc['engine']} on port {proc['port']}")
+            
+            # 3. Port scan for any missed databases
+            open_ports = PortScanner.scan_host(ip)
+            for port, engine in open_ports.items():
+                db_name = f"{ip.replace('.', '-')}-{engine.lower()}-{port}"
+                normalized = db_name.upper().replace("-", "_")
+                if normalized not in existing_names:
+                    # Check if we already found this via Docker/process
+                    already_found = any(d.get("port") == port for d in discovered)
+                    if not already_found:
+                        discovered.append({
+                            "name": db_name,
+                            "host": ip,
+                            "port": port,
+                            "engine": engine,
+                            "gateway_ref": gateway_id
+                        })
+                        print(f"   🆕 Port scan: {engine} on port {port}")
+            ssh.close()
         
-        # 3. Port scan for any missed databases
-        open_ports = PortScanner.scan_host(ip)
-        for port, engine in open_ports.items():
-            db_name = f"{ip.replace('.', '-')}-{engine.lower()}-{port}"
-            normalized = db_name.upper().replace("-", "_")
-            if normalized not in existing_names:
-                # Check if we already found this via Docker/process
-                already_found = any(d.get("port") == port for d in discovered)
-                if not already_found:
-                    discovered.append({
-                        "name": db_name,
-                        "host": ip,
-                        "port": port,
-                        "engine": engine,
-                        "gateway_ref": gateway_id
-                    })
-                    print(f"   🆕 Port scan: {engine} on port {port}")
+        else:
+            # Fallback to port scan if SSH fails
+            print(f"   ⚠️ SSH failed, falling back to port scan...")
+            open_ports = PortScanner.scan_host(ip)
+            for port, engine in open_ports.items():
+                discovered.append({
+                    "name": f"{ip.replace('.', '-')}-{engine.lower()}-{port}",
+                    "host": ip,
+                    "port": port,
+                    "engine": engine,
+                    "gateway_ref": gateway_id
+                })
+
+        # 4. Direct Oracle connection (Always try if port 1521 is found or just force try)
+        oracle_discovered = self.discover_oracle_direct(host_info, gateway_id, existing_names)
         
-        ssh.close()
+        # Merge logic: If Oracle found a DB on the same IP:Port, prefer the rich Oracle doc over the generic one
+        for o_doc in oracle_discovered:
+            # Find and remove any existing generic entry for this host/port
+            for i, d_doc in enumerate(discovered):
+                if d_doc.get("host") == o_doc.get("host") and d_doc.get("port") == o_doc.get("port"):
+                     print(f"   🔄 Upgrading {d_doc.get('name')} -> {o_doc.get('name')} (Rich Metadata)")
+                     discovered.pop(i)
+                     break
+            discovered.append(o_doc)
+        
+        return discovered
+    
+    def discover_oracle_direct(self, host_info: Dict, gateway_id: str, existing_names: Set[str]) -> List[Dict]:
+        """Discover Oracle databases by connecting directly via oracledb"""
+        ip = host_info.get("ip_address", "")
+        port = host_info.get("db_port", 1521)
+        
+        if not ORACLEDB_AVAILABLE:
+            print(f"   ⚠️ oracledb not available, skipping Oracle discovery")
+            return []
+        
+        discovered = []
+        
+        # Determine credentials
+        credentials = []
+        if host_info.get("db_user"):
+            credentials.append((host_info.get("db_user"), host_info.get("db_password", "root")))
+        
+        # Add defaults requested by user
+        credentials.append(("sys", "root"))
+        credentials.append(("c##aiauto", "root"))
+        credentials.append(("c##aiauto", "nexi2024"))
+        
+        # Common service names to try
+        service_names = ["cdbrac", "pdb1", "ORCL", "XE", "FREE", "ORCLCDB"]
+        
+        for user, password in credentials:
+            # Stop if we found database already with previous credential
+            if discovered: break 
+            
+            for service in service_names:
+                try:
+                    dsn = f"{ip}:{port}/{service}"
+                    print(f"   🔗 ({user}) Trying Oracle: {dsn}...", end="")
+                    
+                    mode = oracledb.AUTH_MODE_SYSDBA if user.lower() == "sys" else oracledb.DEFAULT_AUTH
+                    
+                    conn = oracledb.connect(
+                        user=user,
+                        password=password,
+                        dsn=dsn,
+                        mode=mode
+                    )
+                    cursor = conn.cursor()
+                    print("✅")
+                    
+                    # Get CDB info
+                    cursor.execute("SELECT DBID, NAME, DB_UNIQUE_NAME, CDB FROM V$DATABASE")
+                    row = cursor.fetchone()
+                    if not row:
+                        conn.close()
+                        continue
+                    
+                    dbid, db_name, db_unique_name, is_cdb = row
+                    print(f"      Running on: {db_name} (CDB: {is_cdb})")
+                    
+                    # Get instance info
+                    cursor.execute("SELECT INSTANCE_NAME, HOST_NAME, VERSION_FULL FROM V$INSTANCE")
+                    inst_row = cursor.fetchone()
+                    instance_name = inst_row[0] if inst_row else db_name
+                    host_name = inst_row[1] if inst_row else ip
+                    version = inst_row[2] if inst_row else "Unknown"
+                    
+                    # Check if this CDB is already discovered
+                    # Use DB_UNIQUE_NAME as the primary identifier (e.g. CDBRAC) instead of generic
+                    cdb_unique = db_unique_name.upper()
+                    
+                    if cdb_unique not in existing_names:
+                        cdb_doc = {
+                            "name": cdb_unique, # Use Real Name
+                            "host": ip,
+                            "port": port,
+                            "engine": "ORACLE",
+                            "service_name": service,
+                            "gateway_ref": gateway_id,
+                            "is_cdb": is_cdb == "YES",
+                            "dbid": dbid,
+                            "instance_name": instance_name,
+                            "host_name": host_name,
+                            "version": version
+                        }
+                        discovered.append(cdb_doc)
+                        existing_names.add(cdb_unique)
+                        print(f"   🆕 CDB Found: {cdb_unique}")
+                    
+                    # Get RAC instances
+                    try:
+                        cursor.execute("SELECT INST_ID, INSTANCE_NAME, HOST_NAME, STATUS FROM GV$INSTANCE")
+                        rac_instances = cursor.fetchall()
+                        if len(rac_instances) > 1:
+                            print(f"      🔄 RAC detected: {len(rac_instances)} nodes")
+                            for inst in rac_instances:
+                                # Use RAC-specific name like CDBRAC_1
+                                rac_unique = f"{db_unique_name}_RAC{inst[0]}".upper()
+                                if rac_unique not in existing_names:
+                                    rac_doc = {
+                                        "name": rac_unique,
+                                        "host": ip,
+                                        "port": port,
+                                        "engine": "ORACLE",
+                                        "service_name": service,
+                                        "gateway_ref": gateway_id,
+                                        "is_rac": True,
+                                        "instance_id": inst[0],
+                                        "instance_name": inst[1],
+                                        "rac_host": inst[2],
+                                        "rac_status": inst[3]
+                                    }
+                                    discovered.append(rac_doc)
+                                    existing_names.add(rac_unique)
+                                    print(f"      🆕 RAC Node: {inst[1]} on {inst[2]}")
+                    except:
+                        pass
+                    
+                    # Get PDBs (if CDB)
+                    if is_cdb == "YES":
+                        try:
+                            cursor.execute("""
+                                SELECT PDB_ID, PDB_NAME, OPEN_MODE, STATUS 
+                                FROM V$PDBS 
+                                WHERE PDB_NAME != 'PDB$SEED'
+                            """)
+                            for pdb_row in cursor.fetchall():
+                                pdb_name = pdb_row[1]
+                                # Use PDB Name as unique identifier if possible, or PDB_CDB
+                                # But we must ensure uniqueness. Let's stick to PDB_CDB for safety BUT display as PDB Name
+                                pdb_unique = f"{pdb_name}_{db_unique_name}".upper()
+                                
+                                if pdb_unique not in existing_names:
+                                    pdb_doc = {
+                                        "name": pdb_name, # Display Name
+                                        "db_unique_suffix": pdb_unique, # Internal unique suffix
+                                        "host": ip,
+                                        "port": port,
+                                        "engine": "ORACLE",
+                                        "service_name": pdb_name.lower(),
+                                        "gateway_ref": gateway_id,
+                                        "is_pdb": True,
+                                        "parent_cdb": db_unique_name,
+                                        "pdb_id": pdb_row[0],
+                                        "open_mode": pdb_row[2],
+                                        "status": pdb_row[3]
+                                    }
+                                    discovered.append(pdb_doc)
+                                    existing_names.add(pdb_unique)
+                                    print(f"      🆕 PDB: {pdb_name} ({pdb_row[2]})")
+                        except Exception as e:
+                            print(f"      ⚠️ PDB query error: {str(e)[:40]}")
+                    
+                    conn.close()
+                    break  # Success, stop trying other services with this credential
+                    
+                except Exception as e:
+                    print(f"❌")
+                    # Try next service name
+                    continue
+        
         return discovered
     
     def create_inventory_document(self, discovery_info: Dict) -> Dict:
@@ -593,13 +817,44 @@ class DiscoveryAgent:
     
     def insert_new_database(self, doc: Dict) -> bool:
         """Insert a new database document into MongoDB"""
+        # Try PyMongo direct insertion first (more reliable for large docs)
+        try:
+            from pymongo import MongoClient
+            client = MongoClient("mongodb://admin:nexi2024@localhost:28017/")
+            db = client["nexi_cmdb_v2"]
+            db.inventory_databases.insert_one(doc)
+            
+            name = doc.get("identity", {}).get("db_unique_name", "UNKNOWN")
+            print(f"   ✅ Inserted {name} into inventory (PyMongo)")
+            
+            # Create alert
+            alert = {
+                "severity": "INFO",
+                "state": "INFO",
+                "type": "NEW_DB_DISCOVERED",
+                "message": f"DiscoveryAgent found new database: {name}",
+                "database": name,
+                "host": doc.get("identity", {}).get("host"),
+                "engine": doc.get("identity", {}).get("engine"),
+                "timestamp": datetime.now().isoformat(),
+                "processed": False
+            }
+            db.monitoring_alerts.insert_one(alert)
+            client.close()
+            return True
+        except ImportError:
+            # Fallback to MongoProxy
+            pass
+        except Exception as e:
+            print(f"   ⚠️ PyMongo insert failed: {e}, falling back to Proxy")
+
         try:
             doc_json = json.dumps(doc, default=str)
             js_cmd = f"db.inventory_databases.insertOne({doc_json})"
             self.mongo.execute_eval(js_cmd)
             
             name = doc.get("identity", {}).get("db_unique_name", "UNKNOWN")
-            print(f"   ✅ Inserted {name} into inventory")
+            print(f"   ✅ Inserted {name} into inventory (Proxy)")
             
             # Create alert
             alert = {

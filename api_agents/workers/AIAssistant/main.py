@@ -19,21 +19,10 @@ from langchain.agents import AgentExecutor, create_tool_calling_agent
 from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder
 from langchain_core.messages import HumanMessage, AIMessage
 
-from tools.database_tools import (
-    search_databases,
-    get_database_status,
-    list_databases_by_status,
-    get_database_metrics
-)
-from tools.inventory_tools import (
-    search_inventory,
-    get_pdbs_info
-)
-from tools.action_tools import (
-    manage_container,
-    get_container_logs,
-    check_system_health
-)
+from tools.inventory_tools import search_inventory, get_pdbs_info, get_inventory_summary
+from tools.action_tools import manage_container, get_container_logs, check_system_health
+from tools.database_tools import execute_sql_query, explain_query_plan, get_table_schema
+from tools.orchestration_tools import run_agent, list_agents, manage_gateway
 
 load_dotenv()
 

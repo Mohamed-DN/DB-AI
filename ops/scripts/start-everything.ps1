@@ -12,7 +12,7 @@ $ProjectRoot = "c:\AI-Nexi\Nexi_DB_AI"
 
 # 1. Start Docker Containers
 Write-Host "[1/3] Starting Docker Lab..." -ForegroundColor Yellow
-cd "$ProjectRoot\ops\docker-lab"
+Set-Location "$ProjectRoot\ops\docker-lab"
 docker compose up -d
 
 # Write-Host "[2/3] Starting MongoDB Stack..." -ForegroundColor Yellow

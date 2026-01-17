@@ -89,15 +89,20 @@ export default function AIChat() {
         }
     };
 
+    const { data: llmConfig } = useQuery({
+        queryKey: ['llmConfig'],
+        queryFn: api.getLlmConfig,
+    });
+
     useEffect(() => {
         messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
     }, [messages]);
 
     useEffect(() => {
-        if (currentModel?.model) {
-            setSelectedModel(currentModel.model);
+        if (llmConfig?.current_model) {
+            setSelectedModel(llmConfig.current_model);
         }
-    }, [currentModel]);
+    }, [llmConfig]);
 
     const gpuInfo = gpuStatus && !gpuStatus.error
         ? `GPU: ${(gpuStatus.memory_used_mb / 1024).toFixed(1)}/${(gpuStatus.memory_total_mb / 1024).toFixed(1)}GB`
@@ -111,19 +116,20 @@ export default function AIChat() {
                     <Cpu className="w-5 h-5 text-purple-400" />
                     <span className="text-gray-400">Model:</span>
                     <select
-                        className="bg-gray-800 border border-gray-600 rounded px-3 py-1 text-sm"
-                        value={selectedModel || currentModel?.model || 'deepseek-r1:14b'}
+                        className="bg-gray-800 border border-gray-600 rounded px-3 py-1 text-sm max-w-[200px]"
+                        value={selectedModel}
                         onChange={(e) => {
                             const nextModel = e.target.value;
                             setSelectedModel(nextModel);
                             switchModelMutation.mutate(nextModel);
                         }}
                     >
-                        <option value="qwen3:30b-a3b">Qwen3 30B-A3B (Best)</option>
-                        <option value="mistral-small3.1:24b">Mistral-Small 24B</option>
-                        <option value="deepseek-r1:14b">DeepSeek R1 14B (Coding)</option>
-                        <option value="qwen3:14b">Qwen3 14B</option>
-                        <option value="llama3.2:8b">Llama 3.2 8B (Fast)</option>
+                        {llmConfig?.models?.map((model: any) => (
+                            <option key={model.id} value={model.id}>
+                                {model.name} {model.recommended && '(Recommended)'}
+                            </option>
+                        ))}
+                        {!llmConfig && <option>Loading...</option>}
                     </select>
                 </div>
                 <span className="text-sm text-gray-500">{gpuInfo}</span>
@@ -143,8 +149,8 @@ export default function AIChat() {
                         )}
                         <div
                             className={`max-w-[70%] p-3 rounded-lg ${msg.role === 'user'
-                                    ? 'bg-blue-600/30 text-white'
-                                    : 'bg-gray-700/50 text-gray-200'
+                                ? 'bg-blue-600/30 text-white'
+                                : 'bg-gray-700/50 text-gray-200'
                                 }`}
                         >
                             <p className="whitespace-pre-wrap">{msg.content}</p>

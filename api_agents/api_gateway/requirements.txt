@@ -4,5 +4,8 @@ pymongo
 python-dotenv
 requests
 ollama
-langfuse
+langfuse>=2.0.0
 dnspython
+oracledb
+redis
+qdrant-client

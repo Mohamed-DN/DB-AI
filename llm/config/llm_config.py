@@ -6,6 +6,13 @@ import os
 
 # Available models optimized for 16GB VRAM
 LLM_MODELS = {
+    "deepseek-r1:8b": {
+        "name": "DeepSeek R1 8B",
+        "vram_gb": 8,
+        "description": "DeepSeek Reasoning Model (Installed)",
+        "use_case": "reasoning",
+        "recommended": True
+    },
     # Primary - Best all-rounder for 16GB VRAM
     "qwen2.5:14b": {
         "name": "Qwen 2.5 14B",
@@ -44,7 +51,7 @@ LLM_MODELS = {
 }
 
 # Default model for new installations
-DEFAULT_MODEL = "qwen2.5:14b"
+DEFAULT_MODEL = "deepseek-r1:8b"
 
 # Fallback if primary fails
 FALLBACK_MODEL = "llama3.1:8b"

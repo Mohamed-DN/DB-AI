@@ -140,9 +140,64 @@ def get_inventory():
                     else:
                         service_map[mapping.upper()] = service_entry
         
-        # 4. Enrich DB objects
+        # 4. Normalize and Enrich DB objects
+        normalized_dbs = []
         for db in dbs:
+            # --- Normalization Logic for Frontend Compatibility ---
+            # 1. Identity Normalization
+            if 'identity' not in db:
+                if 'cluster_identity' in db:
+                    # Postgres Schema
+                    db['identity'] = db['cluster_identity']
+                    # Ensure engine/topology are present
+                    if 'engine' not in db['identity']:
+                        db['identity']['engine'] = 'POSTGRES'
+                    if 'topology' not in db['identity']:
+                        db['identity']['topology'] = 'CLUSTER'
+                elif 'database_core' in db and 'identity' in db['database_core']:
+                    # Oracle Schema
+                    db['identity'] = db['database_core']['identity']
+                    # Ensure engine/topology
+                    if 'engine' not in db['identity']:
+                        db['identity']['engine'] = 'ORACLE' 
+                    if 'topology' not in db['identity']:
+                        db['identity']['topology'] = 'RAC' if db['identity'].get('is_rac') else 'SINGLE'
+
+            # 2. Connection Normalization
+            if 'connection' not in db:
+                 # Try to find host/port in other places
+                 if 'instance_details' in db: # Postgres
+                     db['connection'] = {
+                         'host': db['instance_details'].get('inet_server_addr'),
+                         'port': db['instance_details'].get('inet_server_port')
+                     }
+                 elif 'database_core' in db: # Oracle
+                     # This is harder for Oracle as connection info might be separate. 
+                     # But enricher_agent uses db['connection'] from input doc.
+                     # If the input doc was NEW schema, connection might be elsewhere.
+                     pass
+            
+            # 3. State/Status Normalization
+            if 'state' not in db:
+                db['state'] = {'status': 'UNKNOWN'}
+            
+            # 4. Configuration Normalization (Version)
+            if 'configuration' not in db:
+                db['configuration'] = {}
+            
+            if 'version' not in db['configuration']:
+                 if 'database_core' in db and 'version_info' in db['database_core']:
+                     db['configuration']['version'] = db['database_core']['version_info'].get('full_version')
+                 elif 'cluster_identity' in db:
+                     db['configuration']['version'] = db['cluster_identity'].get('version_full')
+
+            # Ensure minimal required fields for Frontend to avoid crash
+            if 'identity' not in db:
+                 db['identity'] = {'db_unique_name': 'UNKNOWN_DB', 'engine': 'UNKNOWN'}
+            
             db_name = db.get('identity', {}).get('db_unique_name', '').upper()
+            
+            # --- Business Service Enrichment ---
             # Exact match ?
             svc_info = service_map.get(db_name)
             
@@ -399,6 +454,65 @@ def stop_agent_endpoint(agent_name: str):
         raise HTTPException(status_code=500, detail=str(e))
 
 
+@app.get("/api/llm/config")
+def get_llm_config():
+    """Get available LLM models and current selection"""
+    models_list = []
+    for mid, mdata in LLM_MODELS.items():
+        models_list.append({
+            "id": mid,
+            "name": mdata["name"],
+            "description": mdata["description"],
+            "recommended": mdata.get("recommended", False)
+        })
+    
+    return {
+        "current_model": current_llm_model,
+        "models": models_list,
+        "provider": "ollama",
+        "status": "connected"
+    }
+
+@app.get("/api/rag/status")
+def get_rag_status():
+    """Get status of RAG components (Ollama + Qdrant)"""
+    import requests
+    
+    # 1. Check Ollama
+    ollama_status = {"connected": False, "models": []}
+    try:
+        # Try listing models from real Ollama instance
+        resp = requests.get(f"{OLLAMA_CONFIG['base_url']}/api/tags", timeout=2)
+        if resp.status_code == 200:
+            models_data = resp.json().get('models', [])
+            model_names = [m.get('name') for m in models_data]
+            ollama_status = {"connected": True, "models": model_names}
+        else:
+            # Fallback to configured models if API fails but we want to show 'connected' 
+            # (Wait, if API fails it is NOT connected)
+            pass
+    except:
+        # If connection fails, check if we want to show fake status based on config?
+        # No, better to show offline.
+        pass
+        
+    # 2. Check Qdrant
+    qdrant_status = {"connected": False, "collections": 0}
+    try:
+        resp = requests.get("http://localhost:6333/collections", timeout=2)
+        if resp.status_code == 200:
+            result = resp.json().get('result', {})
+            cols = result.get('collections', [])
+            qdrant_status = {"connected": True, "collections": len(cols)}
+    except:
+        pass
+        
+    return {
+        "ollama": ollama_status,
+        "qdrant": qdrant_status
+    }
+
+
 @app.post("/api/chat")
 def chat_with_ai(request: ChatRequest):
     """Interact with Local Ollama - Multi-DB Expert with Action Capabilities"""
@@ -501,17 +615,22 @@ Remember: BE HELPFUL, BE DECISIVE, SOLVE THE PROBLEM!
         trace = None
         generation = None
         if LANGFUSE_ENABLED and langfuse:
-            trace = langfuse.trace(
-                name="chat_with_ai",
-                user_id="nexi-dba-user",
-                metadata={"db_count": str(db_count), "active_alerts": str(active_alerts)}
-            )
-            generation = trace.generation(
-                name="ollama-generate",
-                model=model_to_use,
-                input=prompt,
-                metadata={"system_prompt_length": len(system_prompt)}
-            )
+            try:
+                trace = langfuse.trace(
+                    name="chat_with_ai",
+                    user_id="nexi-dba-user",
+                    metadata={"db_count": str(db_count), "active_alerts": str(active_alerts)}
+                )
+                generation = trace.generation(
+                    name="ollama-generate",
+                    model=model_to_use,
+                    input=prompt,
+                    metadata={"system_prompt_length": len(system_prompt)}
+                )
+            except Exception as e:
+                print(f"[WARN] Langfuse tracing failed: {e}")
+                trace = None
+                generation = None
         
         # Call Ollama with enhanced prompt
         full_prompt = f"System: {system_prompt}\n\nUser: {prompt}\n\nAssistant (be decisive and action-oriented):"

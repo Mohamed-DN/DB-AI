@@ -145,6 +145,11 @@ export const getCurrentModel = async (): Promise<any> => {
     return data;
 };
 
+export const getLlmConfig = async (): Promise<any> => {
+    const { data } = await api.get('/llm/config');
+    return data;
+};
+
 export const switchModel = async (model: string): Promise<void> => {
     await api.post('/llm/switch', { model });
 };
