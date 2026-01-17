@@ -69,12 +69,13 @@ def validate_identifier(value: str, label: str) -> str:
 # Current LLM model state
 current_llm_model = DEFAULT_MODEL
 
-# CORS
+# CORS - Configurable origins (default: localhost only)
+ALLOWED_ORIGINS = os.getenv("CORS_ORIGINS", "http://localhost:4002,http://localhost:5173,http://127.0.0.1:4002").split(",")
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"], 
+    allow_origins=ALLOWED_ORIGINS,
     allow_credentials=True,
-    allow_methods=["*"],
+    allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
     allow_headers=["*"],
 )
 
@@ -536,8 +537,8 @@ def chat_with_ai(request: ChatRequest):
     
     system_prompt = f"""You are NEXI DBA, an EXPERT Database Administrator AI with 20+ years of experience.
 You are a MULTI-DATABASE EXPERT specializing in:
-- **Oracle** (19c, 21c, RAC, Data Guard, RMAN, ASM, AWR, PDBs, CDBs)
-- **PostgreSQL** (15+, replication, extensions, pg_stat)
+- **Oracle** (19c, 12c, 21c, RAC, Data Guard, RMAN, ASM, AWR, PDBs, CDBs)
+- **PostgreSQL** (8+, 15+, replication, extensions, pg_stat)
 - **MySQL** (8.0+, InnoDB, replication, performance_schema)
 - **DB2** (LUW, z/OS, HADR, backup/recovery)
 - **Cassandra** (clusters, CQL, compaction, repair)
@@ -675,7 +676,30 @@ Remember: BE HELPFUL, BE DECISIVE, SOLVE THE PROBLEM!
                 
                 elif action == "run_query":
                     db_name = validate_identifier(action_json.get("database"), "database")
-                    sql = action_json.get("sql")
+                    sql = action_json.get("sql", "").strip()
+                    
+                    # SECURITY: SQL Whitelist Validation
+                    # Only allow SELECT queries and specific DBA commands
+                    SAFE_SQL_PATTERNS = [
+                        r"^\s*SELECT\s+",  # SELECT queries
+                        r"^\s*SHOW\s+",    # SHOW commands (MySQL/PG)
+                        r"^\s*DESCRIBE\s+", # DESCRIBE (Oracle/MySQL)
+                        r"^\s*DESC\s+",    # DESC shorthand
+                        r"^\s*EXPLAIN\s+", # EXPLAIN plans
+                        r"^\s*\\d",        # psql meta-commands
+                    ]
+                    
+                    sql_upper = sql.upper()
+                    is_safe = any(re.match(pattern, sql_upper, re.IGNORECASE) for pattern in SAFE_SQL_PATTERNS)
+                    
+                    # Block dangerous keywords even in SELECT
+                    DANGEROUS_KEYWORDS = ['DROP', 'DELETE', 'TRUNCATE', 'INSERT', 'UPDATE', 
+                                          'ALTER', 'CREATE', 'GRANT', 'REVOKE', 'EXEC', 
+                                          'EXECUTE', '--', ';', 'UNION']
+                    has_dangerous = any(kw in sql_upper for kw in DANGEROUS_KEYWORDS if kw not in ['--'])
+                    
+                    if not is_safe or has_dangerous:
+                        return f"⛔ **Security Block**: Only SELECT/SHOW/DESCRIBE queries allowed via AI chat.\n\nFor write operations, use the SQL terminal directly."
                     
                     # EXECUTE THE QUERY
                     try:
@@ -685,20 +709,34 @@ Remember: BE HELPFUL, BE DECISIVE, SOLVE THE PROBLEM!
                             return f"⚠️ Database **{db_name}** not found in inventory.\n\n{reply}"
                         
                         container = db_info.get('identity', {}).get('db_name') or db_info.get('identity', {}).get('host')
+                        if not container or not SAFE_IDENTIFIER_RE.match(container):
+                            return f"⚠️ Invalid container name.\n\n{reply}"
+                        
                         engine = db_info.get('identity', {}).get('engine', 'POSTGRES').upper()
                         
-                        # Build docker exec command
+                        # Get credentials from environment (NOT hardcoded)
+                        db_password = os.getenv("DB_ADMIN_PASSWORD", "")
+                        if not db_password:
+                            return f"⚠️ Database password not configured. Set DB_ADMIN_PASSWORD env var.\n\n{reply}"
+                        
+                        # Build docker exec command as ARRAY (no shell=True)
                         if engine == 'ORACLE':
-                            exec_cmd = f'docker exec {container} sqlplus -s sys/nexi2024 as sysdba <<< "{sql}"'
+                            # Use stdin for SQL to avoid command injection
+                            exec_cmd = ["docker", "exec", "-i", container, "sqlplus", "-s", f"sys/{db_password}", "as", "sysdba"]
                         elif engine == 'MYSQL':
-                            exec_cmd = f'docker exec {container} mysql -u root -ppassword -e "{sql}"'
+                            exec_cmd = ["docker", "exec", "-i", container, "mysql", "-u", "root", f"-p{db_password}", "-e", sql]
                         elif engine == 'POSTGRES':
-                            exec_cmd = f'docker exec {container} psql -U postgres -c "{sql}"'
+                            exec_cmd = ["docker", "exec", "-i", "-e", f"PGPASSWORD={db_password}", container, "psql", "-U", "postgres", "-c", sql]
                         else:
                             return f"⚠️ Unsupported engine: {engine}\n\n{reply}"
                         
-                        # Execute via subprocess
-                        result = subprocess.run(exec_cmd, shell=True, capture_output=True, text=True, timeout=30)
+                        # Execute via subprocess with shell=False (SECURE)
+                        if engine == 'ORACLE':
+                            # Oracle needs SQL via stdin
+                            result = subprocess.run(exec_cmd, input=sql, capture_output=True, text=True, timeout=30)
+                        else:
+                            result = subprocess.run(exec_cmd, capture_output=True, text=True, timeout=30)
+                        
                         output = result.stdout or result.stderr
                         
                         if result.returncode == 0:
