@@ -1,35 +1,34 @@
 """
-Connection Router - Database terminal connection endpoints
+Connection Router - Database terminal connection endpoints (Async with Motor)
 """
 import os
 import subprocess
 from fastapi import APIRouter, HTTPException
-from ..dependencies import get_mongo, validate_identifier, SAFE_IDENTIFIER_RE
+from ..services.mongo_service import get_mongo_service
+from ..dependencies import validate_identifier, SAFE_IDENTIFIER_RE
 
 router = APIRouter()
 
 
 @router.post("/action/connect/{db_name:path}")
-def connect_db(db_name: str, mode: str = "sql"):
+async def connect_db(db_name: str, mode: str = "sql"):
     """Open a terminal connection to the DB. Mode: 'sql', 'bash', or 'sysdba'. db_name can be CDB or CDB/PDB"""
     try:
         db_name = validate_identifier(db_name, "database")
         if mode not in {"sql", "bash", "sysdba"}:
             raise HTTPException(status_code=400, detail="Invalid connection mode")
         
-        mongo = get_mongo()
-        if not mongo:
-            raise HTTPException(status_code=500, detail="MongoProxy not initialized")
+        mongo = get_mongo_service()
         
         # Handle PDB paths (e.g., "ORCLCDB/ORCLPDB1")
         pdb_name = None
         if "/" in db_name:
             parent_name, pdb_name = db_name.split("/", 1)
             print(f"DEBUG: Connecting to PDB {pdb_name} of {parent_name}")
-            db_info = mongo.execute_eval(f"db.inventory_databases.findOne({{'identity.db_unique_name': '{parent_name}'}})")
+            db_info = await mongo.get_database(parent_name)
         else:
             print(f"DEBUG: Connecting to DB {db_name}")
-            db_info = mongo.execute_eval(f"db.inventory_databases.findOne({{'identity.db_unique_name': '{db_name}'}})")
+            db_info = await mongo.get_database(db_name)
 
         if not db_info:
             print(f"ERROR: Database not found: {db_name}")

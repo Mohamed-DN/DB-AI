@@ -1,5 +1,5 @@
 """
-LLM Router - AI Chat, model management, and RAG status endpoints
+LLM Router - AI Chat, model management, and RAG status endpoints (Async with Motor)
 """
 import os
 import re
@@ -7,11 +7,12 @@ import json
 import subprocess
 import requests
 from fastapi import APIRouter, HTTPException
-from ..dependencies import get_mongo, validate_identifier, SAFE_IDENTIFIER_RE
+from ..services.mongo_service import get_mongo_service
+from ..dependencies import validate_identifier, SAFE_IDENTIFIER_RE
 from ..config import (
     LLM_MODELS, DEFAULT_MODEL, FALLBACK_MODEL, OLLAMA_CONFIG,
     get_model_info, get_recommended_models, get_all_models,
-    current_llm_model, LANGFUSE_ENABLED, langfuse
+    LANGFUSE_ENABLED, langfuse
 )
 from ..models import ChatRequest, ModelSwitchRequest
 
@@ -36,7 +37,7 @@ def set_current_model_name(model: str):
 # =============================================================================
 
 @router.get("/llm/config")
-def get_llm_config():
+async def get_llm_config():
     """Get available LLM models and current selection"""
     ollama_models = []
     ollama_status = "Unknown"
@@ -67,7 +68,7 @@ def get_llm_config():
 
 
 @router.get("/llm/models")
-def get_llm_models():
+async def get_llm_models():
     """List all available LLM models"""
     return {
         "models": LLM_MODELS,
@@ -78,7 +79,7 @@ def get_llm_models():
 
 
 @router.get("/llm/current")
-def get_current_model():
+async def get_current_model():
     """Get current LLM model in use"""
     model = get_current_model_name()
     info = get_model_info(model)
@@ -86,7 +87,7 @@ def get_current_model():
 
 
 @router.post("/llm/switch")
-def switch_llm_model(req: ModelSwitchRequest):
+async def switch_llm_model(req: ModelSwitchRequest):
     """Switch to a different LLM model"""
     if req.model not in LLM_MODELS:
         raise HTTPException(
@@ -101,7 +102,7 @@ def switch_llm_model(req: ModelSwitchRequest):
 
 
 @router.get("/gpu/status")
-def get_gpu_status():
+async def get_gpu_status():
     """Get GPU status (VRAM usage)"""
     try:
         result = subprocess.run(
@@ -122,7 +123,7 @@ def get_gpu_status():
 
 
 @router.get("/rag/status")
-def get_rag_status():
+async def get_rag_status():
     """Get RAG pipeline status (Ollama + Qdrant)"""
     status = {"ollama": {"status": "Unknown"}, "qdrant": {"status": "Unknown"}}
     
@@ -164,17 +165,23 @@ def get_rag_status():
 # =============================================================================
 
 @router.post("/chat")
-def chat_with_ai(request: ChatRequest):
+async def chat_with_ai(request: ChatRequest):
     """Interact with Local Ollama - Multi-DB Expert with Action Capabilities"""
     prompt = request.message
-    mongo = get_mongo()
+    mongo = get_mongo_service()
     
     # Get system context
     try:
-        db_count = mongo.execute_eval("db.inventory_databases.countDocuments({})") if mongo else "Unknown"
-        active_alerts = mongo.execute_eval('db.monitoring_alerts.countDocuments({"state": "CRITICAL", "processed": false})') if mongo else "Unknown"
-        dbs = mongo.execute_eval("db.inventory_databases.find({}, {'identity.db_unique_name': 1, 'identity.engine': 1, 'state.status': 1}).limit(20).toArray()") if mongo else []
-        db_list = "\n".join([f"   - {d['identity']['db_unique_name']} ({d['identity']['engine']}) - {d['state']['status']}" for d in dbs]) if dbs else "No databases found"
+        db_count = await mongo.count_databases()
+        active_alerts = await mongo.count_critical_alerts()
+        dbs = await mongo.get_inventory()
+        dbs = dbs[:20]  # Limit to 20
+        db_list = "\n".join([
+            f"   - {d.get('identity', {}).get('db_unique_name', 'UNKNOWN')} "
+            f"({d.get('identity', {}).get('engine', 'UNKNOWN')}) - "
+            f"{d.get('state', {}).get('status', 'UNKNOWN')}"
+            for d in dbs
+        ]) if dbs else "No databases found"
     except:
         db_count = "Unknown"
         active_alerts = "Unknown"
@@ -289,19 +296,18 @@ Remember: BE HELPFUL, BE DECISIVE, SOLVE THE PROBLEM!
                 elif action == "connect_terminal":
                     db_name = validate_identifier(action_json.get("database"), "database")
                     mode = action_json.get("mode", "sql")
-                    # Import connection router function
                     from .connection import connect_db
-                    connect_db(db_name, mode)
+                    await connect_db(db_name, mode)
                     return f"✅ **Action Executed**: Terminal opened for {db_name} ({mode})\n\n{reply}"
                 
                 elif action == "run_query":
-                    return _execute_query(action_json, mongo, reply)
+                    return await _execute_query(action_json, mongo, reply)
                 
                 elif action == "create_alert":
                     db_name = validate_identifier(action_json.get("database"), "database")
                     alert_type = action_json.get("type", "WARNING")
                     message = action_json.get("message")
-                    mongo.insert_alert({
+                    await mongo.insert_alert({
                         "type": "USER_ALERT",
                         "state": alert_type,
                         "db_unique_name": db_name,
@@ -320,7 +326,7 @@ Remember: BE HELPFUL, BE DECISIVE, SOLVE THE PROBLEM!
         return f"❌ AI Brain Offline: {str(e)}"
 
 
-def _execute_query(action_json: dict, mongo, reply: str) -> str:
+async def _execute_query(action_json: dict, mongo, reply: str) -> str:
     """Execute a SQL query action with security validation."""
     db_name = validate_identifier(action_json.get("database"), "database")
     sql = action_json.get("sql", "").strip()
@@ -347,7 +353,7 @@ def _execute_query(action_json: dict, mongo, reply: str) -> str:
         return "⛔ **Security Block**: Only SELECT/SHOW/DESCRIBE queries allowed via AI chat.\n\nFor write operations, use the SQL terminal directly."
     
     try:
-        db_info = mongo.execute_eval(f"db.inventory_databases.findOne({{'identity.db_unique_name': '{db_name}'}})")
+        db_info = await mongo.get_database(db_name)
         if not db_info:
             return f"⚠️ Database **{db_name}** not found in inventory.\n\n{reply}"
         

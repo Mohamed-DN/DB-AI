@@ -1,21 +1,19 @@
 """
-Metrics Router - Database metrics and deep observability endpoints
+Metrics Router - Database metrics and deep observability endpoints (Async with Motor)
 """
 from fastapi import APIRouter, HTTPException
-from ..dependencies import get_mongo, validate_identifier
+from ..services.mongo_service import get_mongo_service
+from ..dependencies import validate_identifier
 
 router = APIRouter()
 
 
 @router.get("/metrics")
-def get_database_metrics():
+async def get_database_metrics():
     """Get aggregated database metrics for the metrics dashboard"""
     try:
-        mongo = get_mongo()
-        if not mongo:
-            raise HTTPException(status_code=500, detail="MongoProxy not initialized")
-        
-        dbs = mongo.execute_eval("db.inventory_databases.find().toArray()") or []
+        mongo = get_mongo_service()
+        dbs = await mongo.get_inventory()
         
         # Aggregate summary
         summary = {
@@ -102,8 +100,7 @@ def get_database_metrics():
         summary["storage_gb"] = round(summary["storage_gb"], 2)
         
         # Active alerts
-        alerts = mongo.execute_eval("db.monitoring_alerts.find({state: {$in: ['CRITICAL', 'WARNING']}, processed: {$ne: true}}).toArray()") or []
-        summary["active_alerts"] = len(alerts)
+        summary["active_alerts"] = len(await mongo.get_pending_alerts())
         
         return {
             "summary": summary,
@@ -118,14 +115,11 @@ def get_database_metrics():
 
 
 @router.get("/metrics/deep")
-def get_deep_metrics():
+async def get_deep_metrics():
     """Get deep dive metrics for advanced dashboard"""
     try:
-        mongo = get_mongo()
-        if not mongo:
-            raise HTTPException(status_code=500, detail="MongoProxy not initialized")
-        
-        dbs = mongo.execute_eval("db.inventory_databases.find().toArray()") or []
+        mongo = get_mongo_service()
+        dbs = await mongo.get_inventory()
         
         databases = []
         for db in dbs:
@@ -138,7 +132,6 @@ def get_deep_metrics():
             deep = db.get('deep_observability', {})
             config = db.get('configuration', {})
             
-            # Build database entry
             entry = {
                 "name": db_name,
                 "engine": engine,
@@ -175,15 +168,12 @@ def get_deep_metrics():
 
 
 @router.get("/database/{db_name}/deep")
-def get_deep_observability(db_name: str):
+async def get_deep_observability(db_name: str):
     """Get deep observability data for a specific database"""
     try:
-        mongo = get_mongo()
-        if not mongo:
-            raise HTTPException(status_code=500, detail="MongoProxy not initialized")
-        
+        mongo = get_mongo_service()
         db_name = validate_identifier(db_name, "database")
-        db_info = mongo.execute_eval(f"db.inventory_databases.findOne({{'identity.db_unique_name': '{db_name}'}})")
+        db_info = await mongo.get_database(db_name)
         
         if not db_info:
             raise HTTPException(status_code=404, detail="Database not found")

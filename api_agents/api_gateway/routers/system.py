@@ -1,5 +1,5 @@
 """
-System Router - System status, config, and root endpoints
+System Router - System status, config, and root endpoints (Async with Motor)
 """
 import os
 import subprocess
@@ -7,31 +7,31 @@ import shutil
 import json
 from fastapi import APIRouter, HTTPException
 from fastapi.responses import StreamingResponse
-from ..dependencies import get_mongo
+from ..services.mongo_service import get_mongo_service
 
 router = APIRouter()
 
 
 @router.get("/")
-def read_root():
+async def read_root():
     """Root endpoint"""
     return {"status": "Nexi AI CMDB Backend Running"}
 
 
 @router.get("/api/system/status")
-def get_system_status():
+async def get_system_status():
     """Get global system status (RUNNING/PAUSED)"""
     try:
-        mongo = get_mongo()
-        conf = mongo.execute_eval("db.system_config.findOne({key: 'global_status'})")
-        status = conf.get('value', 'RUNNING') if conf else 'RUNNING'
+        mongo = get_mongo_service()
+        status = await mongo.get_config("global_status")
+        status = status or "RUNNING"
         return {"status": status, "paused": status == "PAUSED"}
     except:
         return {"status": "RUNNING", "paused": False}
 
 
 @router.post("/api/system/status")
-def set_system_status(item: dict):
+async def set_system_status(item: dict):
     """Set global system status (RUNNING/PAUSED) - Controls Docker Lab containers with Streaming Progress"""
     status = item.get("status", "RUNNING").upper()
     if status not in ["RUNNING", "PAUSED"]:
@@ -64,12 +64,11 @@ def set_system_status(item: dict):
     docker_cmd = shutil.which("docker") or "/usr/local/bin/docker"
     action = "stop" if status == "PAUSED" else "start"
 
-    def event_generator():
+    async def event_generator():
         # Update MongoDB global status first
         try:
-            mongo = get_mongo()
-            if mongo:
-                mongo.execute_eval(f"db.system_config.updateOne({{key: 'global_status'}}, {{$set: {{value: '{status}'}}}}, {{upsert: true}})")
+            mongo = get_mongo_service()
+            await mongo.set_config("global_status", status)
         except:
             pass
 
@@ -114,7 +113,7 @@ def set_system_status(item: dict):
 
 
 @router.get("/api/config")
-def get_config():
+async def get_config():
     """Get all agent intervals"""
     agents = ['scout', 'criticalalert', 'watcher', 'forensicanalyzer', 'checkmk_bridge', 'collector']
     defaults = {
@@ -128,24 +127,20 @@ def get_config():
     
     config = {}
     try:
-        mongo = get_mongo()
-        if not mongo:
-            raise Exception("MongoProxy not initialized")
+        mongo = get_mongo_service()
         for agent in agents:
-            doc = mongo.execute_eval(f"db.system_config.findOne({{key: '{agent}_interval'}})")
-            config[f"{agent}_interval"] = doc.get('value', defaults[agent]) if doc else defaults[agent]
+            value = await mongo.get_config(f"{agent}_interval")
+            config[f"{agent}_interval"] = value if value is not None else defaults[agent]
         return config
     except:
         return {f"{a}_interval": defaults[a] for a in agents}
 
 
 @router.post("/api/config")
-def update_config(cfg: dict):
+async def update_config(cfg: dict):
     """Update agent intervals"""
     try:
-        mongo = get_mongo()
-        if not mongo:
-            raise HTTPException(status_code=500, detail="MongoProxy not initialized")
+        mongo = get_mongo_service()
         
         for key, value in cfg.items():
             if not key.endswith('_interval'):
@@ -157,9 +152,8 @@ def update_config(cfg: dict):
             if normalized < 5:
                 raise HTTPException(status_code=400, detail=f"Interval too small for {key}")
             
-            mongo.execute_eval(
-                f"db.system_config.updateOne({{key: '{key}'}}, {{$set: {{value: {normalized}}}}}, {{upsert: true}})"
-            )
+            await mongo.set_config(key, normalized)
+        
         return {"status": "Updated", "config": cfg}
     except HTTPException:
         raise

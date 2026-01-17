@@ -1,25 +1,24 @@
 """
-Inventory Router - Database inventory and storage endpoints
+Inventory Router - Database inventory and storage endpoints (Async with Motor)
 """
 from fastapi import APIRouter, HTTPException
-from ..dependencies import get_mongo, validate_identifier
+from ..services.mongo_service import get_mongo_service
+from ..dependencies import validate_identifier
 
 router = APIRouter()
 
 
 @router.get("/inventory")
-def get_inventory():
+async def get_inventory():
     """Get all databases enriched with Business Service info"""
     try:
-        mongo = get_mongo()
-        if not mongo:
-            raise HTTPException(status_code=500, detail="MongoProxy not initialized")
+        mongo = get_mongo_service()
         
         # 1. Fetch Inventory
-        dbs = mongo.execute_eval("db.inventory_databases.find({}, {'_id': 0}).toArray()") or []
+        dbs = await mongo.get_inventory()
         
         # 2. Fetch Business Services
-        services = mongo.execute_eval("db.business_services.find({}, {'_id': 0}).toArray()") or []
+        services = await mongo.get_business_services()
         
         # 3. Create Lookup Map (DB Name -> Service Info)
         service_map = {}
@@ -109,38 +108,26 @@ def get_inventory():
 
 
 @router.get("/storage")
-def get_all_storage():
+async def get_all_storage():
     """Get all storage inventory items"""
     try:
-        mongo = get_mongo()
-        if not mongo:
-            raise HTTPException(status_code=500, detail="MongoProxy not initialized")
-        
-        storage = mongo.execute_eval("db.inventory_storage.find().toArray()") or []
-        for s in storage:
-            if "_id" in s:
-                s["_id"] = str(s["_id"])
-        return storage
+        mongo = get_mongo_service()
+        return await mongo.get_all_storage()
     except Exception as e:
         print(f"Error fetching storage: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
 
 @router.get("/storage/{db_name}")
-def get_storage_for_db(db_name: str):
+async def get_storage_for_db(db_name: str):
     """Get storage inventory for a specific database"""
     try:
-        mongo = get_mongo()
-        if not mongo:
-            raise HTTPException(status_code=500, detail="MongoProxy not initialized")
-        
+        mongo = get_mongo_service()
         db_name = validate_identifier(db_name, "database")
-        storage = mongo.execute_eval(f"db.inventory_storage.findOne({{db_ref: '{db_name}'}})")
+        storage = await mongo.get_storage_for_db(db_name)
         
         if not storage:
             raise HTTPException(status_code=404, detail=f"No storage found for {db_name}")
-        if "_id" in storage:
-            storage["_id"] = str(storage["_id"])
         return storage
     except HTTPException:
         raise
@@ -150,56 +137,31 @@ def get_storage_for_db(db_name: str):
 
 
 @router.get("/raw/{collection_name}")
-def get_raw_collection(collection_name: str):
+async def get_raw_collection(collection_name: str):
     """Get raw collection data for Explorer"""
     try:
-        mongo = get_mongo()
-        if not mongo:
-            raise HTTPException(status_code=500, detail="MongoProxy not initialized")
-        
-        allowed = [
-            "inventory_databases",
-            "monitoring_alerts",
-            "business_services",
-            "system_config",
-            "discovery_queue",
-            "agent_runs",
-            "baselines",
-            "compliance_reports",
-            "gateways",
-            "rag_knowledge_base"
-        ]
-        
-        if collection_name not in allowed:
-            raise HTTPException(status_code=400, detail="Invalid collection")
-        
-        data = mongo.execute_eval(f"db.{collection_name}.find().limit(100).toArray()") or []
-        for item in data:
-            if "_id" in item:
-                item["_id"] = str(item["_id"])
-        return data
-    except HTTPException:
-        raise
+        mongo = get_mongo_service()
+        return await mongo.get_raw_collection(collection_name)
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
     except Exception as e:
         print(f"Error fetching raw collection: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
 
 @router.delete("/inventory/{db_name}")
-def delete_database(db_name: str):
+async def delete_database(db_name: str):
     """Delete a database from inventory (does not stop container)"""
     try:
-        mongo = get_mongo()
-        if not mongo:
-            raise HTTPException(status_code=500, detail="MongoProxy not initialized")
+        mongo = get_mongo_service()
         
         # Check if exists
-        exists = mongo.execute_eval(f"db.inventory_databases.findOne({{'identity.db_unique_name': '{db_name}'}})")
+        exists = await mongo.get_database(db_name)
         if not exists:
             raise HTTPException(status_code=404, detail="Database not found")
         
         # Delete
-        mongo.execute_eval(f"db.inventory_databases.deleteOne({{'identity.db_unique_name': '{db_name}'}})")
+        await mongo.delete_database(db_name)
         return {"status": f"Database {db_name} removed from inventory"}
     except HTTPException:
         raise

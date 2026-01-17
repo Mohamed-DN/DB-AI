@@ -1,66 +1,39 @@
 """
-Alerts Router - Alert management endpoints
+Alerts Router - Alert management endpoints (Async with Motor)
 """
 from fastapi import APIRouter, HTTPException
-from ..dependencies import get_mongo
+from ..services.mongo_service import get_mongo_service
 
 router = APIRouter()
 
 
 @router.get("/alerts")
-def get_alerts():
+async def get_alerts():
     """Get recent alerts"""
     try:
-        mongo = get_mongo()
-        if not mongo:
-            raise HTTPException(status_code=500, detail="MongoProxy not initialized")
-        
-        # Fetch alerts, sort by timestamp desc, limit 50
-        alerts = mongo.execute_eval(
-            "db.monitoring_alerts.find().sort({timestamp: -1}).limit(50).toArray()"
-        ) or []
-        
-        # Convert _id to string
-        for a in alerts:
-            if "_id" in a:
-                a["_id"] = str(a["_id"])
-        return alerts
+        mongo = get_mongo_service()
+        return await mongo.get_alerts(limit=50)
     except Exception as e:
         print(f"Error fetching alerts: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
 
 @router.get("/alerts/ai")
-def get_alerts_with_ai_analysis():
+async def get_alerts_with_ai_analysis():
     """Get alerts that have AI analysis attached"""
     try:
-        mongo = get_mongo()
-        if not mongo:
-            raise HTTPException(status_code=500, detail="MongoProxy not initialized")
-        
-        alerts = mongo.execute_eval(
-            "db.monitoring_alerts.find({ai_analysis: {$exists: true}}).sort({timestamp: -1}).limit(20).toArray()"
-        ) or []
-        
-        for a in alerts:
-            if "_id" in a:
-                a["_id"] = str(a["_id"])
-        return alerts
+        mongo = get_mongo_service()
+        return await mongo.get_alerts_with_ai_analysis(limit=20)
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
 
 @router.post("/action/clear_alerts")
-def clear_alerts():
+async def clear_alerts():
     """Mark all pending alerts as processed"""
     try:
-        mongo = get_mongo()
-        if not mongo:
-            raise HTTPException(status_code=500, detail="MongoProxy not initialized")
-        
-        mongo.execute_eval(
-            "db.monitoring_alerts.updateMany({processed: false}, {$set: {processed: true}})"
-        )
-        return {"status": "All Pending Alerts Cleared"}
+        mongo = get_mongo_service()
+        count = await mongo.clear_alerts()
+        return {"status": "All Pending Alerts Cleared", "count": count}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
