@@ -1,4 +1,4 @@
-import { Bot, Play, Square, CheckCircle, XCircle, Loader, Terminal as TerminalIcon, Brain, RefreshCw, Eye, Clock, Settings, X } from 'lucide-react';
+import { Bot, Play, Square, CheckCircle, XCircle, Loader, Terminal as TerminalIcon, Brain, RefreshCw, Eye, Clock, Settings, X, Activity, ExternalLink } from 'lucide-react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import axios from 'axios';
 import { useState } from 'react';
@@ -16,8 +16,8 @@ interface AgentsStatus {
 }
 
 interface RagStatus {
-    ollama: { connected: boolean; models: string[] };
-    qdrant: { connected: boolean; collections: number };
+    ollama: { status: string; models?: string[]; url?: string };
+    qdrant: { status: string; collections?: string[]; url?: string };
 }
 
 interface ProcessResult {
@@ -245,15 +245,15 @@ export default function AgentsPanel() {
     return (
         <div className="space-y-6">
             {/* RAG Status Header */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
                 <div className="glass p-4 flex items-center justify-between">
                     <div>
                         <div className="text-sm text-gray-400">Ollama LLM</div>
                         <div className="text-lg font-bold flex items-center gap-2">
-                            {ragQuery.data?.ollama.connected ? (
-                                <span className="text-green-400 flex items-center gap-2">Connected <span className="text-xs text-gray-500">({ragQuery.data.ollama.models.length} models)</span></span>
+                            {ragQuery.data?.ollama.status === 'Connected' ? (
+                                <span className="text-green-400 flex items-center gap-2">Connected <span className="text-xs text-gray-500">({ragQuery.data.ollama.models?.length || 0} mod)</span></span>
                             ) : (
-                                <span className="text-red-400">Offline</span>
+                                <span className="text-red-400">{ragQuery.data?.ollama.status || 'Offline'}</span>
                             )}
                         </div>
                     </div>
@@ -263,27 +263,44 @@ export default function AgentsPanel() {
                     <div>
                         <div className="text-sm text-gray-400">Qdrant Vector DB</div>
                         <div className="text-lg font-bold">
-                            {ragQuery.data?.qdrant.connected ? (
-                                <span className="text-green-400 flex items-center gap-2">Connected <span className="text-xs text-gray-500">({ragQuery.data.qdrant.collections} collections)</span></span>
+                            {ragQuery.data?.qdrant.status === 'Connected' ? (
+                                <span className="text-green-400 flex items-center gap-2">Connected <span className="text-xs text-gray-500">({ragQuery.data.qdrant.collections?.length || 0} col)</span></span>
                             ) : (
-                                <span className="text-red-400">Offline</span>
+                                <span className="text-red-400">{ragQuery.data?.qdrant.status || 'Offline'}</span>
                             )}
                         </div>
                     </div>
                     <DatabaseIcon className="w-8 h-8 text-gray-600 opacity-20" />
                 </div>
+                <div className="glass p-4 flex items-center justify-between cursor-pointer hover:bg-white/5 transition-colors" onClick={() => window.open('http://localhost:3001', '_blank')}>
+                    <div>
+                        <div className="text-sm text-gray-400">Langfuse Tracing</div>
+                        <div className="text-lg font-bold">
+                            <span className="text-green-400">Active</span>
+                        </div>
+                        <div className="text-xs text-blue-400 mt-1 flex items-center gap-1">Open Dashboard <ExternalLink className="w-3 h-3" /></div>
+                    </div>
+                    <Activity className="w-8 h-8 text-purple-600 opacity-20" />
+                </div>
+                <div className="glass p-4 flex items-center justify-between cursor-pointer hover:bg-white/5 transition-colors" onClick={() => window.open('http://localhost:9000/docs', '_blank')}>
+                    <div>
+                        <div className="text-sm text-gray-400">LangGraph Agents</div>
+                        <div className="text-lg font-bold">
+                            <span className="text-green-400">Active</span>
+                        </div>
+                        <div className="text-xs text-blue-400 mt-1 flex items-center gap-1">View API Docs <ExternalLink className="w-3 h-3" /></div>
+                    </div>
+                    <Bot className="w-8 h-8 text-pink-600 opacity-20" />
+                </div>
             </div>
 
-            {/* Agents Header with Settings */}
-            <div className="flex items-center justify-between">
-                <h3 className="text-lg font-semibold flex items-center gap-2">
-                    <Bot className="w-5 h-5 text-purple-400" /> Agent Control Panel
-                </h3>
+            {/* Agents List Header */}
+            <div className="flex items-center justify-end">
                 <button
                     onClick={() => setSettingsOpen(true)}
                     className="btn-secondary text-sm flex items-center gap-2"
                 >
-                    <Clock className="w-4 h-4" /> Configure Intervals
+                    <Settings className="w-4 h-4" /> Configure Intervals
                 </button>
             </div>
 

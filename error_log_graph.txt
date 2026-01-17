@@ -1,0 +1,11 @@
+INFO:     Started server process [49892]
+INFO:     Waiting for application startup.
+INFO:httpx:HTTP Request: GET http://localhost:7333 "HTTP/1.1 200 OK"
+C:\AI-Nexi\Nexi_DB_AI\api_agents\workers\AIAssistant\main.py:113: LangGraphDeprecatedSinceV10: create_react_agent has been moved to `langchain.agents`. Please update your import to `from langchain.agents import create_agent`. Deprecated in LangGraph V1.0 to be removed in V2.0.
+  agent_app = create_react_agent(llm, tools, prompt=SYSTEM_PROMPT)
+INFO:     Application startup complete.
+INFO:     Uvicorn running on http://0.0.0.0:8001 (Press CTRL+C to quit)
+INFO:httpx:HTTP Request: POST http://localhost:11434/api/chat "HTTP/1.1 200 OK"
+INFO:httpx:HTTP Request: POST http://localhost:11434/api/embed "HTTP/1.1 404 Not Found"
+ERROR:api_agents.workers.AIAssistant.services.rag_service:RAG Search failed: model "nomic-embed-text" not found, try pulling it first (status code: 404)
+INFO:httpx:HTTP Request: POST http://localhost:11434/api/chat "HTTP/1.1 200 OK"

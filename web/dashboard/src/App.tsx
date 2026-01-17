@@ -14,7 +14,8 @@ import {
   Pause,
   Play,
   ExternalLink,
-  BarChart3
+  BarChart3,
+  Activity // New icon for Monitoring
 } from 'lucide-react';
 import DashboardStats from './components/Dashboard/DashboardStats';
 import InventoryTable from './components/Inventory/InventoryTable';
@@ -26,6 +27,7 @@ import ExplorerPanel from './components/Explorer/ExplorerPanel';
 import AgentsPanel from './components/Agents/AgentsPanel';
 import SettingsPanel from './components/Settings/SettingsPanel';
 import { MetricsContainer } from './components/Metrics';
+import { MonitoringDashboard } from './components/Monitoring'; // Import new component
 import { useAutoDiscovery, useSystemStatus } from './hooks/useDatabases';
 import './index.css';
 
@@ -39,7 +41,7 @@ const queryClient = new QueryClient({
   },
 });
 
-type Tab = 'dashboard' | 'inventory' | 'hosts' | 'alerts' | 'chat' | 'mailbox' | 'explorer' | 'agents' | 'metrics' | 'settings';
+type Tab = 'dashboard' | 'inventory' | 'hosts' | 'alerts' | 'chat' | 'mailbox' | 'explorer' | 'agents' | 'metrics' | 'settings' | 'monitoring';
 
 const pageTitles: Record<Tab, string> = {
   dashboard: 'Dashboard Overview',
@@ -52,6 +54,7 @@ const pageTitles: Record<Tab, string> = {
   agents: 'Agent Control Panel',
   metrics: 'Database Metrics',
   settings: 'Configuration',
+  monitoring: 'Real-Time Monitoring (Grafana/CheckMK)', // New Title
 };
 
 function Navigation({
@@ -63,6 +66,7 @@ function Navigation({
 }) {
   const navItems = [
     { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
+    { id: 'monitoring', label: 'Monitor', icon: Activity }, // Add Monitoring Item
     { id: 'inventory', label: 'Inventory', icon: Database },
     { id: 'hosts', label: 'Hosts', icon: Server },
     { id: 'alerts', label: 'Alerts', icon: Bell },
@@ -223,6 +227,8 @@ function AppContent() {
         return <AgentsPanel />;
       case 'metrics':
         return <MetricsContainer />;
+      case 'monitoring': // Render new component
+        return <MonitoringDashboard />;
       case 'settings':
         return <SettingsPanel onNavigateToAgents={() => setActiveTab('agents')} />;
       default:

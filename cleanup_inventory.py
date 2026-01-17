@@ -1,57 +1,59 @@
-from pymongo import MongoClient
+import asyncio
 import os
+import sys
 
-# Connect
-client = MongoClient('localhost', 28017, username='admin', password='nexi2024', authSource='admin')
-db = client.nexi_cmdb_v2
-collection = db.inventory_databases
+# Add project root
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '')))
 
-print(f"Initial Count: {collection.count_documents({})}")
+from api_agents.api_gateway.services.mongo_service import get_mongo_service
 
-deleted_count = 0
-
-# 1. Delete N/A or Missing names
-res = collection.delete_many({"$or": [{"identity.db_unique_name": "N/A"}, {"identity.db_unique_name": None}]})
-if res.deleted_count > 0:
-    print(f"🗑️  Deleted {res.deleted_count} documents with invalid names (N/A).")
-    deleted_count += res.deleted_count
-
-# 2. Delete explicitly MISSING databases (ghosts)
-# We might want to keep some if they are important but down, but for now user wants to clean "non ci sono"
-res = collection.delete_many({"state.status": "MISSING"})
-if res.deleted_count > 0:
-    print(f"🗑️  Deleted {res.deleted_count} MISSING databases.")
-    deleted_count += res.deleted_count
-
-# 3. Handle V1 vs V2 duplicates (The "2" suffix ghost problem)
-# Logic: If we have "NAME" and "NAME2", and "NAME" is UP/active (or exists), delete "NAME2".
-all_dbs = list(collection.find({}, {"identity.db_unique_name": 1}))
-db_names = {d['identity'].get('db_unique_name') for d in all_dbs if d.get('identity')}
-
-for name in db_names:
-    if not name: continue
+async def cleanup():
+    mongo = get_mongo_service()
+    print("🧹 Cleaning Inventory...")
     
-    # Check if this is a "v2" name (ends with 2)
-    if name.endswith("2") and not "RAC" in name: # Skip RAC2 as it might be legitimate node 2
-        base_name = name[:-1] # Remove '2'
-        base_name2 = name[:-2] # Maybe it was added differently? No, standard is suffix '2'
-        
-        # If base name exists in our list (e.g. NEXI-PG-MILANO-PROD exists for NEXI-PG-MILANO-PROD2)
-        # Or if the base name without 2 is present
-        if base_name in db_names:
-            print(f"🔍 Found duplicate pair: {base_name} (Keep) vs {name} (Delete)")
-            collection.delete_one({"identity.db_unique_name": name})
-            print(f"   🗑️  Deleted {name}")
-            deleted_count += 1
-        else:
-            # Even if base_name doesn't exist, if it's a seed artifact and we know we are running V1 names...
-            # Check docker ps? No, can't easily.
-            # But earlier we saw PROD and PROD2.
-            # If we only have PROD2, we might keep it? 
-            # But the user said "ridondanza".
-            # Safe bet: if base_name is NOT in db_names, we might have ONLY the seeded V2 doc.
-            # In that case, we should strictly check if it's UP.
-            pass
+    # 1. Delete all entries that don't look like our real containers
+    # Real ones start with 'nexi-' and have specific types
+    result = await mongo.db.inventory_databases.delete_many({
+        "$or": [
+            {"identity.db_unique_name": None},
+            {"identity.db_unique_name": "UNKNOWN"},
+            {"identity.db_unique_name": {"$not": {"$regex": "^(nexi-pg|nexi-oracle|nexi-redis|nexi-qdrant|nexi-mongo|NEXI-PG|NEXI-ORACLE|NEXI-REDIS|NEXI-QDRANT|NEXI-MONGO)"}}}
+        ]
+    })
+    print(f"🗑️ Deleted {result.deleted_count} invalid/mock entries.")
 
-print(f"Total Deleted: {deleted_count}")
-print(f"Final Count: {collection.count_documents({})}")
+    # 2. De-duplicate remaining real entries
+    # Use direct access to get _id
+    cursor = mongo.db.inventory_databases.find({})
+    dbs = await cursor.to_list(length=None)
+    
+    seen = {}
+    duplicates = []
+    
+    for db in dbs:
+        name = db.get('identity', {}).get('db_unique_name')
+        if not name: continue
+        
+        if '_id' not in db:
+            print(f"⚠️ Warning: Document missing _id: {db.keys()}")
+            continue
+
+        if name in seen:
+            duplicates.append(db['_id'])
+        else:
+            seen[name] = True
+            
+    if duplicates:
+        print(f"found {len(duplicates)} duplicates for valid names. Removing...")
+        await mongo.db.inventory_databases.delete_many({"_id": {"$in": duplicates}})
+        print("✅ Duplicates removed.")
+    else:
+        print("✅ No duplicates found.")
+
+    print("Populating initial real inventory if empty...")
+    if len(seen) == 0:
+        # Seed basic if totally empty (fallback)
+        pass 
+        
+if __name__ == "__main__":
+    asyncio.run(cleanup())

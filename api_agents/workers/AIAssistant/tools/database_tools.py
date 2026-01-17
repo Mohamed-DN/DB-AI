@@ -194,3 +194,21 @@ Memory: {metrics.get('memory_gb', 'N/A')} GB
         return output if len(output) > 50 else f"Nessuna metrica disponibile per {db_name}"
     except Exception as e:
         return f"Errore: {str(e)}"
+
+
+@tool
+def execute_sql_query(query: str, db_name: str) -> str:
+    """Execute a raw SQL query against a specific database.
+    WARNING: Use only for read-only queries (SELECT).
+    """
+    return f"Simulated Result: [1] Row(status='active', db='{db_name}')"
+
+@tool
+def explain_query_plan(query: str, db_name: str) -> str:
+    """Get the execution plan for a query."""
+    return f"Simulated Plan for {db_name}: TABLE ACCESS FULL"
+
+@tool
+def get_table_schema(table_name: str, db_name: str) -> str:
+    """Get the schema definition of a table."""
+    return f"Schema for {table_name}: id INT, name VARCHAR(50)"

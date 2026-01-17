@@ -1,35 +1,127 @@
 """
-Nexi AI Database Assistant - LangChain Agent
+Nexi AI Database Assistant - LangGraph Agent
 FastAPI endpoints for AI-powered database queries
 """
 import os
 import sys
+import logging
 from pathlib import Path
 from typing import Optional
+from contextlib import asynccontextmanager
+
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 from dotenv import load_dotenv
+from motor.motor_asyncio import AsyncIOMotorClient
 
 # Add project root to path
 sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 
 from langchain_ollama import ChatOllama
-from langchain.agents import AgentExecutor, create_tool_calling_agent
-from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder
-from langchain_core.messages import HumanMessage, AIMessage
+from langgraph.prebuilt import create_react_agent
+from langchain_core.messages import HumanMessage, AIMessage, SystemMessage
 
-from tools.inventory_tools import search_inventory, get_pdbs_info, get_inventory_summary
-from tools.action_tools import manage_container, get_container_logs, check_system_health
-from tools.database_tools import execute_sql_query, explain_query_plan, get_table_schema
-from tools.orchestration_tools import run_agent, list_agents, manage_gateway
+# Services
+from api_agents.workers.AIAssistant.services.tool_registry import ToolRegistry
+from api_agents.workers.AIAssistant.services.rag_service import RAGService
 
-load_dotenv()
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
+
+load_dotenv(override=True)
+
+# Global State
+tool_registry = None
+rag_service = None
+agent_app = None # Replaces agent_executor
+
+# Configuration
+OLLAMA_BASE_URL = os.getenv("OLLAMA_BASE_URL", "http://localhost:11434")
+MODEL_NAME = os.getenv("MODEL_NAME", "llama3.1:8b")
+
+llm = ChatOllama(
+    base_url=OLLAMA_BASE_URL,
+    model=MODEL_NAME,
+    temperature=0
+)
+
+# Chat History Storage (Simple In-Memory for MVP)
+chat_histories = {}
+
+SYSTEM_PROMPT = """You are NexiDB, an expert Database Administrator AI.
+Your goal is to help users manage, debug, and optimize Oracle and PostgreSQL databases.
+You have access to real-time inventory tools, execution tools, and a RAG knowledge base.
+
+Guidelines:
+1. ALWAYS verify the database status before suggesting actions.
+2. If an error is technical (e.g. ORA-00600), use the 'search_knowledge_base' tool.
+3. Be concise and professional.
+4. If you execute a query, summarize the results clearly.
+"""
+
+class ChatRequest(BaseModel):
+    message: str
+    session_id: Optional[str] = None
+
+class ChatResponse(BaseModel):
+    response: str
+    session_id: str
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    # Startup
+    global tool_registry, rag_service, agent_app
+    
+    # Init Mongo
+    mongo_client = AsyncIOMotorClient(os.getenv("MONGO_URI", "mongodb://localhost:27017"))
+    db = mongo_client["Nexi_DB_AI"]
+    
+    # Init Services
+    tool_registry = ToolRegistry(db)
+    rag_service = RAGService()
+    
+    # Load Tools
+    # Load Tools
+    print("Loading tools from Registry...")
+    tools = await tool_registry.get_tools()
+    print(f"Loaded {len(tools)} tools: {[t.name for t in tools]}")
+    
+    # RAG Tool Definition
+    from langchain_core.tools import StructuredTool
+    
+    class RAGInput(BaseModel):
+        query: str = Field(description="The question to search usage documentation for")
+        domain: Optional[str] = Field(description="Optional domain filter (e.g. 'oracle', 'postgres')")
+
+    async def search_knowledge_base(query: str, domain: str = None):
+        """Search the knowledge base for runbooks and SOPs."""
+        return await rag_service.search(query, domain)
+
+    rag_tool = StructuredTool.from_function(
+        func=None,
+        coroutine=search_knowledge_base,
+        name="search_knowledge_base",
+        description="Search technical documentation, runbooks, and SOPs. Use this when you don't know how to solve a specific database error.",
+        args_schema=RAGInput
+    )
+    
+    tools.append(rag_tool)
+    
+    # Init Agent (LangGraph)
+    # Using create_react_agent which is the modern standard for tool-calling agents
+    agent_app = create_react_agent(llm, tools, prompt=SYSTEM_PROMPT)
+    
+    yield
+    
+    # Shutdown
+    mongo_client.close()
 
 app = FastAPI(
     title="Nexi AI Admin",
     description="Autonomous AI Administrator for Nexi CMDB",
-    version="2.0.0"
+    version="2.2.0", # Bumped version for LangGraph
+    lifespan=lifespan
 )
 
 app.add_middleware(
@@ -40,122 +132,45 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Initialize LLM
-OLLAMA_URL = os.getenv("OLLAMA_BASE_URL", "http://localhost:11434")
-MODEL_NAME = os.getenv("LLM_MODEL", "llama3.2")
-
-llm = ChatOllama(
-    base_url=OLLAMA_URL,
-    model=MODEL_NAME,
-    temperature=0.2, # Lower temperature for more precise admin actions
-)
-
-# Define tools
-tools = [
-    search_databases,
-    get_database_status,
-    list_databases_by_status,
-    get_database_metrics,
-    search_inventory,
-    get_pdbs_info,
-    # ADMIN TOOLS
-    manage_container,
-    get_container_logs,
-    check_system_health
-]
-
-# System prompt
-SYSTEM_PROMPT = """Sei l'Amministratore di Sistema AI di Nexi CMDB.
-Hai il COMPLETO CONTROLLO e l'AUTORIZZAZIONE per gestire l'infrastruttura.
-Il tuo obiettivo è mantenere il sistema stabile, sicuro e performante.
-
-CAPACITÀ:
-- Puoi avviare, fermare e riavviare container Docker se necessario.
-- Puoi leggere i log per diagnosticare errori.
-- Puoi consultare l'inventario e lo stato dei database.
-
-REGOLE DI COMPORTAMENTO:
-1. **Sii Proattivo**: Se vedi un problema (es. DB down), indaga e proponi/esegui una soluzione.
-2. **Ragiona Prima di Agire**: Usa i log per capire la causa radice prima di riavviare a caso.
-3. **Sii Chiaro**: Spiega cosa hai fatto e perché.
-4. **Non Chiedere Permesso per Fix Ovvi**: Se un servizio è crashato, riavvialo. Hai il permesso ("lock") dell'utente.
-
-STRUMENTI A DISPOSIZIONE:
-- `check_system_health`: Controlla lo stato globale dei container.
-- `get_database_status` / `search_databases`: Informazioni sui DB.
-- `get_container_logs`: Leggi i log di errore.
-- `manage_container`: Esegui azioni (start/stop/restart).
-
-Rispondi in italiano. Sii professionale, diretto ed efficace.
-Sembra un SRE (Site Reliability Engineer) senior.
-"""
-
-prompt = ChatPromptTemplate.from_messages([
-    ("system", SYSTEM_PROMPT),
-    MessagesPlaceholder(variable_name="chat_history"),
-    ("human", "{input}"),
-    MessagesPlaceholder(variable_name="agent_scratchpad"),
-])
-
-# Create agent
-agent = create_tool_calling_agent(llm, tools, prompt)
-agent_executor = AgentExecutor(
-    agent=agent,
-    tools=tools,
-    verbose=True,
-    handle_parsing_errors=True,
-    max_iterations=10, # Allow more steps for complex diagnosis -> fix -> verify loops
-)
-
-# Chat history storage (simple in-memory for now)
-chat_histories: dict[str, list] = {}
-
-
-class ChatRequest(BaseModel):
-    message: str
-    session_id: Optional[str] = "default"
-
-
-class ChatResponse(BaseModel):
-    response: str
-    session_id: str
-
-
 @app.post("/chat", response_model=ChatResponse)
 async def chat(request: ChatRequest):
     """Process a chat message and return AI response"""
+    if not agent_app:
+            raise HTTPException(status_code=503, detail="Agent initializing...")
+            
     try:
         session_id = request.session_id or "default"
-        
-        # Get or create chat history
         if session_id not in chat_histories:
             chat_histories[session_id] = []
         
-        chat_history = chat_histories[session_id]
+        # Prepare LangGraph input (list of messages)
+        # We include history + new message
+        # LangGraph ReAct agent manages state, but here we feed strictly the "messages" key
+        # For simplicity in this stateless pass: we send history + current message
         
-        # Invoke agent
-        result = agent_executor.invoke({
-            "input": request.message,
-            "chat_history": chat_history,
-        })
+        messages = chat_histories[session_id] + [HumanMessage(content=request.message)]
+        
+        # Invoke Agent
+        result = await agent_app.ainvoke({"messages": messages})
+        
+        # Extract response
+        # The result state contains "messages". The last one is the AI response.
+        final_messages = result["messages"]
+        last_message = final_messages[-1]
+        response_text = last_message.content
         
         # Update history
-        chat_history.append(HumanMessage(content=request.message))
-        chat_history.append(AIMessage(content=result["output"]))
+        chat_histories[session_id].append(HumanMessage(content=request.message))
+        chat_histories[session_id].append(AIMessage(content=response_text))
         
-        # Keep history limited
-        if len(chat_history) > 20:
-            chat_history = chat_history[-20:]
+        # Limit history
+        if len(chat_histories[session_id]) > 20: 
+            chat_histories[session_id] = chat_histories[session_id][-20:]
         
-        chat_histories[session_id] = chat_history
-        
-        return ChatResponse(
-            response=result["output"],
-            session_id=session_id
-        )
+        return ChatResponse(response=response_text, session_id=session_id)
     except Exception as e:
+        logger.error(f"Chat Error: {e}", exc_info=True)
         raise HTTPException(status_code=500, detail=str(e))
-
 
 @app.post("/clear-history/{session_id}")
 async def clear_history(session_id: str):
@@ -164,12 +179,10 @@ async def clear_history(session_id: str):
         del chat_histories[session_id]
     return {"status": "cleared"}
 
-
 @app.get("/health")
 async def health():
     """Health check endpoint"""
     return {"status": "healthy", "model": MODEL_NAME}
-
 
 if __name__ == "__main__":
     import uvicorn

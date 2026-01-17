@@ -89,7 +89,7 @@ services:
     #           count: all
     #           capabilities: [ gpu ]
 
-  # Open WebUI - ChatGPT-like interface for Ollama (V2)
+    # Open WebUI - ChatGPT-like interface for Ollama (V2)
   open-webui2:
     image: ghcr.io/open-webui/open-webui:main
     container_name: nexi-open-webui2
@@ -414,6 +414,27 @@ services:
         ipv4_address: 172.21.0.32
     restart: unless-stopped
 
+  # ===========================================================================
+  # MONITORING - CheckMK (Simulation)
+  # ===========================================================================
+
+  checkmk:
+    image: checkmk/check-mk-raw:2.2.0-latest
+    container_name: nexi-checkmk
+    hostname: checkmk.nexi.lab
+    ports:
+      - "8080:5000"
+      - "8000:8000" # Agent receiver
+    networks:
+      nexi-lab2:
+        ipv4_address: 172.21.0.40
+    environment:
+      CMK_SITE_ID: nexi_monitor
+      CMK_PASSWORD: nexi2024
+    volumes:
+      - checkmk_data:/omd/sites
+    restart: unless-stopped
+
 volumes:
   mongodb_data_v2:
   ollama_data_v2:
@@ -430,3 +451,4 @@ volumes:
   langfuse_clickhouse_data_v2:
   prometheus_data_v2:
   grafana_data_v2:
+  checkmk_data:

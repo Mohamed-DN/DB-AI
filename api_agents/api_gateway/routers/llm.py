@@ -127,35 +127,65 @@ async def get_rag_status():
     """Get RAG pipeline status (Ollama + Qdrant)"""
     status = {"ollama": {"status": "Unknown"}, "qdrant": {"status": "Unknown"}}
     
-    # Check Ollama
-    try:
-        response = requests.get(f"{OLLAMA_CONFIG['base_url']}/api/tags", timeout=5)
-        if response.status_code == 200:
-            models = [m.get('name') for m in response.json().get('models', [])]
-            status["ollama"] = {
-                "status": "Connected",
-                "models": models,
-                "current_model": get_current_model_name()
-            }
-        else:
-            status["ollama"] = {"status": "Error", "code": response.status_code}
-    except Exception as e:
-        status["ollama"] = {"status": "Disconnected", "error": str(e)}
+    # Check Ollama - Try common ports
+    ollama_urls = [
+        OLLAMA_CONFIG.get('base_url'),
+        "http://localhost:11434",
+        "http://localhost:12434", # V2 Port
+        "http://nexi-ollama2:11434" # Internal Docker DNS
+    ]
+    # Filter nones and duplicates
+    ollama_urls = list(dict.fromkeys([u for u in ollama_urls if u]))
+    
+    ollama_connected = False
+    for url in ollama_urls:
+        try:
+            # Short timeout to fast fail
+            response = requests.get(f"{url}/api/tags", timeout=2)
+            if response.status_code == 200:
+                models = [m.get('name') for m in response.json().get('models', [])]
+                status["ollama"] = {
+                    "status": "Connected",
+                    "url": url,
+                    "models": models,
+                    "current_model": get_current_model_name()
+                }
+                ollama_connected = True
+                break
+        except:
+            continue
+            
+    if not ollama_connected:
+         status["ollama"] = {"status": "Disconnected", "checked_urls": ollama_urls}
     
     # Check Qdrant
     qdrant_host = os.getenv("QDRANT_HOST", "http://localhost:7333")
-    try:
-        response = requests.get(f"{qdrant_host}/collections", timeout=5)
-        if response.status_code == 200:
-            collections = response.json().get('result', {}).get('collections', [])
-            status["qdrant"] = {
-                "status": "Connected",
-                "collections": [c.get('name') for c in collections]
-            }
-        else:
-            status["qdrant"] = {"status": "Error", "code": response.status_code}
-    except Exception as e:
-        status["qdrant"] = {"status": "Disconnected", "error": str(e)}
+    qdrant_urls = [
+        qdrant_host,
+        "http://localhost:6333",
+        "http://localhost:7333", # V2 Port
+        "http://nexi-qdrant2:6333"
+    ]
+    qdrant_urls = list(dict.fromkeys([u for u in qdrant_urls if u]))
+
+    qdrant_connected = False
+    for url in qdrant_urls:
+        try:
+            response = requests.get(f"{url}/collections", timeout=2)
+            if response.status_code == 200:
+                collections = response.json().get('result', {}).get('collections', [])
+                status["qdrant"] = {
+                    "status": "Connected",
+                    "url": url,
+                    "collections": [c.get('name') for c in collections]
+                }
+                qdrant_connected = True
+                break
+        except:
+            continue
+
+    if not qdrant_connected:
+        status["qdrant"] = {"status": "Disconnected", "checked_urls": qdrant_urls}
     
     return status
 
