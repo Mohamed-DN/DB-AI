@@ -1,6 +1,7 @@
 fastapi
 uvicorn
 pymongo
+motor
 python-dotenv
 requests
 ollama
@@ -9,3 +10,7 @@ dnspython
 oracledb
 redis
 qdrant-client
+python-jose[cryptography]
+passlib[bcrypt]
+pydantic[email]
+cryptography>=41.0.0

@@ -2,7 +2,7 @@
 Nexi AI CMDB - API Gateway
 FastAPI application with modular router architecture.
 
-Version: 3.1.0
+Version: 3.2.0 - With Authentication
 """
 import sys
 import os
@@ -28,6 +28,7 @@ from .routers.emails import router as emails_router
 from .routers.connection import router as connection_router
 from .routers.tasks import router as tasks_router
 from .routers.workflows import router as workflows_router
+from .routers.auth import router as auth_router
 
 # =============================================================================
 # FastAPI Application
@@ -35,8 +36,8 @@ from .routers.workflows import router as workflows_router
 
 app = FastAPI(
     title="Nexi AI CMDB",
-    version="3.1.0",
-    description="AI-Powered Database Management - Modular Architecture",
+    version="3.2.0",
+    description="AI-Powered Database Management - With Authentication",
     docs_url="/docs",
     redoc_url="/redoc"
 )
@@ -70,6 +71,7 @@ app.include_router(emails_router, prefix="/api", tags=["Emails"])
 app.include_router(connection_router, prefix="/api", tags=["Connection"])
 app.include_router(tasks_router, prefix="/api", tags=["Tasks"])
 app.include_router(workflows_router, prefix="/api", tags=["Workflows"])
+app.include_router(auth_router, prefix="/api", tags=["Authentication"])
 
 # =============================================================================
 # Startup Event
@@ -78,9 +80,20 @@ app.include_router(workflows_router, prefix="/api", tags=["Workflows"])
 @app.on_event("startup")
 async def startup_event():
     print("=" * 60)
-    print("🚀 Nexi AI CMDB v3.1.0 - Modular Architecture")
-    print(f"📁 Routers loaded: inventory, alerts, agents, llm, system, metrics, emails, connection, tasks, workflows")
+    print("🚀 Nexi AI CMDB v3.2.0 - With Authentication")
+    print(f"📁 Routers loaded: inventory, alerts, agents, llm, system, metrics, emails, connection, tasks, workflows, auth")
     print(f"🌐 CORS Origins: {ALLOWED_ORIGINS}")
+    print("🔒 Authentication enabled")
+    
+    try:
+        # Ensure default admin user exists
+        from .services.auth_service import get_auth_service
+        auth_service = get_auth_service()
+        await auth_service.ensure_admin_exists()
+    except Exception as e:
+        print(f"❌ Startup Error - Failed to initialize Auth Service: {e}")
+        print("   The application will continue, but authentication might not work.")
+    
     print("=" * 60)
 
 # =============================================================================

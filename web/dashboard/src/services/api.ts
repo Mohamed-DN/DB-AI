@@ -1,7 +1,10 @@
 import axios from 'axios';
 import type { Database } from '../types/database';
 
-const API_BASE = '/api';  // Relative URL - Vite proxy routes to backend (8000 for V1, 9000 for V2)
+export const API_BASE = '/api';  // Relative URL - Vite proxy routes to backend (8000 for V1, 9000 for V2)
+
+// Token storage key (must match AuthContext)
+const TOKEN_KEY = 'nexi_auth_token';
 
 const api = axios.create({
     baseURL: API_BASE,
@@ -9,6 +12,34 @@ const api = axios.create({
         'Content-Type': 'application/json',
     },
 });
+
+// Request interceptor - Add JWT token to all requests
+api.interceptors.request.use(
+    (config) => {
+        const token = localStorage.getItem(TOKEN_KEY);
+        if (token) {
+            config.headers.Authorization = `Bearer ${token}`;
+        }
+        return config;
+    },
+    (error) => Promise.reject(error)
+);
+
+// Response interceptor - Handle 401 errors (unauthorized)
+api.interceptors.response.use(
+    (response) => response,
+    (error) => {
+        if (error.response?.status === 401) {
+            // Token expired or invalid - clear and redirect to login
+            localStorage.removeItem(TOKEN_KEY);
+            // Don't redirect if already on login page
+            if (!window.location.pathname.includes('login')) {
+                window.dispatchEvent(new CustomEvent('auth:logout'));
+            }
+        }
+        return Promise.reject(error);
+    }
+);
 
 // Inventory
 export const getDatabases = async (): Promise<Database[]> => {

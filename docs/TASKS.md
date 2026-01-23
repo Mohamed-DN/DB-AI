@@ -55,3 +55,5 @@
 - [ ] **Security**: Implement RBAC & Secret Management
 - [ ] **Frontend**: Add Auth & Error Handling
 - [ ] **Testing**: Fix `validate_system.py` paths
+- [ ] **Ops**: Port PowerShell scripts to Bash (`.sh`) for Red Hat
+- [ ] **Ops**: Validate and fix Docker volume paths for Linux

@@ -5,6 +5,25 @@
 
 ## 🧠 System Architecture
 
+### The 3-Layer Operating Model
+
+This project strictly follows a **3-Layer Architecture** to separate deterministic execution from probabilistic AI reasoning:
+
+1. **Layer 1: Directive (Directives)**
+   - Located in `matrix/directives/`.
+   - Markdown Standard Operating Procedures (SOPs).
+   - "Rules of Engagement" for the AI (Context).
+
+2. **Layer 2: Orchestration (The Brain)**
+   - Located in `orchestrator/`.
+   - Intelligent routing, decision making, and task delegation.
+   - Connects intent (Directive) to action (Execution).
+
+3. **Layer 3: Execution (The Hands)**
+   - Located in `execution/`.
+   - Deterministic, atomic Python scripts.
+   - No AI logic here—just pure, testable code.
+
 ```mermaid
 graph TD
     %% Users & Entry

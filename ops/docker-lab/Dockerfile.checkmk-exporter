@@ -1,0 +1,20 @@
+# CheckMK Prometheus Exporter Dockerfile
+FROM python:3.11-slim
+
+WORKDIR /app
+
+# Install dependencies
+RUN pip install --no-cache-dir flask prometheus_client requests
+
+# Copy exporter script
+COPY ops/scripts/checkmk_exporter.py /app/exporter.py
+
+# Expose metrics port
+EXPOSE 9106
+
+# Health check
+HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
+    CMD curl -f http://localhost:9106/health || exit 1
+
+# Run exporter
+CMD ["python", "/app/exporter.py"]

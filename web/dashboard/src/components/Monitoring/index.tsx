@@ -4,8 +4,9 @@ import { Database, Activity, AlertTriangle } from 'lucide-react';
 export function MonitoringDashboard() {
     const [activeView, setActiveView] = useState<'grafana' | 'checkmk'>('grafana');
 
-    const grafanaUrl = "http://localhost:3003/d/nexi-dba-v2/nexi-db-checkmk-and-critical-events-v2?orgId=1&refresh=5s&kiosk"; // Kiosk mode for full screen
-    const checkmkUrl = "http://localhost:8080/nexi_monitor/check_mk/index.py?start_url=%2Fnexi_monitor%2Fcheck_mk%2Fview.py%3Fview_name%3Dallhosts"; // Direct to hosts view
+    // Updated to use the new CheckMK dashboard we provisioned
+    const grafanaUrl = "http://localhost:3003/d/checkmk-nexi/checkmk-monitoring?orgId=1&refresh=30s&kiosk&from=now-1h&to=now";
+    const checkmkUrl = "http://localhost:8080/nexi_monitor/check_mk/index.py?start_url=%2Fnexi_monitor%2Fcheck_mk%2Fview.py%3Fview_name%3Dallhosts";
 
     const [userRole, setUserRole] = useState<'admin' | 'dev' | 'viewer'>('admin');
 

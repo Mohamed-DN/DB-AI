@@ -1,11 +1,21 @@
 # Prometheus Configuration for Nexi DBA AI
 # Scrapes metrics from database exporters
+# Remote write enabled for VictoriaMetrics long-term storage
 
 global:
   scrape_interval: 15s
   evaluation_interval: 15s
   external_labels:
     monitor: 'nexi-dba-ai'
+
+# Remote Write to VictoriaMetrics for long-term storage
+# This enables Prometheus to keep collecting metrics while
+# VictoriaMetrics handles long-term storage and scalability
+remote_write:
+  - url: http://victoriametrics:8428/api/v1/write
+    queue_config:
+      max_samples_per_send: 10000
+      batch_send_deadline: 5s
 
 # Alerting configuration (optional - for future)
 alerting:
@@ -25,6 +35,14 @@ scrape_configs:
         labels:
           service: 'prometheus'
 
+  # VictoriaMetrics - for VM internal metrics
+  - job_name: 'victoriametrics'
+    static_configs:
+      - targets: ['victoriametrics:8428']
+        labels:
+          service: 'victoriametrics'
+    scrape_interval: 30s
+
   # PostgreSQL Exporter
   - job_name: 'postgresql'
     static_configs:
@@ -34,12 +52,13 @@ scrape_configs:
           location: 'milano'
     scrape_interval: 30s
 
-  # PostgreSQL Exporter - Multiple DBs (future)
-  # - job_name: 'postgresql-bratislava'
-  #   static_configs:
-  #     - targets: ['pg-exporter-bratislava.nexi.lab:9187']
-
-  # Node Exporter (optional - for host metrics)
-  # - job_name: 'node'
-  #   static_configs:
-  #     - targets: ['node-exporter.nexi.lab:9100']
+  # CheckMK Exporter - Host and Service Metrics
+  - job_name: 'checkmk'
+    static_configs:
+      - targets: ['checkmk-exporter:9106']
+        labels:
+          source: 'checkmk'
+          environment: 'production'
+    scrape_interval: 60s  # CheckMK API can be slow
+    scrape_timeout: 30s
+    metrics_path: /metrics

@@ -15,7 +15,9 @@ import {
   Play,
   ExternalLink,
   BarChart3,
-  Activity // New icon for Monitoring
+  Activity,
+  LogOut,
+  User
 } from 'lucide-react';
 import DashboardStats from './components/Dashboard/DashboardStats';
 import InventoryTable from './components/Inventory/InventoryTable';
@@ -27,7 +29,9 @@ import ExplorerPanel from './components/Explorer/ExplorerPanel';
 import AgentsPanel from './components/Agents/AgentsPanel';
 import SettingsPanel from './components/Settings/SettingsPanel';
 import { MetricsContainer } from './components/Metrics';
-import { MonitoringDashboard } from './components/Monitoring'; // Import new component
+import { MonitoringDashboard } from './components/Monitoring';
+import Login from './components/Auth/Login';
+import { AuthProvider, useAuth } from './context/AuthContext';
 import { useAutoDiscovery, useSystemStatus } from './hooks/useDatabases';
 import './index.css';
 
@@ -119,8 +123,9 @@ function AppContent() {
   const [activeTab, setActiveTab] = useState<Tab>('dashboard');
   const autoDiscovery = useAutoDiscovery();
   const { data: systemStatus } = useSystemStatus();
-  // const setSystemStatus = useSetSystemStatus(); // Replaced by custom fetch implementation
+  const { user, logout, hasPermission, isAuthenticated, isLoading } = useAuth();
   const [isPaused, setIsPaused] = useState(false);
+  const [showUserMenu, setShowUserMenu] = useState(false);
 
   // Progress Modal State
   const [showProgressModal, setShowProgressModal] = useState(false);
@@ -133,6 +138,23 @@ function AppContent() {
       setIsPaused(systemStatus.paused ?? systemStatus.status === 'PAUSED');
     }
   }, [systemStatus]);
+
+  // Show loading state
+  if (isLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <div className="w-12 h-12 border-4 border-blue-500 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+          <p className="text-gray-400">Loading...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Show login page if not authenticated
+  if (!isAuthenticated) {
+    return <Login />;
+  }
 
   const handleTogglePause = async () => {
     const targetState = !isPaused; // If paused=true, we want to Resume (running). If paused=false, we want to Pause.
@@ -286,6 +308,39 @@ function AppContent() {
               <span className="hidden md:inline">{isPaused ? 'Resume' : 'Pause'} System</span>
             </button>
 
+            {/* User Menu */}
+            <div className="relative">
+              <button
+                onClick={() => setShowUserMenu(!showUserMenu)}
+                className="flex items-center gap-2 px-3 py-2 rounded-lg bg-gray-800/50 hover:bg-gray-700/50 transition-colors"
+              >
+                <User className="w-4 h-4" />
+                <span className="hidden md:inline text-sm">{user?.username}</span>
+                <span className={`text-xs px-2 py-0.5 rounded-full ${user?.role === 'admin' ? 'bg-purple-500/20 text-purple-300' :
+                    user?.role === 'operator' ? 'bg-blue-500/20 text-blue-300' :
+                      'bg-gray-500/20 text-gray-300'
+                  }`}>
+                  {user?.role}
+                </span>
+              </button>
+
+              {showUserMenu && (
+                <div className="absolute right-0 mt-2 w-48 glass rounded-lg shadow-lg py-1 z-50">
+                  <div className="px-4 py-2 border-b border-gray-700">
+                    <p className="text-sm font-medium">{user?.full_name || user?.username}</p>
+                    <p className="text-xs text-gray-400">{user?.email}</p>
+                  </div>
+                  <button
+                    onClick={() => { logout(); setShowUserMenu(false); }}
+                    className="w-full flex items-center gap-2 px-4 py-2 text-sm text-red-400 hover:bg-red-500/10 transition-colors"
+                  >
+                    <LogOut className="w-4 h-4" />
+                    Sign Out
+                  </button>
+                </div>
+              )}
+            </div>
+
             {/* Status Indicator */}
             <div className="flex items-center gap-2 px-3">
               <span className={`w-2 h-2 rounded-full ${isPaused ? 'bg-amber-400' : 'bg-emerald-500 animate-pulse'}`}></span>
@@ -325,9 +380,11 @@ import { ConnectionProvider } from './context/ConnectionContext';
 export default function App() {
   return (
     <QueryClientProvider client={queryClient}>
-      <ConnectionProvider>
-        <AppContent />
-      </ConnectionProvider>
+      <AuthProvider>
+        <ConnectionProvider>
+          <AppContent />
+        </ConnectionProvider>
+      </AuthProvider>
     </QueryClientProvider>
   );
 }

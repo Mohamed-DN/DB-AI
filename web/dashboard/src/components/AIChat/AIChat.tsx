@@ -1,25 +1,36 @@
 import { useState, useRef, useEffect } from 'react';
-import { Send, Bot, User, Cpu } from 'lucide-react';
+import { Send, Bot, User, Cpu, Lock, Shield } from 'lucide-react';
 import { useMutation, useQuery } from '@tanstack/react-query';
 import * as api from '../../services/api';
+import { useAuth } from '../../context/AuthContext';
 
 interface Message {
-    role: 'user' | 'assistant';
+    role: 'user' | 'assistant' | 'system';
     content: string;
     timestamp: Date;
 }
 
 export default function AIChat() {
-    const [messages, setMessages] = useState<Message[]>([
-        {
-            role: 'assistant',
-            content: 'Ciao! Sono l\'assistente AI di Nexi CMDB. Posso aiutarti con informazioni sui database, alert di sistema, o qualsiasi domanda sull\'infrastruttura.',
-            timestamp: new Date(),
-        },
-    ]);
+    const { user, hasPermission } = useAuth();
+    const canUseLlm = hasPermission('can_use_llm');
+
+    const [messages, setMessages] = useState<Message[]>([]);
     const [input, setInput] = useState('');
     const [selectedModel, setSelectedModel] = useState('');
     const messagesEndRef = useRef<HTMLDivElement>(null);
+
+    // Set initial greeting with user name
+    useEffect(() => {
+        if (user) {
+            setMessages([
+                {
+                    role: 'assistant',
+                    content: `Ciao ${user.full_name || user.username}! 👋 Sono l'assistente AI di Nexi CMDB. Posso aiutarti con informazioni sui database, alert di sistema, o qualsiasi domanda sull'infrastruttura.`,
+                    timestamp: new Date(),
+                },
+            ]);
+        }
+    }, [user]);
 
     const { data: currentModel } = useQuery({
         queryKey: ['currentModel'],
@@ -123,6 +134,7 @@ export default function AIChat() {
                             setSelectedModel(nextModel);
                             switchModelMutation.mutate(nextModel);
                         }}
+                        disabled={!canUseLlm}
                     >
                         {llmConfig?.models?.map((model: any) => (
                             <option key={model.id} value={model.id}>
@@ -132,7 +144,15 @@ export default function AIChat() {
                         {!llmConfig && <option>Loading...</option>}
                     </select>
                 </div>
-                <span className="text-sm text-gray-500">{gpuInfo}</span>
+                <div className="flex items-center gap-4">
+                    <span className="text-sm text-gray-500">{gpuInfo}</span>
+                    {user && (
+                        <div className="flex items-center gap-2 px-2 py-1 rounded bg-gray-800/50">
+                            <Shield className="w-4 h-4 text-purple-400" />
+                            <span className="text-xs text-gray-400">{user.role}</span>
+                        </div>
+                    )}
+                </div>
             </div>
 
             {/* Messages */}
@@ -182,25 +202,34 @@ export default function AIChat() {
                 <div ref={messagesEndRef} />
             </div>
 
-            {/* Input */}
+            {/* Input - Permission Protected */}
             <div className="p-4 border-t border-gray-700">
-                <div className="flex gap-2">
-                    <input
-                        type="text"
-                        value={input}
-                        onChange={(e) => setInput(e.target.value)}
-                        onKeyDown={handleKeyDown}
-                        placeholder="Chiedi informazioni sui database, alert, o stato del sistema..."
-                        className="flex-1 bg-gray-800 border border-gray-600 rounded-lg px-4 py-3 focus:outline-none focus:border-purple-500"
-                    />
-                    <button
-                        onClick={handleSend}
-                        disabled={sendMessageMutation.isPending || !input.trim()}
-                        className="btn-primary px-4"
-                    >
-                        <Send className="w-5 h-5" />
-                    </button>
-                </div>
+                {canUseLlm ? (
+                    <div className="flex gap-2">
+                        <input
+                            type="text"
+                            value={input}
+                            onChange={(e) => setInput(e.target.value)}
+                            onKeyDown={handleKeyDown}
+                            placeholder="Chiedi informazioni sui database, alert, o stato del sistema..."
+                            className="flex-1 bg-gray-800 border border-gray-600 rounded-lg px-4 py-3 focus:outline-none focus:border-purple-500"
+                        />
+                        <button
+                            onClick={handleSend}
+                            disabled={sendMessageMutation.isPending || !input.trim()}
+                            className="btn-primary px-4"
+                        >
+                            <Send className="w-5 h-5" />
+                        </button>
+                    </div>
+                ) : (
+                    <div className="flex items-center justify-center gap-3 p-4 bg-amber-500/10 border border-amber-500/30 rounded-lg">
+                        <Lock className="w-5 h-5 text-amber-400" />
+                        <span className="text-amber-300 text-sm">
+                            Il tuo ruolo ({user?.role}) non ha permessi per usare l'AI Chat. Contatta un admin.
+                        </span>
+                    </div>
+                )}
             </div>
         </div>
     );

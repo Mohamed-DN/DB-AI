@@ -10,7 +10,7 @@ export default defineConfig({
     port: 3002, // React frontend (3000=old, 3001=OpenWebUI)
     proxy: {
       '/api': {
-        target: 'http://localhost:9000',
+        target: 'http://127.0.0.1:9000',
         changeOrigin: true,
       }
     }

@@ -414,6 +414,56 @@ services:
         ipv4_address: 172.21.0.32
     restart: unless-stopped
 
+  # CheckMK Prometheus Exporter - Exports host/service metrics
+  checkmk-exporter:
+    build:
+      context: ../..
+      dockerfile: ops/docker-lab/Dockerfile.checkmk-exporter
+    container_name: nexi-checkmk-exporter
+    hostname: checkmk-exporter.nexi.lab
+    ports:
+      - "${CHECKMK_EXPORTER_PORT:-9106}:9106"
+    environment:
+      CHECKMK_URL: "http://checkmk:5000/nexi_monitor/check_mk/api/1.0"
+      CHECKMK_USER: cmkadmin
+      CHECKMK_PASSWORD: nexi2024
+      CHECKMK_EXPORTER_PORT: "9106"
+    depends_on:
+      - checkmk
+    networks:
+      nexi-lab2:
+        ipv4_address: 172.21.0.34
+    restart: unless-stopped
+
+  # ===========================================================================
+  # TIME SERIES - VictoriaMetrics for Long-Term Storage
+  # ===========================================================================
+  # VictoriaMetrics provides:
+  # - Long-term storage for Prometheus metrics
+  # - 10x better compression than Prometheus
+  # - PromQL compatible queries
+  # - Horizontal scalability for 3000+ databases
+
+  victoriametrics:
+    image: victoriametrics/victoria-metrics:latest
+    container_name: nexi-victoriametrics
+    hostname: victoriametrics.nexi.lab
+    ports:
+      - "${VICTORIAMETRICS_PORT:-8428}:8428"
+      - "${VICTORIAMETRICS_GRAPHITE_PORT:-2003}:2003"  # Graphite for CheckMK Raw
+    volumes:
+      - victoriametrics_data:/victoria-metrics-data
+    command:
+      - '--storageDataPath=/victoria-metrics-data'
+      - '--httpListenAddr=:8428'
+      - '--graphiteListenAddr=:2003'  # Enable Graphite ingestion for CheckMK
+      - '--retentionPeriod=365d'  # 1 year retention
+      - '--maxLabelsPerTimeseries=30'
+    networks:
+      nexi-lab2:
+        ipv4_address: 172.21.0.33
+    restart: unless-stopped
+
   # ===========================================================================
   # MONITORING - CheckMK (Simulation)
   # ===========================================================================
@@ -451,4 +501,5 @@ volumes:
   langfuse_clickhouse_data_v2:
   prometheus_data_v2:
   grafana_data_v2:
+  victoriametrics_data:
   checkmk_data:
