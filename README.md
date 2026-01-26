@@ -11,7 +11,8 @@ This project strictly follows a **3-Layer Architecture** to separate determinist
 
 1. **Layer 1: Directive (Directives)**
    - Located in `matrix/directives/`.
-   - Markdown Standard Operating Procedures (SOPs).
+   - 
+    Standard Operating Procedures (SOPs).
    - "Rules of Engagement" for the AI (Context).
 
 2. **Layer 2: Orchestration (The Brain)**
@@ -107,7 +108,24 @@ All scripts are located in `ops/scripts/`.
 
 ---
 
-## 📚 Essential Reading
+## � Future Architecture & Data Sources
+
+### Data Sources
+The system integrates 4 main data streams for holistic monitoring:
+1. **CheckMK**: Infrastructure status and legacy alerts.
+2. **OEM (Oracle Enterprise Manager)**: Deep database performance metrics.
+3. **Database**: Direct SQL queries for internal state and logs.
+4. **Machine**: OS-level metrics (CPU, RAM, Disk I/O).
+
+### Infrastructure Evolution
+We are moving towards a distributed gateway architecture:
+- **Current State**: 2 Primary Gateways connecting Machines to MongoDB and AI Core.
+- **Future State**: 3+ Gateways for high availability and load balancing.
+- **Queue Management**: **Redis** will be deployed on ALL gateways to handle message queues, replacing direct synchronous connections for better resilience.
+
+---
+
+## �📚 Essential Reading
 
 - **[System Architecture](docs/architecture/system_architecture.md)**: High-level design and component interaction.
 - **[Agents Overview](docs/architecture/agents_overview.md)**: Details on the autonomous workers.

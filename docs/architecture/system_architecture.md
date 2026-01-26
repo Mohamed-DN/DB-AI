@@ -184,3 +184,47 @@ flowchart LR
 - [README.md](README.md) - Quick start
 - [AGENTS.md](AGENTS.md) - Agent documentation
 - [MANIFEST.md](MANIFEST.md) - Port mappings
+
+---
+
+## 🔮 Future Architecture Vision
+
+The platform is evolving towards a distributed, high-availability architecture with **3 Gateways** and **Redis-based Queues**.
+
+```mermaid
+flowchart TB
+    subgraph DataSources["📊 Data Sources"]
+        CheckMK[CheckMK Monitoring]
+        OEM[Oracle Enterprise Manager]
+        DB[Direct SQL Access]
+        Machine[OS Metrics]
+    end
+
+    subgraph Gateways["🌐 Distributed Gateways"]
+        direction LR
+        GW1[Gateway 01<br/>+ Redis Queue]
+        GW2[Gateway 02<br/>+ Redis Queue]
+        GW3[Gateway 03<br/>+ Redis Queue]
+    end
+
+    subgraph Core["🧠 Central Core"]
+        MongoDB[(MongoDB Cluster)]
+        AI[AI Orchestrator]
+    end
+
+    %% Connections
+    CheckMK & OEM & DB & Machine --> GW1 & GW2 & GW3
+    GW1 & GW2 & GW3 <-->|Async Queue| MongoDB
+    GW1 & GW2 & GW3 <-->|Context| AI
+
+    %% Styling
+    style Gateways fill:#e1f5fe,stroke:#01579b
+    style Core fill:#fff3e0,stroke:#e65100
+    style DataSources fill:#f3e5f5,stroke:#4a148c
+```
+
+### Key Changes
+1. **Redundancy**: Moving from 2 to **3 Gateways** to ensure zero downtime.
+2. **Asynchronous Processing**: **Redis Queues** on each gateway decouple data ingestion from processing.
+3. **Unified Ingestion**: All 4 data sources (CheckMK, OEM, DB, Machine) flow through the same gateway layer.
+
