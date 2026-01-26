@@ -201,3 +201,80 @@ def trigger_forensic_analysis():
         return {"status": "Forensic Analyzer Triggered"}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.post("/action/sentinel")
+def trigger_sentinel():
+    """
+    Trigger Sentinel Engine - Predictive Anomaly Detection
+    
+    Runs the full Predictor → Verifier → Action workflow:
+    1. Predictor Agent analyzes time-series metrics for anomalies
+    2. Verifier Agent classifies predictions as real or false alarms
+    3. Action dispatch sends emails based on classification
+    """
+    try:
+        script_path = os.path.abspath(os.path.join(os.path.dirname(__file__), '../../workers/Sentinel/sentinel_workflow.py'))
+        subprocess.Popen(
+            [sys.executable, script_path, "--once"],
+            stdout=subprocess.DEVNULL,
+            stderr=subprocess.DEVNULL
+        )
+        return {"status": "Sentinel Engine Triggered", "workflow": "predict → verify → act"}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.get("/sentinel/status")
+def get_sentinel_status():
+    """Get last Sentinel run status from MongoDB"""
+    try:
+        from api_agents.shared.sync_mongo_service import SyncMongoService
+        mongo = SyncMongoService.get_instance()
+        
+        # Get last sentinel alert
+        db = mongo.client[mongo.db_name]
+        last_alert = db.monitoring_alerts.find_one(
+            {"source": "SentinelWorkflow"},
+            sort=[("created_at", -1)]
+        )
+        
+        if last_alert:
+            return {
+                "last_run": last_alert.get("created_at"),
+                "last_alert_type": last_alert.get("type"),
+                "last_db": last_alert.get("db_name"),
+                "status": "active"
+            }
+        return {"status": "no_runs", "message": "Sentinel has not run yet"}
+    except Exception as e:
+        return {"status": "error", "message": str(e)}
+
+@router.post("/action/oem-collect")
+def trigger_oem_collection():
+    """Trigger OEM Collector for Oracle Enterprise Manager metrics"""
+    try:
+        script_path = os.path.abspath(os.path.join(os.path.dirname(__file__), '../../workers/OEM_Collector/oem_collector.py'))
+        subprocess.Popen(
+            [sys.executable, script_path, "--once"],
+            stdout=subprocess.DEVNULL,
+            stderr=subprocess.DEVNULL
+        )
+        return {"status": "OEM Collector Triggered"}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.post("/action/rag-ingest")
+def trigger_rag_ingestion():
+    """Trigger Sentinel RAG Knowledge Ingestion"""
+    try:
+        script_path = os.path.abspath(os.path.join(os.path.dirname(__file__), '../../workers/Sentinel/sentinel_rag_ingester.py'))
+        subprocess.Popen(
+            [sys.executable, script_path, "--ingest"],
+            stdout=subprocess.DEVNULL,
+            stderr=subprocess.DEVNULL
+        )
+        return {"status": "RAG Ingestion Triggered"}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))

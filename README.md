@@ -113,6 +113,8 @@ All scripts are located in `ops/scripts/`.
 - **[Agents Overview](docs/architecture/agents_overview.md)**: Details on the autonomous workers.
 - **[Qdrant Basics](docs/references/qdrant_basics.md)**: Understanding the Vector DB.
 - **[Audit & Roadmap](docs/audit/ROADMAP_MIGLIORAMENTO_E_AUDIT_TECNICO.md)**: Technical audit and future improvements.
+- **[Sentinel Implementation Walkthrough](docs/SENTINEL_WALKTHROUGH.md)**: Full guide to the Intelligent DBA Sentinel System.
+- **[Sentinel Task Tracker](docs/SENTINEL_TASK.md)**: Implementation status and checklist.
 - **[Project Tasks](docs/TASKS.md)**: Current development checklist and status.
 
 ---
