@@ -25,6 +25,7 @@ sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), 'src')))
 # Link to Shared Modules (ROOT)
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '../../../')))
 from api_agents.shared.sync_mongo_service import SyncMongoService
+from api_agents.shared.redis_client import RedisClient
 
 # Local Imports
 try:
@@ -39,6 +40,8 @@ except ImportError:
 class CollectorAgent:
     def __init__(self):
         self.mongo = SyncMongoService.get_instance()
+        self.redis = RedisClient.get_instance()
+        
         # Initialize CMDB Updater (uses direct PyMongo)
         try:
             self.cmdb_updater = CMDBUpdater(self.mongo)
@@ -128,8 +131,9 @@ class CollectorAgent:
                 if 'state' not in cmdb_doc: cmdb_doc['state'] = {}
                 cmdb_doc['state']['status'] = 'UP'
                 
-                self.cmdb_updater.upsert_database(cmdb_doc)
-                print(f"   ✅ Deep Oracle Data updated for {identity.get('db_unique_name')}")
+                # ASYNC WRITE: Push to Redis
+                self.redis.push_to_queue("CMDB_UPDATES", cmdb_doc)
+                print(f"   ✅ Deep Oracle Data queued for {identity.get('db_unique_name')}")
                 return True
             else:
                 print(f"   ⚠️ No data collected from {host}")
@@ -176,19 +180,22 @@ class CollectorAgent:
                     # FIX: Strict check for running state (Windows Docker output fix)
                     if self.is_container_running(container_name):
                         # Always mark UP if running, even if metrics fail
-                        self.mongo.update_status(name, "UP")
+                        # ASYNC WRITE: Status UP
+                        self.redis.push_to_queue("STATUS_UPDATES", {"name": name, "status": "UP"})
                         
                         metrics = self.collect_docker_metrics(container_name)
                         if metrics:
                             print(f"   📈 Metrics for {name}: CPU={metrics['cpu_usage']}, RAM={metrics['ram_usage']}")
-                            self.mongo.update_metrics(name, metrics)
+                            # ASYNC WRITE: Metrics
+                            self.redis.push_to_queue("METRICS_UPDATES", {"name": name, "metrics": metrics})
                             count += 1
                         else:
                              print(f"   ⚠️ Metrics collection failed for {name} (Running but no stats?)")
                     else:
                         if not is_remote:
                             print(f"   🛑 Container {container_name} is stopped. Marking DOWN.")
-                            self.mongo.update_status(name, "DOWN")
+                            # ASYNC WRITE: Status DOWN
+                            self.redis.push_to_queue("STATUS_UPDATES", {"name": name, "status": "DOWN"})
 
             except Exception as e:
                 print(f"   ❌ Error processing {name}: {e}")

@@ -6,9 +6,10 @@ Design and implement a comprehensive AI-powered DBA monitoring system that integ
 ---
 
 ## Phase 1: Repository Knowledge Ingestion (Static Analysis) ✅
-- [x] Create `SentinelRAGIngester` class to scan repository for SQL scripts, stored procedures, and config files
-- [x] Index into Qdrant vector database with semantic embeddings
-- [x] Build knowledge base of standard operating procedures from existing scripts
+- [x] **Redis Deployment**: Add Redis service to `docker-compose` and `ops/scripts`.
+- [x] **Queue Implementation**: Create `RedisClient` in `api_agents/shared` for async messaging.
+- [x] **Agent Decoupling**: Refactor Agents (Collector, Scout) to push data to Redis instead of direct MongoDB writes.
+- [x] **Ingestion Workers**: Create dedicated workers to consume from Redis and write to MongoDB (Async Write).
 
 ---
 

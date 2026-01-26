@@ -74,7 +74,8 @@ AGENTS_STATE = {
     "checkmk_bridge": {"running": False, "process": None},
     "enricher": {"running": False, "process": None},
     "discovery": {"running": False, "process": None},
-    "userprovisioner": {"running": False, "process": None}
+    "userprovisioner": {"running": False, "process": None},
+    "ingestion": {"running": False, "process": None}
 }
 
 AGENT_SCRIPTS = {
@@ -86,5 +87,6 @@ AGENT_SCRIPTS = {
     "checkmk_bridge": "../workers/CheckMK_Bridge/main.py",
     "enricher": "../workers/Enricher/enricher_agent.py",
     "discovery": "../workers/Discovery/discovery_agent.py",
-    "userprovisioner": "../workers/UserProvisioner/user_provisioner_agent.py"
+    "userprovisioner": "../workers/UserProvisioner/user_provisioner_agent.py",
+    "ingestion": "../workers/Ingestion/ingestion_worker.py"
 }

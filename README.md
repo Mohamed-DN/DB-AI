@@ -142,10 +142,10 @@ We are moving towards a distributed gateway architecture:
 To achieve the **Future Architecture** (3 Gateways, Redis, 4 Sources), the work is broken down into manageable phases.
 
 ### Phase 1: Infrastructure Foundations (Redis & Queueing)
-- [ ] **Redis Deployment**: Add Redis service to `docker-compose` and `ops/scripts`.
-- [ ] **Queue Implementation**: Create `RedisClient` in `api_agents/shared` for async messaging.
-- [ ] **Agent Decoupling**: Refactor Agents (Collector, Scout) to push data to Redis instead of direct MongoDB writes.
-- [ ] **Ingestion Workers**: Create dedicated workers to consume from Redis and write to MongoDB (Async Write).
+- [x] **Redis Deployment**: Add Redis service to `docker-compose` and `ops/scripts`.
+- [x] **Queue Implementation**: Create `RedisClient` in `api_agents/shared` for async messaging.
+- [x] **Agent Decoupling**: Refactor Agents (Collector, Scout) to push data to Redis instead of direct MongoDB writes.
+- [x] **Ingestion Workers**: Create dedicated workers to consume from Redis and write to MongoDB (Async Write).
 
 ### Phase 2: Distributed Gateway Architecture
 - [ ] **Gateway Config**: Define configuration profiles for `Gateway_01`, `Gateway_02`, `Gateway_03`.

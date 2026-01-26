@@ -14,13 +14,13 @@ sys.stdout.reconfigure(encoding='utf-8')
 # Add path for shared modules
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '../../../')))
 from api_agents.shared.sync_mongo_service import SyncMongoService
-from api_agents.workers.Scout.user_provisioner import UserProvisioner
+from api_agents.shared.redis_client import RedisClient
 from api_agents.workers.Scout.template_loader import build_document
 
 class ScoutAgent:
     def __init__(self):
         self.mongo = SyncMongoService.get_instance()
-        self.provisioner = UserProvisioner(self.mongo)
+        self.redis = RedisClient.get_instance()
         
     def scan_docker(self):
         """Scan Docker for database containers"""
@@ -121,113 +121,12 @@ class ScoutAgent:
             print(f"❌ Scout Error: {e}")
             return []
 
-    def update_inventory(self, dbs):
-        """Update MongoDB Inventory"""
-        print(f"💾 Updating Inventory with {len(dbs)} databases...")
-        
-        # Get existing DBs with status using native PyMongo
-        existing_status = self.mongo.get_existing_databases()
-        existing_names = set(existing_status.keys())
-        
-        found_names = set()
-        for db in dbs:
-            name = db['identity']['db_unique_name']
-            found_names.add(name)
-            
-            # Check if NEW
-            if name not in existing_names:
-                print(f"✨ NEW DATABASE FOUND: {name}")
-                alert = {
-                    "severity": "WARNING",
-                    "state": "WARNING",
-                    "type": "NEW_DB_DISCOVERED",
-                    "host_name": db['identity']['host'],
-                    "service": f"{db['identity']['engine']}-{name}",
-                    "message": f"Scout discovered new {db['identity']['engine']} database: {name}",
-                    "output": "New Asset",
-                    "timestamp": "NOW",
-                    "processed": False
-                }
-                self.mongo.insert_alert(alert)
-                
-                # 🔑 AUTO-PROVISION AIAUTO USER
-                try:
-                    prov_result = self.provisioner.provision_database(db)
-                    if prov_result.get('provisioned'):
-                        print(f"✅ AIAUTO user provisioned on {name}")
-                    elif prov_result.get('skipped'):
-                        print(f"⏭️ Skipped provisioning for {name}: {prov_result.get('reason')}")
-                    else:
-                        print(f"⚠️ Provisioning failed for {name}: {prov_result.get('message', prov_result.get('error'))}")
-                except Exception as prov_err:
-                    print(f"❌ Provisioning error for {name}: {prov_err}")
-
-            # Check if NEW or EXISTING for Update Logic
-            if name in existing_names:
-                # EXISTING: Check for RECOVERY
-                prev_status = existing_status.get(name, 'UNKNOWN')
-                if prev_status in ['MISSING', 'DOWN']:
-                    print(f"🎉 RECOVERY DETECTED: {name} is back UP (was {prev_status})")
-                    alert = {
-                        "severity": "RESOLVED",
-                        "state": "RESOLVED", 
-                        "type": "DB_RECOVERY",
-                        "db_unique_name": name,
-                        "host_name": db['identity']['host'],
-                        "service": f"{db['identity']['engine']}-{name}",
-                        "message": f"Database {name} has recovered and is back ONLINE.",
-                        "output": "Service Restored",
-                        "timestamp": "NOW",
-                        "processed": False
-                    }
-                    self.mongo.insert_alert(alert)
-
-                # EXISTING: Only update state/status, preserve manual metadata
-                self.mongo.update_last_seen(name, "UP")
-            else:
-                # NEW: Full Upsert - Merge document with state fields
-                db['state'] = db.get('state', {})
-                db['state']['status'] = 'UP'
-                db['state']['last_seen'] = datetime.datetime.utcnow()
-                self.mongo.upsert_database(db)
-        
-        # Check MISSING - but exclude REMOTE databases (e.g. VirtualBox Oracle RAC)
-        remote_names = set(self.mongo.get_remote_databases())
-        
-        missing_names = existing_names - found_names - remote_names
-        for missing in missing_names:
-            prev_status = existing_status.get(missing, 'UNKNOWN')
-            
-            # Update status to MISSING
-            self.mongo.update_last_seen(missing, "MISSING")
-            
-            # Anti-Spam: Only alert if it's a NEW incident
-            if prev_status != 'MISSING':
-                print(f"⚠️ DETECTED MISSING ASSET: {missing} (Prev: {prev_status})")
-                
-                # Create Alert
-                alert = {
-                    "severity": "CRITICAL",
-                    "state": "CRITICAL",
-                    "type": "ASSET_MISSING",
-                    "db_unique_name": missing,
-                    "host_name": "Docker",
-                    "service": f"DB-{missing}",
-                    "message": f"Database {missing} was not found in Docker scan.",
-                    "output": "Container Missing",
-                    "timestamp": "NOW",
-                    "processed": False
-                }
-                self.mongo.insert_alert(alert)
-            else:
-                pass # Already known missing, silent update
-        
-        print(f"✅ Inventory Sync Complete. Found: {len(found_names)}, Missing: {len(missing_names)}, Remote (Excluded): {len(remote_names)}")
-
     def run(self):
         dbs = self.scan_docker()
         if dbs:
-            self.update_inventory(dbs)
+            print(f"📡 Found {len(dbs)} databases. Pushing to Discovery Queue...")
+            self.redis.push_to_queue("DISCOVERY_UPDATES", {"dbs": dbs})
+            print("✅ Discovery payload pushed to Redis.")
         else:
             print("No databases found.")
 
