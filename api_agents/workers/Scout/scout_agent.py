@@ -13,13 +13,13 @@ sys.stdout.reconfigure(encoding='utf-8')
 
 # Add path for shared modules
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '../../../')))
-from orchestrator.core.mongo_proxy import MongoProxy
+from api_agents.shared.sync_mongo_service import SyncMongoService
 from api_agents.workers.Scout.user_provisioner import UserProvisioner
 from api_agents.workers.Scout.template_loader import build_document
 
 class ScoutAgent:
     def __init__(self):
-        self.mongo = MongoProxy()
+        self.mongo = SyncMongoService.get_instance()
         self.provisioner = UserProvisioner(self.mongo)
         
     def scan_docker(self):
@@ -125,21 +125,9 @@ class ScoutAgent:
         """Update MongoDB Inventory"""
         print(f"💾 Updating Inventory with {len(dbs)} databases...")
         
-        # Get existing DBs with status
-        existing_docs = self.mongo.execute_eval("db.inventory_databases.find({}, {'identity.db_unique_name': 1, 'state.status': 1}).toArray()")
-        existing_names = set()
-        existing_status = {}
-        if existing_docs:
-            for doc in existing_docs:
-                if 'identity' in doc and 'db_unique_name' in doc['identity']:
-                    name = doc['identity']['db_unique_name']
-                    existing_names.add(name)
-                    # Safe get status
-                    try:
-                        status = doc.get('state', {}).get('status', 'UNKNOWN')
-                        existing_status[name] = status
-                    except:
-                        existing_status[name] = 'UNKNOWN'
+        # Get existing DBs with status using native PyMongo
+        existing_status = self.mongo.get_existing_databases()
+        existing_names = set(existing_status.keys())
         
         found_names = set()
         for db in dbs:
@@ -194,45 +182,24 @@ class ScoutAgent:
                     }
                     self.mongo.insert_alert(alert)
 
-                # Only update state/status, preserve manual metadata
-                js_cmd = f"""
-                db.inventory_databases.updateOne(
-                    {{ "identity.db_unique_name": "{name}" }},
-                    {{ $set: {{ "state.status": "UP", "state.last_seen": new Date() }} }}
-                )
-                """
+                # EXISTING: Only update state/status, preserve manual metadata
+                self.mongo.update_last_seen(name, "UP")
             else:
-                # NEW: Full Upsert
-                db_json = json.dumps(db)
-                db_json = db_json.replace('"NOW"', 'new Date()')
-                
-                js_cmd = f"""
-                db.inventory_databases.updateOne(
-                    {{ "identity.db_unique_name": "{name}" }},
-                    {{ $set: {db_json}, $set: {{ "state.status": "UP", "state.last_seen": new Date() }} }},
-                    {{ upsert: true }}
-                )
-                """
-            self.mongo.execute_eval(js_cmd)
+                # NEW: Full Upsert - Merge document with state fields
+                db['state'] = db.get('state', {})
+                db['state']['status'] = 'UP'
+                db['state']['last_seen'] = datetime.datetime.utcnow()
+                self.mongo.upsert_database(db)
         
         # Check MISSING - but exclude REMOTE databases (e.g. VirtualBox Oracle RAC)
-        # Get remote DBs to exclude
-        remote_dbs_result = self.mongo.execute_eval("db.inventory_databases.find({'connection.type': 'REMOTE'}, {'identity.db_unique_name': 1}).toArray()")
-        remote_names = set()
-        if remote_dbs_result:
-            for doc in remote_dbs_result:
-                name = doc.get('identity', {}).get('db_unique_name')
-                if name:
-                    remote_names.add(name)
+        remote_names = set(self.mongo.get_remote_databases())
         
         missing_names = existing_names - found_names - remote_names
-        # print(f"📉 Missing Candidates: {missing_names}") # verbose
         for missing in missing_names:
             prev_status = existing_status.get(missing, 'UNKNOWN')
             
             # Update status to MISSING
-            js_cmd = f"db.inventory_databases.updateOne({{ 'identity.db_unique_name': '{missing}' }}, {{ $set: {{ 'state.status': 'MISSING', 'state.last_seen': new Date() }} }})"
-            self.mongo.execute_eval(js_cmd)
+            self.mongo.update_last_seen(missing, "MISSING")
             
             # Anti-Spam: Only alert if it's a NEW incident
             if prev_status != 'MISSING':
@@ -267,10 +234,9 @@ class ScoutAgent:
     def get_interval(self):
         """Get scan interval from MongoDB Config"""
         try:
-            cmd = "db.system_config.findOne({key: 'scout_interval'})"
-            doc = self.mongo.execute_eval(cmd)
-            if doc and 'value' in doc:
-                return int(doc['value'])
+            interval = self.mongo.get_config('scout_interval')
+            if interval:
+                return int(interval)
         except:
             pass
         return 60 # Default 60s

@@ -1,0 +1,59 @@
+# ============================================================
+# VirtualBox Oracle VMs - Configurazione per Nexi DBA AI
+# ============================================================
+# Queste VM sono usate come ambiente di sviluppo per testare
+# il monitoring passivo prima del deploy in produzione.
+
+# ========================
+# VM 1 - Oracle Primary
+# ========================
+oracle_vm1:
+  name: "Oracle_RAC_VM1"
+  ssh:
+    host: "127.0.0.1"
+    port: 2200
+    user: "oracle"
+    password: "root"
+  oracle:
+    # Porta 1521 di Oracle deve essere in port forwarding su VirtualBox
+    # Es: Host 2521 -> Guest 1521
+    host: "127.0.0.1"
+    port: 2521 # CAMBIA SE DIVERSO! Controlla VirtualBox port forwarding
+    sid: "ORCL" # O il nome del tuo SID
+    service_name: ""
+    user: "system"
+    password: "root"
+  checkmk_agent:
+    port: 6556 # Se installato, porta forwarding es: 2556 -> 6556
+
+# ========================
+# VM 2 - Oracle Standby
+# ========================
+oracle_vm2:
+  name: "Oracle_RAC_VM2"
+  ssh:
+    host: "127.0.0.1"
+    port: 2201
+    user: "oracle"
+    password: "root"
+  oracle:
+    host: "127.0.0.1"
+    port: 2522 # CAMBIA SE DIVERSO!
+    sid: "ORCL"
+    service_name: ""
+    user: "system"
+    password: "root"
+  checkmk_agent:
+    port: 6556
+# ========================
+# Istruzioni VirtualBox Port Forwarding
+# ========================
+# Per ogni VM, configura in: Settings -> Network -> Advanced -> Port Forwarding
+#
+# | Name       | Protocol | Host IP   | Host Port | Guest IP | Guest Port |
+# |------------|----------|-----------|-----------|----------|------------|
+# | SSH        | TCP      | 127.0.0.1 | 2200      |          | 22         |
+# | Oracle     | TCP      | 127.0.0.1 | 2521      |          | 1521       |
+# | CheckMK    | TCP      | 127.0.0.1 | 2556      |          | 6556       |
+#
+# Per VM2, usa porte 2201, 2522, 2557

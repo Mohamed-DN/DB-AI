@@ -170,28 +170,28 @@ class CriticalAlertAgent:
         self.default_pg_password = os.getenv("POSTGRES_PASSWORD", "nexi2024")
         self.default_pg_db = os.getenv("POSTGRES_DB", "postgres")
         
-        # Connect to MongoDB via Proxy
+        # Connect to MongoDB via SyncMongoService
         try:
             sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '../../../')))
-            from orchestrator.core.mongo_proxy import MongoProxy
-            self.mongo_proxy = MongoProxy()
-            print("Connected to MongoDB (Proxy)")
+            from api_agents.shared.sync_mongo_service import SyncMongoService
+            self.mongo = SyncMongoService.get_instance()
+            print("Connected to MongoDB (SyncMongoService)")
             
             # Load targets from Inventory
             self.load_targets_from_inventory()
         except Exception as e:
-            print(f"MongoDB Proxy Setup Failed: {e}")
-            self.mongo_proxy = None
+            print(f"MongoDB SyncMongoService Setup Failed: {e}")
+            self.mongo = None
 
     def load_targets_from_inventory(self):
         """Fetch active databases from MongoDB Inventory"""
-        if not self.mongo_proxy:
-            print("MongoDB proxy not available; skipping inventory load.")
+        if not self.mongo:
+            print("MongoDB not available; skipping inventory load.")
             return
 
         print("Fetching targets from inventory...")
         try:
-            dbs = self.mongo_proxy.execute_eval("db.inventory_databases.find({'identity.engine': 'POSTGRES'}).toArray()")
+            dbs = self.mongo.get_postgres_databases()
             targets = []
             for db in dbs or []:
                 identity = db.get('identity', {})
@@ -265,23 +265,19 @@ class CriticalAlertAgent:
     
     def check_for_active_alert(self, db_name: str, alert_type: str) -> bool:
         """Check if an unprocessed alert already exists for this db and type"""
-        if not self.mongo_proxy: return False
+        if not self.mongo: return False
         try:
-            # Look for CRITICAL alerts that are NOT processed
-            query = f"db.monitoring_alerts.findOne({{database: '{db_name}', type: '{alert_type}', processed: false, state: 'CRITICAL'}})"
-            res = self.mongo_proxy.execute_eval(query)
-            return res is not None
+            return self.mongo.check_active_alert(db_name, alert_type)
         except:
             return False
 
     def resolve_alerts(self, db_name: str):
         """Mark alerts as processed when issue is resolved"""
-        if not self.mongo_proxy: return
+        if not self.mongo: return
         try:
-            # Find unprocessed CRITICAL alerts for this DB
-            query = f"db.monitoring_alerts.updateMany({{database: '{db_name}', processed: false, state: 'CRITICAL'}}, {{$set: {{processed: true, resolved_at: new Date()}}}})"
-            self.mongo_proxy.execute_eval(query)
-            print(f"    Resolved active alerts for {db_name}")
+            count = self.mongo.resolve_alerts_for_db(db_name)
+            if count > 0:
+                print(f"    Resolved {count} active alerts for {db_name}")
         except Exception as e:
             print(f"    Failed to resolve alerts: {e}")
 
@@ -322,8 +318,8 @@ class CriticalAlertAgent:
                             problem['message']
                         )
                         # Insert into DB
-                        if self.mongo_proxy:
-                            self.mongo_proxy.insert_alert(problem)
+                        if self.mongo:
+                            self.mongo.insert_alert(problem)
             else:
                 # DB IS OK (or at least not in critical list)
                 # Try to resolve any pending critical alerts
@@ -333,13 +329,12 @@ class CriticalAlertAgent:
         return current_status
     
     def get_interval(self, default_value: int = 30) -> int:
-        if not self.mongo_proxy:
+        if not self.mongo:
             return default_value
         try:
-            cmd = "db.system_config.findOne({key: 'criticalalert_interval'})"
-            doc = self.mongo_proxy.execute_eval(cmd)
-            if doc and 'value' in doc:
-                return int(doc['value'])
+            interval = self.mongo.get_config('criticalalert_interval')
+            if interval:
+                return int(interval)
         except Exception:
             pass
         return default_value
@@ -347,9 +342,9 @@ class CriticalAlertAgent:
     def check_pause(self):
         """Check if system is globally paused"""
         try:
-            if not self.mongo_proxy: return False
-            doc = self.mongo_proxy.execute_eval("db.system_config.findOne({key: 'global_status'})")
-            if doc and doc.get('value') == 'PAUSED':
+            if not self.mongo: return False
+            status = self.mongo.get_config('global_status')
+            if status == 'PAUSED':
                 return True
         except:
             pass

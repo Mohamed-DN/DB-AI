@@ -1,0 +1,33 @@
+# OEM Repository Collector Configuration
+# =======================================
+# Configuration for collecting metrics from Oracle Enterprise Manager Repository
+
+# OEM Repository database connection
+oem_repository:
+  host: "${OEM_HOST:-localhost}"
+  port: 1521
+  service_name: "EMREP" # OEM Repository service name
+  username: "sysman" # Or dedicated monitoring user
+  password: "${OEM_PASSWORD:-}"
+
+# VictoriaMetrics/Graphite output
+graphite_host: "${GRAPHITE_HOST:-localhost}"
+graphite_port: 2003
+
+# MongoDB for history (optional)
+mongo_uri: "${MONGO_URI:-mongodb://admin:nexi2024@localhost:28017/}"
+mongo_db: "nexi_cmdb_v2"
+
+# Default collection interval (seconds)
+default_interval: 3600
+# Custom queries (optional - builtin queries are used by default)
+# queries:
+#   - name: custom_query_name
+#     sql: |
+#       SELECT column1, column2 FROM sysman.mgmt$some_table
+#     interval: 3600
+#     metric_prefix: oem.custom
+#     dimensions:
+#       - column1
+#     metrics:
+#       - column2

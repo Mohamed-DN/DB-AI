@@ -24,7 +24,7 @@ sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), 'src')))
 
 # Link to Shared Modules (ROOT)
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '../../../')))
-from orchestrator.core.mongo_proxy import MongoProxy
+from api_agents.shared.sync_mongo_service import SyncMongoService
 
 # Local Imports
 try:
@@ -38,7 +38,7 @@ except ImportError:
 
 class CollectorAgent:
     def __init__(self):
-        self.mongo = MongoProxy()
+        self.mongo = SyncMongoService.get_instance()
         # Initialize CMDB Updater (uses direct PyMongo)
         try:
             self.cmdb_updater = CMDBUpdater(self.mongo)

@@ -18,8 +18,8 @@ from datetime import datetime
 sys.stdout.reconfigure(encoding='utf-8')
 
 # Add path for shared modules
-sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '../../')))
-from orchestrator.core.mongo_proxy import MongoProxy
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '../../../')))
+from api_agents.shared.sync_mongo_service import SyncMongoService
 
 class LogStreamer(threading.Thread):
     """Thread to tail a single container's log and detect errors"""
@@ -107,7 +107,7 @@ class LogStreamer(threading.Thread):
 
 class TheWatcher:
     def __init__(self):
-        self.mongo = MongoProxy()
+        self.mongo = SyncMongoService.get_instance()
         self.streams = {} # container_name -> LogStreamer
         
         # Configuration: Define where to look for logs in different images
