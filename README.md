@@ -137,4 +137,38 @@ We are moving towards a distributed gateway architecture:
 
 ---
 
+## 🛠️ Detailed Implementation Roadmap
+
+To achieve the **Future Architecture** (3 Gateways, Redis, 4 Sources), the work is broken down into manageable phases.
+
+### Phase 1: Infrastructure Foundations (Redis & Queueing)
+- [ ] **Redis Deployment**: Add Redis service to `docker-compose` and `ops/scripts`.
+- [ ] **Queue Implementation**: Create `RedisClient` in `api_agents/shared` for async messaging.
+- [ ] **Agent Decoupling**: Refactor Agents (Collector, Scout) to push data to Redis instead of direct MongoDB writes.
+- [ ] **Ingestion Workers**: Create dedicated workers to consume from Redis and write to MongoDB (Async Write).
+
+### Phase 2: Distributed Gateway Architecture
+- [ ] **Gateway Config**: Define configuration profiles for `Gateway_01`, `Gateway_02`, `Gateway_03`.
+- [ ] **Load Balancing**: Implement logic to distribute Agents across gateways.
+- [ ] **Failover Logic**: If Gateway 01 fails, agents should fallback to Gateway 02.
+- [ ] **Service Discovery**: Update `Scout` to register machines against specific Gateways.
+
+### Phase 3: Data Source Unification (The 4 Streams)
+- [ ] **Stream 1: CheckMK**: Finalize `checkmk_legacy_adapter` for stable event streaming.
+- [ ] **Stream 2: OEM**: Optimize `oem_collector` for high-frequency polling.
+- [ ] **Stream 3: Database**: Standardize `PredictorAgent` queries for direct DB health.
+- [ ] **Stream 4: Machine**: Integrate `psutil` or `Telegraf` into `Watcher` agent for OS metrics (CPU/RAM/IO).
+
+### Phase 4: Frontend & Visualization
+- [ ] **Gateway Dashboard**: New UI view to monitor the status of the 3 Gateways + Redis Queues.
+- [ ] **Unified Timeline**: Merge events from CheckMK, OEM, and Sentinel into a single timeline.
+- [ ] **Real-time Updates**: Connect Frontend to Redis Pub/Sub for live status changes.
+
+### Phase 5: Hardening & Production
+- [ ] **Security**: Implement API Keys for Gateway-to-Gateway communication.
+- [ ] **Disaster Recovery**: Simulate Gateway failure and verify Agent migration.
+- [ ] **Performance Tuning**: Optimize Redis retention and MongoDB write throughput.
+
+---
+
 > _"From Chaos to Order" - Built for Nexi by the Advanced Agentic Coding Team_
