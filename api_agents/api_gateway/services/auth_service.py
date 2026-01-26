@@ -27,15 +27,18 @@ class AuthService:
     """Service for authentication operations"""
     
     def __init__(self, mongo_uri: str = None, db_name: str = None):
+        # Prioritize MONGODB_URI from environment, then build from components
         if mongo_uri:
             self.mongo_uri = mongo_uri
         else:
-            # Construct URI from environment variables
-            user = os.getenv("MONGO_USERNAME", "admin")
-            password = os.getenv("MONGO_PASSWORD", "nexi2024")
-            host = os.getenv("MONGODB_HOST", "localhost")
-            port = os.getenv("MONGODB_PORT", "27017")
-            self.mongo_uri = os.getenv("MONGODB_URI", f"mongodb://{user}:{password}@{host}:{port}")
+            self.mongo_uri = os.getenv("MONGODB_URI")
+            if not self.mongo_uri:
+                # Fallback: build from individual components
+                user = os.getenv("MONGO_USERNAME", "admin")
+                password = os.getenv("MONGO_PASSWORD", "nexi2024")
+                host = os.getenv("MONGODB_HOST", "localhost")
+                port = os.getenv("MONGODB_PORT", "28017")
+                self.mongo_uri = f"mongodb://{user}:{password}@{host}:{port}/?authSource=admin"
             
         self.db_name = db_name or os.getenv("MONGODB_DB", "nexi_cmdb_v2")
         self._client: Optional[AsyncIOMotorClient] = None
@@ -57,12 +60,18 @@ class AuthService:
     
     # Password methods
     def verify_password(self, plain_password: str, hashed_password: str) -> bool:
-        """Verify a password against its hash"""
-        return pwd_context.verify(plain_password, hashed_password)
+        """Verify a password against its hash using bcrypt directly"""
+        import bcrypt
+        try:
+            return bcrypt.checkpw(plain_password.encode('utf-8'), hashed_password.encode('utf-8'))
+        except Exception:
+            return False
     
     def get_password_hash(self, password: str) -> str:
-        """Hash a password"""
-        return pwd_context.hash(password)
+        """Hash a password using bcrypt directly"""
+        import bcrypt
+        salt = bcrypt.gensalt()
+        return bcrypt.hashpw(password.encode('utf-8'), salt).decode('utf-8')
     
     # Token methods
     def create_access_token(self, data: dict, expires_delta: Optional[timedelta] = None) -> str:

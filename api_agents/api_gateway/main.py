@@ -15,20 +15,41 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 
 # Import configuration
-from .config import ALLOWED_ORIGINS
+try:
+    from api_agents.api_gateway.config import ALLOWED_ORIGINS
+    print("[OK] Config imported")
 
-# Import routers
-from .routers.inventory import router as inventory_router
-from .routers.alerts import router as alerts_router
-from .routers.agents import router as agents_router
-from .routers.llm import router as llm_router
-from .routers.system import router as system_router
-from .routers.metrics import router as metrics_router
-from .routers.emails import router as emails_router
-from .routers.connection import router as connection_router
-from .routers.tasks import router as tasks_router
-from .routers.workflows import router as workflows_router
-from .routers.auth import router as auth_router
+    # Import routers
+    from api_agents.api_gateway.routers.inventory import router as inventory_router
+    print("[OK] Inventory Router imported")
+    from api_agents.api_gateway.routers.alerts import router as alerts_router
+    print("[OK] Alerts Router imported")
+    from api_agents.api_gateway.routers.agents import router as agents_router
+    print("[OK] Agents Router imported")
+    from api_agents.api_gateway.routers.llm import router as llm_router
+    print("[OK] LLM Router imported")
+    from api_agents.api_gateway.routers.system import router as system_router
+    print("[OK] System Router imported")
+    from api_agents.api_gateway.routers.metrics import router as metrics_router
+    print("[OK] Metrics Router imported")
+    from api_agents.api_gateway.routers.emails import router as emails_router
+    print("[OK] Emails Router imported")
+    from api_agents.api_gateway.routers.connection import router as connection_router
+    print("[OK] Connection Router imported")
+    from api_agents.api_gateway.routers.tasks import router as tasks_router
+    print("[OK] Tasks Router imported")
+    from api_agents.api_gateway.routers.workflows import router as workflows_router
+    print("[OK] Workflows Router imported")
+    from api_agents.api_gateway.routers.auth import router as auth_router
+    print("[OK] Auth Router imported")
+    from api_agents.api_gateway.routers.oem import router as oem_router
+    print("[OK] OEM Router imported")
+
+except Exception as e:
+    print(f"[ERROR] IMPORT ERROR: {e}")
+    import traceback
+    traceback.print_exc()
+    sys.exit(1)
 
 # =============================================================================
 # FastAPI Application
@@ -72,6 +93,7 @@ app.include_router(connection_router, prefix="/api", tags=["Connection"])
 app.include_router(tasks_router, prefix="/api", tags=["Tasks"])
 app.include_router(workflows_router, prefix="/api", tags=["Workflows"])
 app.include_router(auth_router, prefix="/api", tags=["Authentication"])
+app.include_router(oem_router, prefix="/api", tags=["OEM"])
 
 # =============================================================================
 # Startup Event

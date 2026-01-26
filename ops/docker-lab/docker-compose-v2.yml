@@ -56,16 +56,56 @@ services:
       - mongodb2
     restart: unless-stopped
 
-  # Redis - Message Queue (V2)
-  redis2:
+  # Redis Core - Context & Cache (V2)
+  redis-core:
     image: redis:7-alpine
-    container_name: nexi-redis2
-    hostname: redis2.nexi.lab
+    container_name: nexi-redis-core
+    hostname: redis-core.nexi.lab
     ports:
       - "${REDIS_PORT:-7379}:6379"
     networks:
       nexi-lab2:
         ipv4_address: 172.21.0.11
+    restart: unless-stopped
+
+  # ===========================================================================
+  # DISTRIBUTED GATEWAY QUEUES (Simulation)
+  # ===========================================================================
+
+  # Gateway 1 (Milano) - Redis Queue
+  redis-milano:
+    image: redis:7-alpine
+    container_name: nexi-redis-milano
+    hostname: redis-milano.nexi.lab
+    ports:
+      - "${REDIS_MILANO_PORT:-7380}:6379"
+    networks:
+      nexi-lab2:
+        ipv4_address: 172.21.1.5
+    restart: unless-stopped
+
+  # Gateway 2 (Bratislava) - Redis Queue
+  redis-bratislava:
+    image: redis:7-alpine
+    container_name: nexi-redis-bratislava
+    hostname: redis-bratislava.nexi.lab
+    ports:
+      - "${REDIS_BRATISLAVA_PORT:-7381}:6379"
+    networks:
+      nexi-lab2:
+        ipv4_address: 172.21.2.5
+    restart: unless-stopped
+
+  # Gateway 3 (Cairo) - Redis Queue
+  redis-cairo:
+    image: redis:7-alpine
+    container_name: nexi-redis-cairo
+    hostname: redis-cairo.nexi.lab
+    ports:
+      - "${REDIS_CAIRO_PORT:-7382}:6379"
+    networks:
+      nexi-lab2:
+        ipv4_address: 172.21.3.5
     restart: unless-stopped
 
   # Ollama - Local LLM (V2)
@@ -450,14 +490,14 @@ services:
     hostname: victoriametrics.nexi.lab
     ports:
       - "${VICTORIAMETRICS_PORT:-8428}:8428"
-      - "${VICTORIAMETRICS_GRAPHITE_PORT:-2003}:2003"  # Graphite for CheckMK Raw
+      - "${VICTORIAMETRICS_GRAPHITE_PORT:-2003}:2003" # Graphite for CheckMK Raw
     volumes:
       - victoriametrics_data:/victoria-metrics-data
     command:
       - '--storageDataPath=/victoria-metrics-data'
       - '--httpListenAddr=:8428'
-      - '--graphiteListenAddr=:2003'  # Enable Graphite ingestion for CheckMK
-      - '--retentionPeriod=365d'  # 1 year retention
+      - '--graphiteListenAddr=:2003' # Enable Graphite ingestion for CheckMK
+      - '--retentionPeriod=365d' # 1 year retention
       - '--maxLabelsPerTimeseries=30'
     networks:
       nexi-lab2:

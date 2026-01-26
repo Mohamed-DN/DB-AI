@@ -148,7 +148,7 @@ To achieve the **Future Architecture** (3 Gateways, Redis, 4 Sources), the work 
 - [x] **Ingestion Workers**: Create dedicated workers to consume from Redis and write to MongoDB (Async Write).
 
 ### Phase 2: Distributed Gateway Architecture
-- [ ] **Gateway Config**: Define configuration profiles for `Gateway_01`, `Gateway_02`, `Gateway_03`.
+- [x] **Gateway Config**: Define configuration profiles for `Gateway_01`, `Gateway_02`, `Gateway_03` (Infrastructure Ready).
 - [ ] **Load Balancing**: Implement logic to distribute Agents across gateways.
 - [ ] **Failover Logic**: If Gateway 01 fails, agents should fallback to Gateway 02.
 - [ ] **Service Discovery**: Update `Scout` to register machines against specific Gateways.

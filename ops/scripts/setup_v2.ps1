@@ -132,7 +132,10 @@ function Test-Port($port, $name) {
 }
 
 Test-Port $EnvVars['MONGODB_PORT'] "MongoDB V2"
-Test-Port $EnvVars['REDIS_PORT'] "Redis V2"
+Test-Port $EnvVars['REDIS_PORT'] "Redis Core V2"
+Test-Port $EnvVars['REDIS_MILANO_PORT'] "Redis Milano (GW1)"
+Test-Port $EnvVars['REDIS_BRATISLAVA_PORT'] "Redis Bratislava (GW2)"
+Test-Port $EnvVars['REDIS_CAIRO_PORT'] "Redis Cairo (GW3)"
 Test-Port $EnvVars['OLLAMA_PORT'] "Ollama V2"
 Test-Port $EnvVars['QDRANT_PORT'] "Qdrant V2"
 Test-Port $EnvVars['MONGO_EXPRESS_PORT'] "Mongo Express V2"
