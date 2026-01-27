@@ -5,18 +5,19 @@ Monitors DB_FORENSICS alerts and generates AI-powered root cause analysis.
 
 import sys
 import os
-import time
-import json
-from datetime import datetime
 
 # Fix encoding
 sys.stdout.reconfigure(encoding='utf-8')
 
-# Add paths
-sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '../../')))
+import time
+import json
+from datetime import datetime
 
-from orchestrator.core.mongo_proxy import MongoProxy
-from orchestrator.rag.rag_pipeline import RAGPipeline
+# Add paths
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '../../../')))
+
+from Orchestrator.core.mongo_proxy import MongoProxy
+from Orchestrator.rag.rag_pipeline import RAGPipeline
 
 
 class ForensicAnalyzer:
