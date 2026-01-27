@@ -11,7 +11,7 @@ from datetime import datetime
 
 
 # MongoDB connection
-MONGO_URI = os.getenv("MONGODB_URI", "mongodb://admin:nexi2024@localhost:27017")
+MONGO_URI = os.getenv("MONGODB_URI", "mongodb://admin:nexi2024@localhost:28017")
 DB_NAME = os.getenv("MONGODB_DB", "nexi_cmdb_v2")
 
 

@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Database, Loader2, CheckCircle, XCircle, Terminal, X } from 'lucide-react';
+import { Database, Loader, CheckCircle, XCircle, Terminal, X } from 'lucide-react';
 
 interface ConnectionModalProps {
     isOpen: boolean;
@@ -146,7 +146,7 @@ export default function ConnectionModal({ isOpen, onClose, dbName, mode, status,
                                     {i < step ? (
                                         <CheckCircle className="w-4 h-4 text-green-400" />
                                     ) : i === step ? (
-                                        <Loader2 className="w-4 h-4 animate-spin text-cyan-400" />
+                                        <Loader className="w-4 h-4 animate-spin text-cyan-400" />
                                     ) : (
                                         <div className="w-4 h-4 rounded-full border border-gray-600" />
                                     )}

@@ -28,13 +28,13 @@ Write-Host "=================================================================" -
 # -----------------------------------------------------------------------------
 # 0. Load Configuration
 # -----------------------------------------------------------------------------
-$EnvFile = "$PSScriptRoot\..\..\.env.v2"
+$EnvFile = "$PSScriptRoot\..\..\.env"
 if (-not (Test-Path $EnvFile)) {
-    Write-Error "Configuration file .env.v2 not found at $EnvFile"
+    Write-Error "Configuration file .env not found at $EnvFile"
     exit 1
 }
 
-Write-Host "Loading configuration from .env.v2..." -ForegroundColor Gray
+Write-Host "Loading configuration from .env..." -ForegroundColor Gray
 $EnvVars = @{}
 Get-Content $EnvFile | Where-Object { $_ -match "^[^#].+=" } | ForEach-Object {
     $parts = $_ -split '=', 2
@@ -89,7 +89,7 @@ if ($ProcId) {
 # -----------------------------------------------------------------------------
 if (-not $SkipDocker) {
     Write-Host "`n[STEP 3] Starting V2 Infrastructure (Docker)..." -ForegroundColor Yellow
-    $ComposeFile = "$PSScriptRoot\..\docker-lab\docker-compose-v2.yml"
+    $ComposeFile = "$PSScriptRoot\..\docker-lab\docker-compose.yml"
     
     # We use --env-file to pass .env.v2 to docker-compose
     Write-Host "Running docker-compose with .env.v2..." -ForegroundColor Gray
@@ -198,7 +198,7 @@ if (-not $SkipFrontend) {
     
     # Start Vite with V2 config
     Start-Process -FilePath "cmd.exe" `
-        -ArgumentList "/c npm run dev:v2" `
+        -ArgumentList "/c npm run dev" `
         -WorkingDirectory $FrontendDir
                   
     Write-Host "✅ Frontend UI Started." -ForegroundColor Green

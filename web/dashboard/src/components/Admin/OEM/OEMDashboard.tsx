@@ -1,6 +1,6 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { Plus, Database, Activity, Clock, ShieldCheck, Trash2, RefreshCw, AlertTriangle, CheckCircle, Server } from 'lucide-react';
+import { Plus, Database, ShieldCheck, Trash2, RefreshCw, AlertTriangle, CheckCircle, Server, Clock } from 'lucide-react';
 import AddInstanceModal from './AddInstanceModal';
 
 interface OEMInstance {
@@ -48,7 +48,7 @@ export default function OEMDashboard() {
     // Delete Instance Mutation
     const deleteInstance = useMutation({
         mutationFn: async (name: string) => {
-            const res = await fetch(`/api/oem/instances/${name}`, { method: 'DELETE' });
+            const res = await fetch(`/ api / oem / instances / ${name} `, { method: 'DELETE' });
             if (!res.ok) throw new Error('Failed to delete instance');
         },
         onSuccess: () => {
@@ -94,7 +94,7 @@ export default function OEMDashboard() {
                             disabled={collectMetrics.isPending}
                             className="btn-secondary flex items-center gap-2"
                         >
-                            <RefreshCw className={`w-4 h-4 ${collectMetrics.isPending ? 'animate-spin' : ''}`} />
+                            <RefreshCw className={`w - 4 h - 4 ${collectMetrics.isPending ? 'animate-spin' : ''} `} />
                             Sync Now
                         </button>
                         <button
@@ -125,7 +125,7 @@ export default function OEMDashboard() {
                                     <div>
                                         <h4 className="font-bold text-white">{inst.name}</h4>
                                         <div className="flex items-center gap-2 text-xs">
-                                            <span className={`w-2 h-2 rounded-full ${inst.is_connected ? 'bg-green-500' : 'bg-red-500'}`}></span>
+                                            <span className={`w - 2 h - 2 rounded - full ${inst.is_connected ? 'bg-green-500' : 'bg-red-500'} `}></span>
                                             <span className="text-gray-400">{inst.is_connected ? 'Connected' : 'Disconnected'}</span>
                                         </div>
                                     </div>
@@ -250,7 +250,7 @@ function MetricItem({ label, value, unit, color }: { label: string, value?: numb
     return (
         <div>
             <div className="text-xs text-gray-400 mb-0.5">{label}</div>
-            <div className={`text-xl font-bold text-${color}-400`}>
+            <div className={`text - xl font - bold text - ${color} -400`}>
                 {value.toFixed(1)}<span className="text-sm text-gray-600 ml-0.5">{unit}</span>
             </div>
         </div>

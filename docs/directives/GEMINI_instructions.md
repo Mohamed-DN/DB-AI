@@ -11,7 +11,7 @@
 ```
 What: Database inventory, monitoring, alerting, AI chat
 Stack: Python/FastAPI + React + MongoDB + Ollama LLM
-Ports: Backend 9000, Frontend 4002, MongoDB 28017
+Ports: Backend 8000, Frontend 4002, MongoDB 28017
 ```
 
 ## Key Commands
@@ -31,7 +31,7 @@ User → Frontend (React) → Backend (FastAPI) → MongoDB
 ```
 
 ## Critical Constraints
-1. **V2 Ports**: Always use `28017` for MongoDB, `9000` for backend
+1. **V2 Ports**: Always use `28017` for MongoDB, `8000` for backend
 2. **Environment**: Load from `.env.v2`, NOT `.env`
 3. **Gateway Suffix**: Set `GATEWAY_SUFFIX=2` for V2 container discovery
 

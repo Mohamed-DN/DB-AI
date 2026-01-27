@@ -31,20 +31,25 @@ class SyncMongoService:
     
     def __init__(self):
         # Build connection string from environment
-        host = os.getenv("MONGODB_HOST", "localhost")
-        port = os.getenv("MONGODB_PORT", "28017")
-        user = os.getenv("MONGO_USERNAME", "admin")
-        password = os.getenv("MONGO_PASSWORD", "nexi2024")
-        db_name = os.getenv("MONGODB_DB", "nexi_cmdb_v2")
+        mongo_url = os.getenv("MONGODB_URL")
         
-        self.connection_string = f"mongodb://{user}:{password}@{host}:{port}/?authSource=admin"
-        self.db_name = db_name
+        if mongo_url:
+            self.connection_string = mongo_url
+        else:
+            host = os.getenv("MONGODB_HOST", "localhost")
+            port = os.getenv("MONGODB_PORT", "28017")
+            user = os.getenv("MONGO_USERNAME", "admin")
+            password = os.getenv("MONGO_PASSWORD", "nexi2024")
+            self.connection_string = f"mongodb://{user}:{password}@{host}:{port}/?authSource=admin"
+            
+        self.db_name = os.getenv("MONGODB_DB", "nexi_cmdb_v2")
         
         # Create sync client
         self.client = MongoClient(self.connection_string, serverSelectionTimeoutMS=5000)
         self.db = self.client[self.db_name]
         
-        print(f"[SyncMongoService] Connected to {host}:{port}/{db_name}")
+        display_url = mongo_url or f"{host}:{port}"
+        print(f"[SyncMongoService] Connected to {display_url}/{self.db_name}")
     
     @classmethod
     def get_instance(cls) -> "SyncMongoService":

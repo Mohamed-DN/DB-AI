@@ -1,5 +1,6 @@
+
 import React from 'react';
-import { ExternalLink, Database, Activity, FileText, Server, BarChart3, ShieldCheck, ArrowRight } from 'lucide-react';
+import { ExternalLink, Database, Activity, Server, BarChart3, ShieldCheck, ArrowRight } from 'lucide-react';
 
 // Configuration for external tools
 const TOOLS = [
@@ -73,8 +74,8 @@ const AdminPortal: React.FC<AdminPortalProps> = ({ onNavigate }) => {
                 {TOOLS.map((tool) => (
                     <div key={tool.id} className="glass p-6 rounded-xl hover:border-blue-500/30 transition-all hover:scale-[1.02] group">
                         <div className="flex items-start justify-between mb-4">
-                            <div className={`p-3 rounded-xl ${tool.bgColor}`}>
-                                <tool.icon className={`h-6 w-6 ${tool.color}`} />
+                            <div className={`p - 3 rounded - xl ${tool.bgColor} `}>
+                                <tool.icon className={`h - 6 w - 6 ${tool.color} `} />
                             </div>
                             <span className="text-xs font-medium px-2 py-1 rounded-full bg-gray-800 text-gray-400 border border-gray-700">
                                 {tool.category}

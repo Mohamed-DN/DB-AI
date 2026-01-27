@@ -1,4 +1,4 @@
-import { Terminal, SquareTerminal, Trash2, ChevronDown, ChevronUp, Database, RefreshCw, Loader2 } from 'lucide-react';
+import { Terminal, SquareTerminal, Trash2, ChevronDown, ChevronUp, Database, RefreshCw, Loader } from 'lucide-react';
 import { useState } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { useDatabases, useDeleteDatabase } from '../../hooks/useDatabases';
@@ -295,7 +295,7 @@ export default function InventoryTable() {
                                 title="Force Refresh Status"
                                 className={`hover:text-white transition-colors ${isRefreshing ? 'animate-spin text-blue-400' : ''}`}
                             >
-                                {isRefreshing ? <Loader2 className="w-4 h-4" /> : <RefreshCw className="w-4 h-4" />}
+                                {isRefreshing ? <Loader className="w-4 h-4" /> : <RefreshCw className="w-4 h-4" />}
                             </button>
                         </th>
                         <th className="px-6 py-4 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">Name</th>

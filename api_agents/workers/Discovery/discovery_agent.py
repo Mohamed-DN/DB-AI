@@ -63,7 +63,7 @@ class PortScanner:
         5435: "POSTGRES", 5436: "POSTGRES", 5437: "POSTGRES", 5438: "POSTGRES",
         1521: "ORACLE", 1522: "ORACLE", 1523: "ORACLE",
         3306: "MYSQL", 3307: "MYSQL",
-        27017: "MONGODB", 27018: "MONGODB",
+        27017: "MONGODB", 28017: "MONGODB", 27018: "MONGODB",
         6379: "REDIS", 6380: "REDIS",
         6333: "QDRANT"
     }

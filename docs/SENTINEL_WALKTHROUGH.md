@@ -63,25 +63,25 @@ Ensure **Qdrant** (port 7333) and **VictoriaMetrics** (port 8428) are running.
 ### 2. Run Data Collection
 ```powershell
 # Collect metrics from Oracle OEM
-curl -X POST http://localhost:9000/api/action/oem-collect
+curl -X POST http://localhost:8000/api/action/oem-collect
 ```
 
 ### 3. Build Knowledge Base
 ```powershell
 # Index SQL scripts from Metriche_oem
-curl -X POST http://localhost:9000/api/action/rag-ingest
+curl -X POST http://localhost:8000/api/action/rag-ingest
 ```
 
 ### 4. Run Sentinel Analysis
 ```powershell
 # Trigger predictive analysis cycle
-curl -X POST http://localhost:9000/api/action/sentinel
+curl -X POST http://localhost:8000/api/action/sentinel
 ```
 
 ### 5. Check Status
 ```powershell
 # View system status
-curl http://localhost:9000/api/sentinel/status
+curl http://localhost:8000/api/sentinel/status
 ```
 
 ---

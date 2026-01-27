@@ -47,7 +47,7 @@ function Stop-ProcessByPort($port, $name) {
 }
 
 # Load ports from env if available, else assume defaults
-$BackendPort = 9000
+$BackendPort = 8000
 $FrontendPort = 4002
 
 if (Test-Path $EnvFile) {

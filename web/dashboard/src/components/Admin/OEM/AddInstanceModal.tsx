@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { X, ShieldCheck, Loader2, CheckCircle, AlertCircle } from 'lucide-react';
+import { X, ShieldCheck, Loader, CheckCircle, AlertCircle } from 'lucide-react';
 
 interface AddInstanceModalProps {
     isOpen: boolean;
@@ -147,7 +147,7 @@ export default function AddInstanceModal({ isOpen, onClose, onSuccess }: AddInst
                         >
                             {isLoading ? (
                                 <>
-                                    <Loader2 className="w-4 h-4 animate-spin" />
+                                    <Loader className="w-4 h-4 animate-spin" />
                                     Connecting...
                                 </>
                             ) : (

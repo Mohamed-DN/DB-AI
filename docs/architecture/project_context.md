@@ -13,7 +13,7 @@ Version: V3 (Shadow Mode on V2 ports)
 Stack: Python/FastAPI + React + MongoDB + Ollama LLM
 
 # Critical Ports (ALWAYS use these)
-Backend: 9000
+Backend: 8000
 Frontend: 4002
 MongoDB: 28017
 Langfuse: 3001
@@ -171,7 +171,7 @@ erDiagram
 
 ## ⚠️ Critical Constraints
 
-1. **Always V2 Ports**: Backend `9000`, MongoDB `28017`, Frontend `4002`
+1. **Always V2 Ports**: Backend `8000`, MongoDB `28017`, Frontend `4002`
 2. **Environment File**: Use `.env.v2` (not `.env`)
 3. **Gateway Suffix**: `GATEWAY_SUFFIX=2` for V2 containers
 4. **Branch Strategy**: Develop on `v3`, sync to `v2`

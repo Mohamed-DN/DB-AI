@@ -74,7 +74,7 @@ async def lifespan(app: FastAPI):
     global tool_registry, rag_service, agent_app
     
     # Init Mongo
-    mongo_client = AsyncIOMotorClient(os.getenv("MONGO_URI", "mongodb://localhost:27017"))
+    mongo_client = AsyncIOMotorClient(os.getenv("MONGO_URI", "mongodb://localhost:28017"))
     db = mongo_client["Nexi_DB_AI"]
     
     # Init Services

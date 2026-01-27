@@ -1,6 +1,6 @@
 $env:PYTHONPATH = "c:\AI-Nexi\Nexi_DB_AI"
 $env:PYTHONIOENCODING = "utf-8"
-$env:MONGO_URI = "mongodb://admin:nexi2024@127.0.0.1:27017/?authSource=admin"
+$env:MONGO_URI = "mongodb://admin:nexi2024@127.0.0.1:28017/?authSource=admin"
 
 Write-Host "STEP 0: CLEANUP"
 docker stop nexi-pg-milano-stg 2>$null

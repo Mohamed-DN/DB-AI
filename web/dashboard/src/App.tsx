@@ -130,7 +130,7 @@ function AppContent() {
   const [activeTab, setActiveTab] = useState<Tab>('dashboard');
   const autoDiscovery = useAutoDiscovery();
   const { data: systemStatus } = useSystemStatus();
-  const { user, logout, hasPermission, isAuthenticated, isLoading } = useAuth();
+  const { user, logout, isAuthenticated, isLoading } = useAuth();
   const [isPaused, setIsPaused] = useState(false);
   const [showUserMenu, setShowUserMenu] = useState(false);
 

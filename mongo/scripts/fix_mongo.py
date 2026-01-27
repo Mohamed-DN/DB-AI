@@ -20,7 +20,7 @@ try:
             "type": "DOCKER",
             "container": "nexi-cmdb-mongo",
             "host": "localhost",
-            "port": 27017
+            "port": 28017
         },
         "state": {
             "status": "UP",
@@ -28,7 +28,7 @@ try:
         },
         "configuration": {
             "version": "7.0",
-            "url": "mongodb://admin:admin123@localhost:27017"
+            "url": "mongodb://admin:admin123@localhost:28017"
         }
     }
     

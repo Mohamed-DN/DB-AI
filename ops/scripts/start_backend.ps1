@@ -1,6 +1,6 @@
 # Start Backend API
 $ProjectRoot = "c:\AI-Nexi\Nexi_DB_AI"
-Write-Host "🚀 Starting Backend API (Port 9000)..." -ForegroundColor Green
+Write-Host "🚀 Starting Backend API (Port 8000)..." -ForegroundColor Green
 $env:PYTHONPATH = $ProjectRoot
 Set-Location $ProjectRoot
 # Use standard python -m to run the module

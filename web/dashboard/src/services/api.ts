@@ -1,7 +1,7 @@
 import axios from 'axios';
 import type { Database } from '../types/database';
 
-export const API_BASE = '/api';  // Relative URL - Vite proxy routes to backend (8000 for V1, 9000 for V2)
+export const API_BASE = '/api';  // Relative URL - Vite proxy routes to backend (8000)
 
 // Token storage key (must match AuthContext)
 const TOKEN_KEY = 'nexi_auth_token';

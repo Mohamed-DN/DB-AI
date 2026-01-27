@@ -33,5 +33,5 @@ POST /api/auto-discovery
 python Agents/Scout/main.py --once
 
 # Or via API
-curl -X POST http://localhost:9000/api/auto-discovery
+curl -X POST http://localhost:8000/api/auto-discovery
 ```

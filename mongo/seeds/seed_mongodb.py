@@ -284,8 +284,8 @@ inventory_databases_docs = [
     build_oracle_doc("nexi-oracle-cairo-primary2", 1521, "PRODUCTION", "PRIMARY"),
     build_oracle_doc("nexi-oracle-cairo-replica2", 1522, "DISASTER_RECOVERY", "REPLICA"),
     # NoSQL Instances
-    build_nosql_doc("nexi-mongodb2", 27017, "MONGODB"),
-    build_nosql_doc("nexi-redis2", 6379, "REDIS"),
+    build_nosql_doc("nexi-mongodb2", 28017, "MONGODB"),
+    build_nosql_doc("nexi-redis2", 7379, "REDIS"),
     build_nosql_doc("nexi-qdrant2", 6333, "QDRANT", "AI_INFRASTRUCTURE"),
 ]
 

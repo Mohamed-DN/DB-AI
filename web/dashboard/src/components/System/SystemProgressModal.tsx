@@ -1,5 +1,5 @@
 import { useEffect, useRef } from 'react';
-import { Check, X, Loader2, Terminal, AlertTriangle, Play, Pause } from 'lucide-react';
+import { Check, X, Loader } from 'lucide-react';
 
 export interface ProgressEvent {
     type: 'start' | 'progress' | 'complete';
@@ -45,7 +45,7 @@ export default function SystemProgressModal({ isOpen, onClose, events, isComplet
                 <div className="p-4 border-b border-white/10 flex items-center justify-between">
                     <div className="flex items-center gap-3">
                         <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${isComplete ? 'bg-emerald-500/20' : 'bg-blue-500/20'}`}>
-                            {isComplete ? <Check className="w-5 h-5 text-emerald-400" /> : <Loader2 className="w-5 h-5 text-blue-400 animate-spin" />}
+                            {isComplete ? <Check className="w-5 h-5 text-emerald-400" /> : <Loader className="w-5 h-5 text-blue-400 animate-spin" />}
                         </div>
                         <div>
                             <h3 className="text-xl font-bold text-white">{title}</h3>
@@ -68,7 +68,7 @@ export default function SystemProgressModal({ isOpen, onClose, events, isComplet
                 <div ref={scrollRef} className="flex-1 overflow-y-auto p-4 space-y-2 font-mono text-sm bg-black/40 min-h-[300px]">
                     {events.length === 0 && (
                         <div className="text-gray-500 italic flex items-center gap-2">
-                            <Loader2 className="w-3 h-3 animate-spin" /> Initializing connection...
+                            <Loader className="w-3 h-3 animate-spin" /> Initializing connection...
                         </div>
                     )}
 

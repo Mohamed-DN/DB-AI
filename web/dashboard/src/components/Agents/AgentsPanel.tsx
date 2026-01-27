@@ -282,7 +282,7 @@ export default function AgentsPanel() {
                     </div>
                     <Activity className="w-8 h-8 text-purple-600 opacity-20" />
                 </div>
-                <div className="glass p-4 flex items-center justify-between cursor-pointer hover:bg-white/5 transition-colors" onClick={() => window.open('http://localhost:9000/docs', '_blank')}>
+                <div className="glass p-4 flex items-center justify-between cursor-pointer hover:bg-white/5 transition-colors" onClick={() => window.open('http://localhost:8000/docs', '_blank')}>
                     <div>
                         <div className="text-sm text-gray-400">LangGraph Agents</div>
                         <div className="text-lg font-bold">

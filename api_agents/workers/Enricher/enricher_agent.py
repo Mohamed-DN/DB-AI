@@ -214,13 +214,20 @@ class MongoEnricher:
 
 class QdrantEnricher:
     """Enriches Qdrant database documents"""
-    def __init__(self, host, port):
+    def __init__(self, host, port, password=None):
         self.host = host
         self.port = port
+        self.password = password
 
     def collect(self) -> Optional[Dict[str, Any]]:
         if not QDRANT_AVAILABLE: return None
         try:
+            # The QdrantClient constructor does not directly take a 'password' argument for basic auth.
+            # Authentication for Qdrant is typically handled via an 'api_key' or 'grpc_port' for gRPC.
+            # If 'password' is intended as an 'api_key', it should be passed as such.
+            # For now, we'll just pass host and port as per the original QdrantClient usage.
+            # If authentication is needed, the QdrantClient constructor would need to be updated
+            # to include `api_key=self.password` or similar, depending on Qdrant's authentication method.
             client = QdrantClient(host=self.host, port=self.port, timeout=5)
             collections = client.get_collections()
             
@@ -312,10 +319,11 @@ class EnricherAgent:
         connection = db_doc.get("connection", {})
         name = identity.get("db_unique_name", "UNKNOWN")
         host = identity.get("host", "127.0.0.1")
-        port = connection.get("port", 6379)
+        port = connection.get("port", 7379)
+        password = os.getenv("REDIS_PASSWORD", "nexi2024")
         
         print(f"   🔌 Connecting to Redis: {host}:{port}...")
-        enricher = RedisEnricher(host, port)
+        enricher = RedisEnricher(host, port, password=password)
         data = enricher.collect()
         
         if not data: return False
@@ -335,7 +343,7 @@ class EnricherAgent:
         connection = db_doc.get("connection", {})
         name = identity.get("db_unique_name", "UNKNOWN")
         host = identity.get("host", "127.0.0.1")
-        port = connection.get("port", 27017)
+        port = connection.get("port", 28017)
         user = os.getenv("MONGO_USERNAME", "admin")
         password = os.getenv("MONGO_PASSWORD", "nexi2024") # Assuming consistent creds
         

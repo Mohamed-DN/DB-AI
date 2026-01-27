@@ -19,6 +19,104 @@ services:
   # ORCHESTRATOR - Servizi centrali (V2)
   # ===========================================================================
 
+  # Frontend - React Dashboard (V2)
+  frontend:
+    build: ../../web/dashboard
+    container_name: nexi-frontend
+    hostname: frontend.nexi.lab
+    ports:
+      - "${FRONTEND_PORT:-4002}:80"
+    depends_on:
+      - backend
+    networks:
+      nexi-lab2:
+        ipv4_address: 172.21.0.5
+    restart: unless-stopped
+
+  # Backend - API Gateway & Orchestrator (V2)
+  backend:
+    build:
+      context: ../..
+      dockerfile: api_agents/Dockerfile
+    container_name: nexi-backend
+    hostname: backend.nexi.lab
+    ports:
+      - "${BACKEND_PORT:-8000}:8000"
+    environment:
+      - MONGODB_URL=mongodb://${MONGO_USERNAME:-admin}:${MONGO_PASSWORD:-nexi2024}@mongodb2:27017/${MONGODB_DB:-nexi_cmdb_v2}?authSource=admin
+      - REDIS_URL=redis://:${REDIS_PASSWORD:-nexi2024}@redis-core:6379/0
+    depends_on:
+      - mongodb2
+      - redis-core
+    networks:
+      nexi-lab2:
+        ipv4_address: 172.21.0.6
+    restart: unless-stopped
+
+  # Celery Worker - Async Task Processing (V2)
+  celery_worker:
+    build:
+      context: ../..
+      dockerfile: api_agents/Dockerfile
+    container_name: nexi-celery-worker
+    hostname: celery-worker.nexi.lab
+    command: celery -A orchestrator.celery_app worker --loglevel=info --queues=default,metrics,alerts,discovery
+    environment:
+      - MONGODB_URL=mongodb://${MONGO_USERNAME:-admin}:${MONGO_PASSWORD:-nexi2024}@mongodb2:27017/${MONGODB_DB:-nexi_cmdb_v2}?authSource=admin
+      - REDIS_HOST=redis-core
+      - REDIS_PORT=6379
+      - REDIS_PASSWORD=${REDIS_PASSWORD:-nexi2024}
+    depends_on:
+      - backend
+      - redis-core
+      - mongodb2
+    networks:
+      nexi-lab2:
+        ipv4_address: 172.21.0.7
+    restart: unless-stopped
+
+  # OEM Collector - Oracle Metrics (V2)
+  oem_collector:
+    build:
+      context: ../..
+      dockerfile: api_agents/Dockerfile
+    container_name: nexi-oem-collector
+    hostname: oem-collector.nexi.lab
+    command: python api_agents/workers/oem_collector/oem_collector.py --interval 60
+    environment:
+      - VICTORIAMETRICS_URL=http://victoriametrics:8428
+      - MONGODB_URL=mongodb://${MONGO_USERNAME:-admin}:${MONGO_PASSWORD:-nexi2024}@mongodb2:27017/${MONGODB_DB:-nexi_cmdb_v2}?authSource=admin
+      # Example OEM Instance (Mock/Real) - Replace with real creds or use Mongo config
+      - OEM_INSTANCES=OEM_TEST|https://mock-oem.nexi.lab:7803/em|sysman|welcome1|false
+    depends_on:
+      - victoriametrics
+      - mongodb2
+    networks:
+      nexi-lab2:
+        ipv4_address: 172.21.0.8
+    restart: unless-stopped
+
+  # Sentinel Predictor - Database Anomalies (V2)
+  sentinel_predictor:
+    build:
+      context: ../..
+      dockerfile: api_agents/Dockerfile
+    container_name: nexi-sentinel-predictor
+    hostname: sentinel-predictor.nexi.lab
+    command: python api_agents/workers/sentinel/predictor_agent.py
+    environment:
+      - VICTORIAMETRICS_URL=http://victoriametrics:8428
+      - MONGODB_URL=mongodb://${MONGO_USERNAME:-admin}:${MONGO_PASSWORD:-nexi2024}@mongodb2:27017/${MONGODB_DB:-nexi_cmdb_v2}?authSource=admin
+      # Configure custom thresholds via env or MongoDB
+      - CHECK_INTERVAL=300
+    depends_on:
+      - victoriametrics
+      - mongodb2
+    networks:
+      nexi-lab2:
+        ipv4_address: 172.21.0.9
+    restart: unless-stopped
+
   # MongoDB - CMDB Database (V2)
   mongodb2:
     image: mongo:7
@@ -63,6 +161,7 @@ services:
     hostname: redis-core.nexi.lab
     ports:
       - "${REDIS_PORT:-7379}:6379"
+    command: redis-server --requirepass nexi2024 --appendonly yes --maxmemory 512mb --maxmemory-policy allkeys-lru
     networks:
       nexi-lab2:
         ipv4_address: 172.21.0.11
@@ -514,7 +613,7 @@ services:
     hostname: checkmk.nexi.lab
     ports:
       - "8080:5000"
-      - "8000:8000" # Agent receiver
+      - "8002:8000" # Agent receiver
     networks:
       nexi-lab2:
         ipv4_address: 172.21.0.40

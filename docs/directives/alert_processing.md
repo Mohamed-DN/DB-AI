@@ -35,5 +35,5 @@ DELETE /api/alerts       # Clear all alerts
 python Agents/CriticalAlert/main.py --once --email dba@example.com
 
 # Or via API
-curl -X POST http://localhost:9000/api/action/check
+curl -X POST http://localhost:8000/api/action/check
 ```

@@ -27,12 +27,12 @@ POST /api/system/status  # Set status
 ## Usage
 ```bash
 # Pause system
-curl -X POST http://localhost:9000/api/system/status \
+curl -X POST http://localhost:8000/api/system/status \
   -H "Content-Type: application/json" \
   -d '{"status": true}'
 
 # Resume system
-curl -X POST http://localhost:9000/api/system/status \
+curl -X POST http://localhost:8000/api/system/status \
   -H "Content-Type: application/json" \
   -d '{"status": false}'
 ```
