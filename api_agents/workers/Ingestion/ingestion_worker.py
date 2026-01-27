@@ -9,13 +9,15 @@ import os
 import time
 import json
 import logging
+from datetime import datetime
 from threading import Thread
 
 # Add root path for imports
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '../../../')))
 
+from pymongo import UpdateOne, InsertOne
 from api_agents.shared.redis_client import RedisClient
-from api_agents.shared.sync_mongo_service import SyncMongoService
+from api_agents.shared.sync_mongo_service import SyncMongoService, sanitize_identifier
 
 # Reuse CMDBUpdater logic
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '../Collector')))
@@ -103,9 +105,20 @@ class IngestionWorker:
         existing_names = set(existing_status.keys())
         
         found_names = set()
+        inventory_ops = []
+        alert_ops = []
+
         for db in dbs:
             name = db.get('identity', {}).get('db_unique_name')
             if not name: continue
+
+            # Sanitize name as per service logic
+            try:
+                name = sanitize_identifier(name, "db_unique_name")
+            except ValueError as e:
+                logger.error(f"Skipping unsafe DB name: {e}")
+                continue
+
             found_names.add(name)
             
             # Check if NEW
@@ -119,10 +132,10 @@ class IngestionWorker:
                     "service": f"{db['identity']['engine']}-{name}",
                     "message": f"Scout discovered new {db['identity']['engine']} database: {name}",
                     "output": "New Asset",
-                    "timestamp": "NOW",
+                    "timestamp": datetime.utcnow(),
                     "processed": False
                 }
-                self.mongo.insert_alert(alert)
+                alert_ops.append(InsertOne(alert))
                 
                 # 🔑 AUTO-PROVISION AIAUTO USER
                 if self.provisioner:
@@ -152,19 +165,32 @@ class IngestionWorker:
                         "service": f"{db['identity']['engine']}-{name}",
                         "message": f"Database {name} has recovered and is back ONLINE.",
                         "output": "Service Restored",
-                        "timestamp": "NOW",
+                        "timestamp": datetime.utcnow(),
                         "processed": False
                     }
-                    self.mongo.insert_alert(alert)
+                    alert_ops.append(InsertOne(alert))
 
                 # EXISTING: Only update state/status, preserve manual metadata
-                self.mongo.update_last_seen(name, "UP")
+                op = UpdateOne(
+                    {"identity.db_unique_name": name},
+                    {"$set": {
+                        "state.status": "UP",
+                        "state.last_seen": datetime.utcnow()
+                    }}
+                )
+                inventory_ops.append(op)
             else:
                 # NEW: Full Upsert - Merge document with state fields
                 if 'state' not in db: db['state'] = {}
                 db['state']['status'] = 'UP'
                 db['state']['last_seen'] = datetime.utcnow()
-                self.mongo.upsert_database(db)
+
+                op = UpdateOne(
+                    {"identity.db_unique_name": name},
+                    {"$set": db},
+                    upsert=True
+                )
+                inventory_ops.append(op)
         
         # Check MISSING - but exclude REMOTE databases
         remote_names = set(self.mongo.get_remote_databases())
@@ -174,7 +200,14 @@ class IngestionWorker:
             prev_status = existing_status.get(missing, 'UNKNOWN')
             
             # Update status to MISSING
-            self.mongo.update_last_seen(missing, "MISSING")
+            op = UpdateOne(
+                {"identity.db_unique_name": missing},
+                {"$set": {
+                    "state.status": "MISSING",
+                    "state.last_seen": datetime.utcnow()
+                }}
+            )
+            inventory_ops.append(op)
             
             # Anti-Spam: Only alert if it's a NEW incident
             if prev_status != 'MISSING':
@@ -190,10 +223,19 @@ class IngestionWorker:
                     "service": f"DB-{missing}",
                     "message": f"Database {missing} was not found in Docker scan.",
                     "output": "Container Missing",
-                    "timestamp": "NOW",
+                    "timestamp": datetime.utcnow(),
                     "processed": False
                 }
-                self.mongo.insert_alert(alert)
+                alert_ops.append(InsertOne(alert))
+
+        # Execute Bulk Ops
+        if alert_ops:
+            logger.info(f"🔔 Flushing {len(alert_ops)} alerts...")
+            self.mongo.bulk_write_alerts(alert_ops)
+
+        if inventory_ops:
+            logger.info(f"💾 Flushing {len(inventory_ops)} inventory updates...")
+            self.mongo.bulk_write_inventory(inventory_ops)
 
 
     def process_cmdb_updates(self):
