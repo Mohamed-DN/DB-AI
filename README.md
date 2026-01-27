@@ -64,16 +64,16 @@ graph TD
     CMK -->|Sync| Mongo
     
     %% Processing
-    Mongo -->|Stream| Sentinel[🤖 Sentinel Agent]
+    Mongo -->|Stream| Sentinel["🤖 Sentinel Agent"]
     
     %% AI Loop
-    Sentinel -->|Query| Qdrant[Qdrant (RAG)]
-    Sentinel -->|Context| LLM[Ollama (LLM)]
+    Sentinel -->|Query| Qdrant["Qdrant (RAG)"]
+    Sentinel -->|Context| LLM["Ollama (LLM)"]
     LLM -->|Decision| Sentinel
     
     %% Action
-    Sentinel -->|Auto-Fix| Executors[⚡ Action Executors]
-    Sentinel -->|Alert| FE[💻 Dashboard]
+    Sentinel -->|Auto-Fix| Executors["⚡ Action Executors"]
+    Sentinel -->|Alert| FE["💻 Dashboard"]
 ```
 
 ### Key Flows
