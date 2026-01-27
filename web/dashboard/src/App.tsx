@@ -17,7 +17,8 @@ import {
   BarChart3,
   Activity,
   LogOut,
-  User
+  User,
+  ShieldCheck
 } from 'lucide-react';
 import DashboardStats from './components/Dashboard/DashboardStats';
 import InventoryTable from './components/Inventory/InventoryTable';
@@ -45,7 +46,7 @@ const queryClient = new QueryClient({
   },
 });
 
-type Tab = 'dashboard' | 'inventory' | 'hosts' | 'alerts' | 'chat' | 'mailbox' | 'explorer' | 'agents' | 'metrics' | 'settings' | 'monitoring';
+type Tab = 'dashboard' | 'inventory' | 'hosts' | 'alerts' | 'chat' | 'mailbox' | 'explorer' | 'agents' | 'metrics' | 'settings' | 'monitoring' | 'admin' | 'oem';
 
 const pageTitles: Record<Tab, string> = {
   dashboard: 'Dashboard Overview',
@@ -58,7 +59,9 @@ const pageTitles: Record<Tab, string> = {
   agents: 'Agent Control Panel',
   metrics: 'Database Metrics',
   settings: 'Configuration',
-  monitoring: 'Real-Time Monitoring (Grafana/CheckMK)', // New Title
+  monitoring: 'Real-Time Monitoring (Grafana/CheckMK)',
+  admin: 'Admin Portal & Tools', // New Title
+  oem: 'Oracle Enterprise Manager',
 };
 
 function Navigation({
@@ -70,7 +73,8 @@ function Navigation({
 }) {
   const navItems = [
     { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
-    { id: 'monitoring', label: 'Monitor', icon: Activity }, // Add Monitoring Item
+    { id: 'admin', label: 'Admin Portal', icon: ShieldCheck }, // Aded Admin Portal
+    { id: 'monitoring', label: 'Monitor', icon: Activity },
     { id: 'inventory', label: 'Inventory', icon: Database },
     { id: 'hosts', label: 'Hosts', icon: Server },
     { id: 'alerts', label: 'Alerts', icon: Bell },
@@ -97,6 +101,9 @@ function Navigation({
     </nav>
   );
 }
+
+import AdminPortal from './components/Admin/AdminPortal';
+import OEMDashboard from './components/Admin/OEM/OEMDashboard';
 
 function TelemetryPanel() {
   return (
@@ -251,6 +258,10 @@ function AppContent() {
         return <MetricsContainer />;
       case 'monitoring': // Render new component
         return <MonitoringDashboard />;
+      case 'admin':
+        return <AdminPortal onNavigate={(tab) => setActiveTab(tab as Tab)} />;
+      case 'oem':
+        return <OEMDashboard />;
       case 'settings':
         return <SettingsPanel onNavigateToAgents={() => setActiveTab('agents')} />;
       default:
@@ -317,8 +328,8 @@ function AppContent() {
                 <User className="w-4 h-4" />
                 <span className="hidden md:inline text-sm">{user?.username}</span>
                 <span className={`text-xs px-2 py-0.5 rounded-full ${user?.role === 'admin' ? 'bg-purple-500/20 text-purple-300' :
-                    user?.role === 'operator' ? 'bg-blue-500/20 text-blue-300' :
-                      'bg-gray-500/20 text-gray-300'
+                  user?.role === 'operator' ? 'bg-blue-500/20 text-blue-300' :
+                    'bg-gray-500/20 text-gray-300'
                   }`}>
                   {user?.role}
                 </span>

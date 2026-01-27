@@ -20,7 +20,7 @@ Network: docker-lab_nexi-lab2 (172.21.0.0/16)
 flowchart TB
     subgraph Application["🖥️ Application Layer"]
         FE[Frontend<br/>:4002]
-        BE[Backend API<br/>:9000]
+        BE[Backend API<br/>:8000]
     end
 
     subgraph Core["🏢 Core Services"]
@@ -65,7 +65,7 @@ flowchart TB
 
 | Service | Port | Container |
 |---------|------|-----------|
-| **Backend API** | 9000 | (process) |
+| **Backend API** | 8000 | (process) |
 | **Frontend UI** | 4002 | (process) |
 
 ### Infrastructure
@@ -107,7 +107,7 @@ flowchart TB
 | Service | URL |
 |---------|-----|
 | 🖥️ Dashboard | http://localhost:4002 |
-| 📡 API Docs | http://localhost:9000/docs |
+| 📡 API Docs | http://localhost:8000/docs |
 | 🗄️ MongoDB UI | http://localhost:9081 |
 | 📊 Langfuse | http://localhost:3001 |
 | 🤖 Ollama | http://localhost:12434 |

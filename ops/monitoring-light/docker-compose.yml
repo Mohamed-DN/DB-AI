@@ -1,0 +1,56 @@
+version: '3.8'
+
+services:
+  # ---------------------------------------------------------------------------
+  # 1. OracleDB Exporter
+  # Connects to your existing DB and exposes metrics for Prometheus
+  # ---------------------------------------------------------------------------
+  oracledb-exporter:
+    image: iamseth/oracledb_exporter:latest
+    container_name: oracle_exporter
+    restart: always
+    environment:
+      # Connect String: user/password@host:port/service
+      - DATA_SOURCE_NAME=system/oracle@ol7-orcl:1521/ORCLCDB
+    ports:
+      - "9161:9161"
+    networks:
+      - orcl_nw
+
+  # ---------------------------------------------------------------------------
+  # 2. Prometheus
+  # Scrapes the exporter
+  # ---------------------------------------------------------------------------
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: prometheus
+    restart: always
+    volumes:
+      - ./prometheus.yml:/etc/prometheus/prometheus.yml
+    ports:
+      - "9094:9090"
+    networks:
+      - orcl_nw
+    depends_on:
+      - oracledb-exporter
+
+  # ---------------------------------------------------------------------------
+  # 3. Grafana
+  # Visualizes the data
+  # ---------------------------------------------------------------------------
+  grafana:
+    image: grafana/grafana:latest
+    container_name: grafana
+    restart: always
+    ports:
+      - "3004:3000"
+    networks:
+      - orcl_nw
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD=admin
+    depends_on:
+      - prometheus
+
+networks:
+  orcl_nw:
+    external: true

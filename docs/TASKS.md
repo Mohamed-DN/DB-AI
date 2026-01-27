@@ -57,3 +57,7 @@
 - [ ] **Testing**: Fix `validate_system.py` paths
 - [ ] **Ops**: Port PowerShell scripts to Bash (`.sh`) for Red Hat
 - [ ] **Ops**: Validate and fix Docker volume paths for Linux
+- [ ] **3-Layer Compliance**: Move 22 root scripts to `execution/`, `Tests/`, `ops/scripts/`
+- [ ] **Startup Fix**: Refactor `ensure_admin_exists()` to use async lifespan handler
+- [ ] **Cleanup**: Remove unused `Metriche_oem` virtualenv and consolidate 50+ READMEs
+- [ ] **Naming**: Rename agent directories to `snake_case` (e.g., `checkmk_collector`)

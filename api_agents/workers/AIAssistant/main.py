@@ -23,8 +23,8 @@ from langgraph.prebuilt import create_react_agent
 from langchain_core.messages import HumanMessage, AIMessage, SystemMessage
 
 # Services
-from api_agents.workers.AIAssistant.services.tool_registry import ToolRegistry
-from api_agents.workers.AIAssistant.services.rag_service import RAGService
+from api_agents.workers.aiassistant.services.tool_registry import ToolRegistry
+from api_agents.workers.aiassistant.services.rag_service import RAGService
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)

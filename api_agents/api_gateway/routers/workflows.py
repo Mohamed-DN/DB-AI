@@ -2,7 +2,7 @@
 Workflows Router - Multi-Agent AI Workflow Endpoints (LangGraph)
 """
 from fastapi import APIRouter, HTTPException, BackgroundTasks
-from api_agents.workers.AIAssistant.langgraph_orchestrator import dba_workflow, DBAState
+from api_agents.workers.aiassistant.langgraph_orchestrator import dba_workflow, DBAState
 from ..services.mongo_service import get_mongo_service
 import uuid
 

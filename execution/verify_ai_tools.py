@@ -1,7 +1,7 @@
 import sys
 import os
 sys.path.append(os.getcwd())
-from api_agents.workers.AIAssistant.main import tools
+from api_agents.workers.aiassistant.main import tools
 
 print("Available Tools:")
 for t in tools:

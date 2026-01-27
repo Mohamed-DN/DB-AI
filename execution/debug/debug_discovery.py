@@ -1,7 +1,7 @@
 import sys
 import os
 sys.path.append(os.getcwd())
-from api_agents.workers.Discovery.discovery_agent import DiscoveryAgent
+from api_agents.workers.discovery.discovery_agent import DiscoveryAgent
 
 agent = DiscoveryAgent()
 host_info = {

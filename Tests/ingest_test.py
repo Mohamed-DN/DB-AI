@@ -1,7 +1,7 @@
 import asyncio
 import os
 from dotenv import load_dotenv
-from api_agents.workers.AIAssistant.services.rag_service import RAGService
+from api_agents.workers.aiassistant.services.rag_service import RAGService
 
 load_dotenv()
 

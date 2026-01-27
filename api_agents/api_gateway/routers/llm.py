@@ -313,7 +313,7 @@ Remember: BE HELPFUL, BE DECISIVE, SOLVE THE PROBLEM!
                 
                 if action == "send_email":
                     try:
-                        from api_agents.workers.CriticalAlert.critical_alert_agent import EmailSender
+                        from api_agents.workers.critical_alert.critical_alert_agent import EmailSender
                         sender = EmailSender()
                         to = action_json.get("to", "admin@nexi.com")
                         subj = action_json.get("subject", "Nexi AI Alert")

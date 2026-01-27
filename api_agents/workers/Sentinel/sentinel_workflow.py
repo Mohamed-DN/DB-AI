@@ -19,8 +19,8 @@ from langgraph.graph import StateGraph, END
 
 # Handle imports for both module and standalone execution
 try:
-    from api_agents.workers.Sentinel.predictor_agent import PredictorAgent, PredictionAlert
-    from api_agents.workers.Sentinel.verifier_agent import VerifierAgent, VerifiedAlert, AlertClassification
+    from api_agents.workers.sentinel.predictor_agent import PredictorAgent, PredictionAlert
+    from api_agents.workers.sentinel.verifier_agent import VerifierAgent, VerifiedAlert, AlertClassification
 except ImportError:
     from predictor_agent import PredictorAgent, PredictionAlert
     from verifier_agent import VerifierAgent, VerifiedAlert, AlertClassification

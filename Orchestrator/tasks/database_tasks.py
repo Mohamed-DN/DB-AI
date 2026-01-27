@@ -47,7 +47,7 @@ def discover_databases(self):
         dict: Discovery results
     """
     try:
-        from api_agents.workers.Scout.scout_agent import ScoutAgent
+        from api_agents.workers.scout.scout_agent import ScoutAgent
         
         scout = ScoutAgent()
         discovered = scout.scan_all()

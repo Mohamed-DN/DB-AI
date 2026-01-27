@@ -21,7 +21,7 @@ os.environ["MONGO_CONTAINER"] = "nexi-mongodb"
 os.environ["MONGO_USERNAME"] = "admin"
 os.environ["MONGO_PASSWORD"] = "admin123"
 
-from api_agents.workers.Discovery.discovery_agent import DiscoveryAgent
+from api_agents.workers.discovery.discovery_agent import DiscoveryAgent
 
 def clean_and_discover():
     # 1. Connect and Clean

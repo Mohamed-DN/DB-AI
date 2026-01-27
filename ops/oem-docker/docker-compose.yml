@@ -1,0 +1,59 @@
+version: '3.8'
+
+services:
+  # ---------------------------------------------------------------------------
+  # OEM Cloud Control 13c (OMS Server)
+  # ---------------------------------------------------------------------------
+  oem-server:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: oem_server_13c
+    hostname: oemserver
+    restart: unless-stopped
+
+    # Needs huge memory
+    mem_limit: 10g
+    mem_reservation: 6g
+    shm_size: '4g'
+
+    ports:
+      - "7802:7802" # HTTPS Console
+      - "7788:7788" # HTTP Console
+      - "7301:7301" # Agent Port
+
+    volumes:
+      # 1. Mount the binaries from Host (You must download them!)
+      - ./installers:/software/oem/installers
+
+      # 2. Persistence for OMS installation
+      - oem_middleware:/u01/app/oracle/middleware
+      - oem_agent:/u01/app/oracle/agent
+      - oem_gc_inst:/u01/app/oracle/gc_inst
+
+      # 3. Scripts
+      - ./scripts:/home/oracle/scripts
+      - ./response:/home/oracle/response
+
+    networks:
+      - orcl_nw
+
+    # Connect to your existing Repo DB "ol7-orcl"
+    extra_hosts:
+      - "oemserver:127.0.0.1"
+
+    # Kernel Params required for Oracle
+    sysctls:
+      - kernel.shmmax=4294967295
+
+networks:
+  orcl_nw:
+    external: true
+    # Make sure your existing ol7-orcl is on this network!
+    # If not, create it: docker network create orcl_nw
+    # And connect ol7-orcl: docker network connect orcl_nw ol7-orcl
+
+volumes:
+  oem_middleware:
+  oem_agent:
+  oem_gc_inst:

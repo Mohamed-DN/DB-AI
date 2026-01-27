@@ -1,0 +1,42 @@
+RESPONSEFILE_VERSION=2.2.1.0.0
+
+# ------------------------------------------------------------------------------
+# Oracle Enterprise Manager Cloud Control 13c - Response File
+# ------------------------------------------------------------------------------
+
+# Installation Type: Simple (Small) or Advanced. simple implies generic sizes.
+INSTALL_TYPE="Advanced"
+
+# Paths
+UNIX_GROUP_NAME=oinstall
+INVENTORY_LOCATION=/u01/app/oraInventory
+ORACLE_HOME=/u01/app/oracle/middleware
+AGENT_BASE_DIR=/u01/app/oracle/agent
+
+# Repository Database Connection
+# NOTE: Connect to the 'ol7-orcl' container via the docker network alias
+DATABASE_HOSTNAME=ol7-orcl
+DATABASE_PORT_NUMBER=1521
+DATABASE_SERVICE_NAME=ORCLCDB
+# SYS user credentials are passed via command line (NOTE:SYS_PASSWORD)
+
+# Deployment Size: SMALL, MEDIUM, LARGE
+DEPLOYMENT_SIZE=SMALL
+
+# Management Server Config
+ORACLE_HOSTNAME=oemserver
+# Ports (match Dockerfile EXPOSE)
+# We accept defaults mostly, but explicitly setting ensures alignment
+# ADMIN_SERVER_HTTPS_PORT=7101
+# MANAGED_SERVER_HTTP_PORT=7202
+# MANAGED_SERVER_HTTPS_PORT=7301
+# EM_UPLOAD_HTTP_PORT=4889
+# EM_UPLOAD_HTTPS_PORT=4903
+# EM_CONSOLE_HTTP_PORT=7788
+# EM_CONSOLE_HTTPS_PORT=7802
+
+# Software Library
+SOFTWARE_LIBRARY_LOCATION=/u01/app/oracle/software_lib
+
+# Data Locations (if creating new tablespaces)
+# We assume we let the installer create/manage them

@@ -240,7 +240,7 @@ async def trigger_oem_collection() -> Dict[str, Any]:
     This will fetch latest metrics from all configured OEM instances.
     """
     try:
-        from api_agents.workers.OEM_Collector.oem_collector import OEMCollectorAgent
+        from api_agents.workers.oem_collector.oem_collector import OEMCollectorAgent
         from api_agents.shared.sync_mongo_service import SyncMongoService
         
         # Run collection

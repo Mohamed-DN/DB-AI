@@ -9,10 +9,10 @@ from langchain_core.tools import Tool, StructuredTool
 from pydantic import BaseModel, Field, create_model
 
 # Import existing tool functions to map them
-from api_agents.workers.AIAssistant.tools.inventory_tools import search_inventory, get_pdbs_info, get_inventory_summary
-from api_agents.workers.AIAssistant.tools.action_tools import manage_container, get_container_logs, check_system_health
-from api_agents.workers.AIAssistant.tools.database_tools import execute_sql_query, explain_query_plan, get_table_schema
-from api_agents.workers.AIAssistant.tools.orchestration_tools import run_agent, list_agents, manage_gateway
+from api_agents.workers.aiassistant.tools.inventory_tools import search_inventory, get_pdbs_info, get_inventory_summary
+from api_agents.workers.aiassistant.tools.action_tools import manage_container, get_container_logs, check_system_health
+from api_agents.workers.aiassistant.tools.database_tools import execute_sql_query, explain_query_plan, get_table_schema
+from api_agents.workers.aiassistant.tools.orchestration_tools import run_agent, list_agents, manage_gateway
 
 logger = logging.getLogger(__name__)
 

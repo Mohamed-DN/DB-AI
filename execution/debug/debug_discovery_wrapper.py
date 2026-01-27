@@ -6,7 +6,7 @@ import io
 # Force utf-8
 sys.stdout.reconfigure(encoding='utf-8')
 
-from api_agents.workers.Discovery.discovery_agent import DiscoveryAgent
+from api_agents.workers.discovery.discovery_agent import DiscoveryAgent
 
 def main():
     log_file = "c:\\AI-Nexi\\Nexi_DB_AI\\discovery_agent_debug.log"

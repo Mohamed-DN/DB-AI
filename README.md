@@ -3,77 +3,16 @@
 > **Status**: Active Development (Shadow Mode on V2)
 > **Goal**: AI-powered Autonomous Database Administration & CMDB
 
-## 🧠 System Architecture
+## 🏗️ Architecture
 
-### The 3-Layer Operating Model
+> **[See Full Architecture Documentation](docs/ARCHITECTURE.md)**
 
-This project strictly follows a **3-Layer Architecture** to separate deterministic execution from probabilistic AI reasoning:
+The system follows a **3-Layer Architecture**:
+1. **Directives**: Rules & SOPs.
+2. **Orchestration**: AI Decision Making.
+3. **Execution**: Python Agents.
 
-1. **Layer 1: Directive (Directives)**
-   - Located in `matrix/directives/`.
-   - 
-    Standard Operating Procedures (SOPs).
-   - "Rules of Engagement" for the AI (Context).
-
-2. **Layer 2: Orchestration (The Brain)**
-   - Located in `orchestrator/`.
-   - Intelligent routing, decision making, and task delegation.
-   - Connects intent (Directive) to action (Execution).
-
-3. **Layer 3: Execution (The Hands)**
-   - Located in `execution/`.
-   - Deterministic, atomic Python scripts.
-   - No AI logic here—just pure, testable code.
-
-```mermaid
-graph TD
-    %% Users & Entry
-    User((User)) -->|HTTP/Browsing| Frontend[Frontend Dashboard :4002]
-    
-    %% Web Layer
-    subgraph "Web Interface Layer"
-        Frontend -->|REST API| Backend[FastAPI Backend :9000]
-    end
-    
-    %% Data Layer
-    subgraph "Data Persistence"
-        Backend <-->|Read/Write| MongoDB[(MongoDB :28017)]
-        Agents <-->|Write Metrics| MongoDB
-        Orchestrator <-->|Context Caching| MongoDB
-    end
-    
-    %% Agent Layer
-    subgraph "Autonomous Agents"
-        Agents{Agents Manager}
-        Agents -->|Discovery| Scout[Scout Agent]
-        Agents -->|Monitoring| Collector[Collector Agent]
-        Agents -->|Analysis| Watcher[Watcher Agent]
-    end
-    
-    %% Target Infrastructure
-    subgraph "Infrastructure"
-        Scout -.->|Scan| Docker[Docker Containers]
-        Collector -.->|Query| Docker
-    end
-    
-    %% Intelligence Layer
-    subgraph "AI Core (Orchestrator)"
-        Backend <-->|Query| Orchestrator[AI Orchestrator]
-        Orchestrator <-->|RAG| Qdrant[(Qdrant Vector DB)]
-        Orchestrator <-->|Inference| Ollama["Local LLM (Ollama)"]
-    end
-
-    %% Class Definitions for Styling
-    classDef web fill:#1f77b4,stroke:#fff,stroke-width:2px,color:#fff;
-    classDef db fill:#ff7f0e,stroke:#fff,stroke-width:2px,color:#fff;
-    classDef agent fill:#2ca02c,stroke:#fff,stroke-width:2px,color:#fff;
-    classDef ai fill:#9467bd,stroke:#fff,stroke-width:2px,color:#fff;
-    
-    class Frontend,Backend web;
-    class MongoDB,Qdrant,Docker db;
-    class Agents,Scout,Collector,Watcher agent;
-    class Orchestrator,Ollama ai;
-```
+[View Architecture Diagram](docs/ARCHITECTURE.md#architecture-diagram)
 
 ## 🗺️ Navigation & Directory Structure
 
@@ -81,7 +20,7 @@ Click on the module name to view detailed documentation and diagrams.
 
 | Module | Icon | Role | Description |
 |--------|:----:|------|-------------|
-| **[api_agents](./api_agents/README.md)** | 🤖 | **Backend & Agents** | Unified backend layer with FastAPI Gateway and Autonomous Workers (`Scout`, `Collector`, `Watcher`). |
+| **[api_agents](./api_agents/README.md)** | 🤖 | **Backend & Agents** | Unified backend layer with FastAPI Gateway and Autonomous Workers (`scout`, `collector`, `watcher`). |
 | **[orchestrator](./orchestrator/README.md)** | 🧠 | **The Brain** | The AI Core handling LLM interactions, RAG pipelines, and decision-making logic. |
 | **[web](./web/README.md)** | 💻 | **The Face** | The user-facing dashboard (`web/dashboard`) and legacy interfaces. |
 | **[mongo](./mongo/README.md)** | 💾 | **The Memory** | Central data store schemas, scripts, and seeds. |
@@ -108,7 +47,7 @@ All scripts are located in `ops/scripts/`.
 
 ---
 
-## � Future Architecture & Data Sources
+## 🔮 Future Architecture & Data Sources
 
 ### Data Sources
 The system integrates 4 main data streams for holistic monitoring:
@@ -125,15 +64,17 @@ We are moving towards a distributed gateway architecture:
 
 ---
 
-## �📚 Essential Reading
+## 📚 Essential Documentation
 
-- **[System Architecture](docs/architecture/system_architecture.md)**: High-level design and component interaction.
-- **[Agents Overview](docs/architecture/agents_overview.md)**: Details on the autonomous workers.
+### 📌 Pinned Directives
+- **[OEM Data Collection SOP](docs/directives/oem_collection.md)**: Standard procedure for Oracle Enterprise Manager integration.
+- **[Sentinel Prediction SOP](docs/directives/sentinel_prediction.md)**: Autonomous predictive maintenance protocol.
+- **[Project Tasks & Roadmap](docs/TASKS.md)**: Current development status and backlog.
+
+### 📖 Reference
+- **[System Architecture](docs/ARCHITECTURE.md)**: Master architecture document.
 - **[Qdrant Basics](docs/references/qdrant_basics.md)**: Understanding the Vector DB.
-- **[Audit & Roadmap](docs/audit/ROADMAP_MIGLIORAMENTO_E_AUDIT_TECNICO.md)**: Technical audit and future improvements.
-- **[Sentinel Implementation Walkthrough](docs/SENTINEL_WALKTHROUGH.md)**: Full guide to the Intelligent DBA Sentinel System.
-- **[Sentinel Task Tracker](docs/SENTINEL_TASK.md)**: Implementation status and checklist.
-- **[Project Tasks](docs/TASKS.md)**: Current development checklist and status.
+- **[Sentinel Walkthrough](docs/SENTINEL_WALKTHROUGH.md)**: Guide to the Intelligent DBA Sentinel System.
 
 ---
 

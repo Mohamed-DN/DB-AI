@@ -337,9 +337,12 @@ class OEMCollectorAgent:
         all_metrics = []
         
         try:
-            # Get all database targets
+            # Get all database targets (CDBs and PDBs)
             targets = client.get_targets("oracle_database")
-            logger.info(f"Found {len(targets)} database targets in {client.instance.name}")
+            pdbs = client.get_targets("oracle_pdb")
+            targets.extend(pdbs)
+            
+            logger.info(f"Found {len(targets)} targets (CDB+PDB) in {client.instance.name}")
             
             for target in targets:
                 target_name = target.get("name") or target.get("targetName")

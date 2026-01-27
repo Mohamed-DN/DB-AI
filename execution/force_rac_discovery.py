@@ -11,7 +11,7 @@ os.environ["MONGO_CONTAINER"] = "nexi-mongodb"
 os.environ["MONGO_USERNAME"] = "admin"
 os.environ["MONGO_PASSWORD"] = "nexi2024" # PyMongo uses this
 
-from api_agents.workers.Discovery.discovery_agent import DiscoveryAgent
+from api_agents.workers.discovery.discovery_agent import DiscoveryAgent
 
 def force_discovery():
     print("🚀 Forcing Oracle RAC Discovery...")

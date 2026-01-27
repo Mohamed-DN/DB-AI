@@ -15,7 +15,7 @@ sys.stdout.reconfigure(encoding='utf-8')
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '../../../')))
 from api_agents.shared.sync_mongo_service import SyncMongoService
 from api_agents.shared.redis_client import RedisClient
-from api_agents.workers.Scout.template_loader import build_document
+from api_agents.workers.scout.template_loader import build_document
 
 class ScoutAgent:
     def __init__(self):

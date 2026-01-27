@@ -24,7 +24,7 @@ from orchestrator.core.mongo_proxy import MongoProxy
 
 # Import template builder from Scout
 try:
-    from api_agents.workers.Scout.template_loader import build_document
+    from api_agents.workers.scout.template_loader import build_document
     TEMPLATE_AVAILABLE = True
 except ImportError:
     TEMPLATE_AVAILABLE = False
