@@ -61,6 +61,7 @@ async def get_oem_instances() -> List[OEMInstanceResponse]:
     Returns list of OEM instances without sensitive data.
     """
     from ..services.mongo_service import get_mongo_service
+    from ...shared.crypto_utils import CryptoUtils
     
     try:
         mongo = get_mongo_service()
@@ -108,7 +109,7 @@ async def add_oem_instance(instance: OEMInstanceConfig) -> Dict[str, Any]:
             "name": instance.name,
             "url": instance.url,
             "username": instance.username,
-            "password": instance.password,  # TODO: Encrypt in production
+            "password": CryptoUtils.encrypt(instance.password), # Encrypted
             "verify_ssl": instance.verify_ssl,
             "is_connected": False,
             "created_at": datetime.utcnow()

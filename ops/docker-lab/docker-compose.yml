@@ -103,7 +103,7 @@ services:
       dockerfile: api_agents/Dockerfile
     container_name: nexi-sentinel-predictor
     hostname: sentinel-predictor.nexi.lab
-    command: python api_agents/workers/sentinel/predictor_agent.py
+    command: python api_agents/workers/Sentinel/sentinel_workflow.py --interval ${CHECK_INTERVAL:-300}
     environment:
       - VICTORIAMETRICS_URL=http://victoriametrics:8428
       - MONGODB_URL=mongodb://${MONGO_USERNAME:-admin}:${MONGO_PASSWORD:-nexi2024}@mongodb2:27017/${MONGODB_DB:-nexi_cmdb_v2}?authSource=admin
@@ -601,6 +601,27 @@ services:
     networks:
       nexi-lab2:
         ipv4_address: 172.21.0.33
+    restart: unless-stopped
+
+  # CheckMK Bridge - Syncs Inventory (V2)
+  checkmk_bridge:
+    build:
+      context: ../..
+      dockerfile: api_agents/Dockerfile
+    container_name: nexi-checkmk-bridge
+    hostname: checkmk-bridge.nexi.lab
+    command: python api_agents/workers/checkmk_bridge/main.py --interval 300
+    environment:
+      - CHECKMK_URL=http://checkmk:5000/nexi_monitor/check_mk/api/1.0
+      - CHECKMK_USER=cmkadmin
+      - CHECKMK_PASSWORD=nexi2024
+      - MONGODB_URL=mongodb://${MONGO_USERNAME:-admin}:${MONGO_PASSWORD:-nexi2024}@mongodb2:27017/${MONGODB_DB:-nexi_cmdb_v2}?authSource=admin
+    depends_on:
+      - checkmk
+      - mongodb2
+    networks:
+      nexi-lab2:
+        ipv4_address: 172.21.0.35
     restart: unless-stopped
 
   # ===========================================================================

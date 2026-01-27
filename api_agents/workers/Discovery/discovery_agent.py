@@ -404,9 +404,13 @@ class DiscoveryAgent:
         try:
             from pymongo import MongoClient
             # Use same credentials that worked for insert checks
-            # Hardcoded based on what worked in logs (admin/nexi2024)
             # ideally read from env but fallback to known working
-            client = MongoClient("mongodb://admin:nexi2024@localhost:28017/")
+            mongo_user = os.getenv("MONGO_USERNAME", "admin")
+            mongo_pass = os.getenv("MONGO_PASSWORD", "nexi2024")
+            mongo_host = os.getenv("MONGODB_HOST", "localhost")
+            mongo_port = os.getenv("MONGODB_PORT", "28017")
+            
+            client = MongoClient(f"mongodb://{mongo_user}:{mongo_pass}@{mongo_host}:{mongo_port}/")
             db_name = os.environ.get("MONGODB_DB", "nexi_cmdb_v2")
             db = client[db_name]
             gateways = list(db.gateways.find({}))
@@ -820,7 +824,13 @@ class DiscoveryAgent:
         # Try PyMongo direct insertion first (more reliable for large docs)
         try:
             from pymongo import MongoClient
-            client = MongoClient("mongodb://admin:nexi2024@localhost:28017/")
+            # Use env vars with fallback
+            mongo_user = os.getenv("MONGO_USERNAME", "admin")
+            mongo_password = os.getenv("MONGO_PASSWORD", "nexi2024")
+            mongo_host = os.getenv("MONGODB_HOST", "localhost")
+            mongo_port = os.getenv("MONGODB_PORT", "28017")
+            
+            client = MongoClient(f"mongodb://{mongo_user}:{mongo_password}@{mongo_host}:{mongo_port}/")
             db = client["nexi_cmdb_v2"]
             db.inventory_databases.insert_one(doc)
             

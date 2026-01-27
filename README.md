@@ -1,115 +1,126 @@
-# Nexi DBA AI (CMDB V3)
 
-> **Status**: Active Development (Shadow Mode on V2)
-> **Goal**: AI-powered Autonomous Database Administration & CMDB
+# 🌌 Nexi DBA AI: The Autonomous Database Administrator
 
-## 🏗️ Architecture
-
-> **[See Full Architecture Documentation](docs/ARCHITECTURE.md)**
-
-The system follows a **3-Layer Architecture**:
-1. **Directives**: Rules & SOPs.
-2. **Orchestration**: AI Decision Making.
-3. **Execution**: Python Agents.
-
-[View Architecture Diagram](docs/ARCHITECTURE.md#architecture-diagram)
-
-## 🗺️ Navigation & Directory Structure
-
-Click on the module name to view detailed documentation and diagrams.
-
-| Module | Icon | Role | Description |
-|--------|:----:|------|-------------|
-| **[api_agents](./api_agents/README.md)** | 🤖 | **Backend & Agents** | Unified backend layer with FastAPI Gateway and Autonomous Workers (`scout`, `collector`, `watcher`). |
-| **[orchestrator](./orchestrator/README.md)** | 🧠 | **The Brain** | The AI Core handling LLM interactions, RAG pipelines, and decision-making logic. |
-| **[web](./web/README.md)** | 💻 | **The Face** | The user-facing dashboard (`web/dashboard`) and legacy interfaces. |
-| **[mongo](./mongo/README.md)** | 💾 | **The Memory** | Central data store schemas, scripts, and seeds. |
-| **[ops](./ops/README.md)** | 🛠️ | **Operations** | Infrastructure tools, Docker Lab (`ops/docker-lab`), and Scripts (`ops/scripts`). |
-| **[llm](./llm/README.md)** | 🗣️ | **Intelligence** | Configuration and clients for Large Language Models. |
+> **Version**: 3.0 (RALPH Validated)
+> **Status**: ✅ Fully Operational / Deployment Verified
+> **Philosophy**: "From Chaos to Order"
 
 ---
 
-## 🎮 System Control
+## 📖 System Overview
 
-### 1. Requirements
-- **Docker Desktop** (running)
-- **Python 3.10+**
-- **PowerShell** (Admin recommended)
+Nexi DBA AI is not just a monitoring tool; it is an **Agentic AI System** designed to autonomously manage, secure, and optimize huge database fleets. It moves beyond passive alerting to active remediation using a **3-Layer Architecture**.
 
-### 2. Commands (Ops)
-All scripts are located in `ops/scripts/`.
-
-| Action | Command | Description |
-|--------|---------|-------------|
-| **🚀 START** | `.\ops\scripts\setup_v2.ps1` | Starts the full stack (Containers, API, Frontend). |
-| **🛑 STOP** | `.\ops\scripts\cleanup_v2.ps1` | Stops all containers and kills python processes. |
-| **🧹 CLEAN** | `docker system prune -f` | **Warning**: Removes all stopped containers (Use with caution). |
+### 🏗️ The 3-Layer Architecture
+1.  **Directives (The Law)**: Static rules and Standard Operating Procedures (SOPs) defined by humans.
+2.  **Orchestration (The Brain)**: AI Agents that decide *when* to act, utilizing LLMs and RAG.
+3.  **Execution (The Hands)**: Deterministic Python scripts and strict APIs that touch the infrastructure.
 
 ---
 
-## 🔮 Future Architecture & Data Sources
+## 🧠 The Intelligence Core (RAG & LLM)
 
-### Data Sources
-The system integrates 4 main data streams for holistic monitoring:
-1. **CheckMK**: Infrastructure status and legacy alerts.
-2. **OEM (Oracle Enterprise Manager)**: Deep database performance metrics.
-3. **Database**: Direct SQL queries for internal state and logs.
-4. **Machine**: OS-level metrics (CPU, RAM, Disk I/O).
+The "Brain" of the system relies on two key technologies working in tandem:
 
-### Infrastructure Evolution
-We are moving towards a distributed gateway architecture:
-- **Current State**: 2 Primary Gateways connecting Machines to MongoDB and AI Core.
-- **Future State**: 3+ Gateways for high availability and load balancing.
-- **Queue Management**: **Redis** will be deployed on ALL gateways to handle message queues, replacing direct synchronous connections for better resilience.
+### 1. Vector Memory (RAG)
+- **Technology**: Qdrant
+- **Role**: Long-term memory. It stores "embeddings" of:
+    - **SOPs**: How to fix specific errors.
+    - **Past Incidents**: What worked before.
+    - **System State**: Snapshots of configuration.
+- **Workflow**: When an alert arrives, the system queries Qdrant: *"Have we seen this error before? What is the procedure?"*
 
----
-
-## 📚 Essential Documentation
-
-### 📌 Pinned Directives
-- **[OEM Data Collection SOP](docs/directives/oem_collection.md)**: Standard procedure for Oracle Enterprise Manager integration.
-- **[Sentinel Prediction SOP](docs/directives/sentinel_prediction.md)**: Autonomous predictive maintenance protocol.
-- **[Project Tasks & Roadmap](docs/TASKS.md)**: Current development status and backlog.
-
-### 📖 Reference
-- **[System Architecture](docs/ARCHITECTURE.md)**: Master architecture document.
-- **[Qdrant Basics](docs/references/qdrant_basics.md)**: Understanding the Vector DB.
-- **[Sentinel Walkthrough](docs/SENTINEL_WALKTHROUGH.md)**: Guide to the Intelligent DBA Sentinel System.
+### 2. The Reasoner (LLM)
+- **Technology**: Ollama (Running local models like Llama3 or Mistral)
+- **Role**: Decision making. It takes the context from Qdrant and the alert data to decide:
+    - *"Is this a false positive?"*
+    - *"Should I trigger an auto-fix?"*
+    - *"Who should I notify?"*
 
 ---
 
-## 🛠️ Detailed Implementation Roadmap
+## 💾 The Central Nervous System (MongoDB)
 
-To achieve the **Future Architecture** (3 Gateways, Redis, 4 Sources), the work is broken down into manageable phases.
+**Unification is key.** We have abolished scattered config files.
 
-### Phase 1: Infrastructure Foundations (Redis & Queueing)
-- [x] **Redis Deployment**: Add Redis service to `docker-compose` and `ops/scripts`.
-- [x] **Queue Implementation**: Create `RedisClient` in `api_agents/shared` for async messaging.
-- [x] **Agent Decoupling**: Refactor Agents (Collector, Scout) to push data to Redis instead of direct MongoDB writes.
-- [x] **Ingestion Workers**: Create dedicated workers to consume from Redis and write to MongoDB (Async Write).
-
-### Phase 2: Distributed Gateway Architecture
-- [x] **Gateway Config**: Define configuration profiles for `Gateway_01`, `Gateway_02`, `Gateway_03` (Infrastructure Ready).
-- [ ] **Load Balancing**: Implement logic to distribute Agents across gateways.
-- [ ] **Failover Logic**: If Gateway 01 fails, agents should fallback to Gateway 02.
-- [ ] **Service Discovery**: Update `Scout` to register machines against specific Gateways.
-
-### Phase 3: Data Source Unification (The 4 Streams)
-- [ ] **Stream 1: CheckMK**: Finalize `checkmk_legacy_adapter` for stable event streaming.
-- [ ] **Stream 2: OEM**: Optimize `oem_collector` for high-frequency polling.
-- [ ] **Stream 3: Database**: Standardize `PredictorAgent` queries for direct DB health.
-- [ ] **Stream 4: Machine**: Integrate `psutil` or `Telegraf` into `Watcher` agent for OS metrics (CPU/RAM/IO).
-
-### Phase 4: Frontend & Visualization
-- [ ] **Gateway Dashboard**: New UI view to monitor the status of the 3 Gateways + Redis Queues.
-- [ ] **Unified Timeline**: Merge events from CheckMK, OEM, and Sentinel into a single timeline.
-- [ ] **Real-time Updates**: Connect Frontend to Redis Pub/Sub for live status changes.
-
-### Phase 5: Hardening & Production
-- [ ] **Security**: Implement API Keys for Gateway-to-Gateway communication.
-- [ ] **Disaster Recovery**: Simulate Gateway failure and verify Agent migration.
-- [ ] **Performance Tuning**: Optimize Redis retention and MongoDB write throughput.
+- **Centralized Configuration**: All agent configurations (intervals, thresholds, targets) live in the `system_config` collection.
+- **Code-as-Data**: Operational scripts (`ops/scripts/*.py`) are stored in `system_scripts`, versioned, and executed directly from the database sans file-system dependency.
+- **Inventory Source**: The `inventory_databases` collection is the Single Source of Truth, synced bi-directionally with CheckMK and OEM.
 
 ---
 
-> _"From Chaos to Order" - Built for Nexi by the Advanced Agentic Coding Team_
+## 🌉 Connectivity & Data Flow
+
+How do the components talk to each other?
+
+```mermaid
+graph TD
+    %% Sources
+    DBs[(Databases)] -->|Metrics| OEM[OEM Collector]
+    DBs -->|Status| CMK[CheckMK Bridge]
+    
+    %% Ingestion
+    OEM -->|JSON| Mongo[(MongoDB)]
+    CMK -->|Sync| Mongo
+    
+    %% Processing
+    Mongo -->|Stream| Sentinel[🤖 Sentinel Agent]
+    
+    %% AI Loop
+    Sentinel -->|Query| Qdrant[Qdrant (RAG)]
+    Sentinel -->|Context| LLM[Ollama (LLM)]
+    LLM -->|Decision| Sentinel
+    
+    %% Action
+    Sentinel -->|Auto-Fix| Executors[⚡ Action Executors]
+    Sentinel -->|Alert| FE[💻 Dashboard]
+```
+
+### Key Flows
+1.  **Enrichment**: The `EnricherAgent` continuously updates MongoDB with live metadata (Version, Uptime, Size) from Postgres/Oracle.
+2.  **Sentinel Loop**:
+    - **Monitor**: Scans `monitoring_alerts` and VictoriaMetrics.
+    - **Predict**: Uses historical trends to foresee outages.
+    - **Fix**: If `auto_fixable=True`, triggers a remediation script.
+3.  **User Interaction**: Users query the system via the Dashboard. The backend uses RAG to fetch answers from the Knowledge Base + Live Data.
+
+---
+
+## 🛠️ Operational Guide
+
+The system is containerized and managed via Docker Compose.
+
+### 🚀 Starting the System
+All services (Frontend, Backend, Agents, DBs) are defined in `ops/docker-lab/docker-compose.yml`.
+
+```powershell
+# Start everything (Windows)
+.\ops\scripts\start-everything.ps1
+
+# Verify status
+python ops/scripts/mongo_runner.py verify_system.py
+```
+
+### 📜 Running Scripts (The New Way)
+Do not run `.py` files manually. Use the MongoDB Runner:
+
+```bash
+# Run a specific verification script
+python ops/scripts/mongo_runner.py verify_deep_state.py
+```
+
+---
+
+## 📂 Directory Structure
+
+| Path | Component | Function |
+|:---|:---|:---|
+| `api_agents/` | **Backend** | FastApi Gateway, Agents (Sentinel, Oem, Enricher). |
+| `web/dashboard/` | **Frontend** | React/Vite Admin UI. |
+| `orchestrator/` | **AI Logic** | RAG Pipeline, LangGraph workflow. |
+| `ops/scripts/` | **Boot** | Startup/Cleanup scripts & Migration tools. |
+| `mongo/` | **Schemas** | Database initialization and migrations. |
+
+---
+
+> **Nexi DBA AI**: Autonomous. Secure. Centralized.

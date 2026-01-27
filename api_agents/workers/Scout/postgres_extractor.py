@@ -1,6 +1,7 @@
 import json
 import subprocess
 import logging
+from datetime import datetime, timezone
 
 class PostgresExtractor:
     def __init__(self):
@@ -115,7 +116,11 @@ class PostgresExtractor:
             "instance_details": {
                 "role": "STANDBY" if inst_data.get('is_in_recovery') else "LEADER",
                 "state": "running",
-                "uptime_seconds": 0, # TODO: Calc from start_time
+                "state": "running",
+                "uptime_seconds": (
+                    datetime.now(timezone.utc) - 
+                    datetime.fromisoformat(inst_data.get('start_time').replace(' ', 'T') + '+00:00')
+                ).total_seconds() if inst_data.get('start_time') else 0,
                 "connections": {
                     "max": inst_data.get('max_connections'),
                     "active": inst_data.get('active_connections')

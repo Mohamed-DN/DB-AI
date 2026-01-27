@@ -261,12 +261,62 @@ class EnricherAgent:
             return []
     
     def enrich_postgres(self, db_doc: Dict) -> bool:
-        # ... (keep existing implementation) ...
-        # For brevity, calling the original logic via self would be ideal if I wasn't replacing the whole class
-        # But since I am replacing logic, I must include it or minimize changes.
-        # This implementation is tricky with replace_file_content for a whole class if not careful.
-        # I will only inject the new enrich methods and update run_once logic.
-        pass 
+        """Enrich PostgreSQL database"""
+        if not PSYCOPG2_AVAILABLE: return False
+        
+        identity = db_doc.get("identity", {})
+        connection = db_doc.get("connection", {})
+        name = identity.get("db_unique_name", "UNKNOWN")
+        host = connection.get("host", identity.get("host", "localhost"))
+        port = connection.get("port", 5432)
+        user = connection.get("user", self.default_pg_user)
+        password = connection.get("password", self.default_pg_password)
+        db_name = connection.get("service_name", "postgres")
+
+        print(f"   🔌 Connecting to Postgres: {host}:{port}/{db_name} as {user}...")
+        
+        conn = None
+        try:
+            conn = psycopg2.connect(
+                host=host, port=port, user=user, password=password, dbname=db_name,
+                connect_timeout=3
+            )
+            cursor = conn.cursor()
+            
+            # Fetch version
+            cursor.execute("SELECT version();")
+            version_full = cursor.fetchone()[0]
+            
+            # Fetch uptime
+            cursor.execute("SELECT pg_postmaster_start_time();")
+            start_time = cursor.fetchone()[0]
+            uptime_seconds = (datetime.now(start_time.tzinfo) - start_time).total_seconds()
+            
+            # Fetch connection count
+            cursor.execute("SELECT count(*) FROM pg_stat_activity;")
+            conn_count = cursor.fetchone()[0]
+            
+            # Fetch DB Size
+            cursor.execute(f"SELECT pg_database_size('{db_name}');")
+            size_bytes = cursor.fetchone()[0]
+            
+            cursor.close()
+            
+            update_fields = {
+                "database_core.version_info.full_version": version_full,
+                "performance.uptime_seconds": uptime_seconds,
+                "performance.connections_total": conn_count,
+                "capacity.data_size_bytes": size_bytes,
+                "metadata.last_enriched": datetime.now().isoformat()
+            }
+            
+            return self._do_update(name, update_fields)
+            
+        except Exception as e:
+            print(f"   ❌ Postgres enrichment failed: {e}")
+            return False
+        finally:
+            if conn: conn.close() 
     
     def enrich_oracle(self, db_doc: Dict) -> bool:
         identity = db_doc.get("identity", {})

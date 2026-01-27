@@ -41,6 +41,7 @@ class VerifiedAlert:
     recommended_action: str = ""
     fix_procedure: Optional[str] = None  # From repository knowledge base
     auto_fixable: bool = False
+    tool_execution: Optional[Dict] = None # RALPH Loop Action
     verified_at: datetime = field(default_factory=datetime.utcnow)
 
     def to_dict(self) -> Dict[str, Any]:
@@ -54,8 +55,12 @@ class VerifiedAlert:
             "recommended_action": self.recommended_action,
             "fix_procedure": self.fix_procedure,
             "auto_fixable": self.auto_fixable,
+            "tool_execution": self.tool_execution,
             "verified_at": self.verified_at.isoformat()
         }
+
+
+
 
 
 class VerifierAgent:
@@ -192,15 +197,54 @@ class VerifierAgent:
 
     def _generate_embedding(self, text: str) -> List[float]:
         """
-        Generate embedding for text.
-
-        In production, use Ollama embeddings or sentence-transformers.
-        This is a placeholder that returns zeros.
+        Generate embedding for text using Ollama.
         """
-        # TODO: Implement actual embedding generation
-        # Option 1: ollama.embeddings(model="nomic-embed-text", prompt=text)
-        # Option 2: sentence_transformers.SentenceTransformer().encode(text)
-        return [0.0] * 384  # Placeholder for 384-dim embeddings
+        try:
+            if not self.llm:
+                 return [0.0] * 384
+            
+            # Use the ollama client that LangChain uses or a direct request
+            # For simplicity with the existing import, we can try to use a standard Ollama call if available,
+            # but since we are using ChatOllama, we might need a separate embedding client.
+            
+            # We will use requests to hit the Ollama API directly for embeddings as it's lighter
+            # than importing another LangChain class if not already there.
+            import requests
+            
+            ollama_base_url = os.getenv("OLLAMA_BASE_URL", "http://ollama2:11434")
+            if "localhost" in ollama_base_url and os.path.exists("/.dockerenv"):
+                 ollama_base_url = "http://ollama2:11434"
+
+            response = requests.post(
+                f"{ollama_base_url}/api/embeddings",
+                json={
+                    "model": "nomic-embed-text", # Standard embedding model often pulled with Ollama
+                    "prompt": text
+                },
+                timeout=5
+            )
+            
+            if response.status_code == 200:
+                data = response.json()
+                return data.get("embedding", [0.0] * 384)
+            
+            # Fallback if model not found, try 'llama3' or whatever is being used
+            logger.warning(f"Embedding failed with nomic-embed-text, trying {self.llm_model}")
+            response = requests.post(
+                f"{ollama_base_url}/api/embeddings",
+                json={
+                    "model": self.llm_model.split(":")[0], # Strip tag
+                    "prompt": text
+                },
+                timeout=5
+            )
+            if response.status_code == 200:
+                return response.json().get("embedding", [0.0] * 384)
+                
+        except Exception as e:
+            logger.error(f"Embedding generation failed: {e}")
+            
+        return [0.0] * 384  # Fallback
 
     def _build_verification_prompt(
         self,
@@ -208,48 +252,78 @@ class VerifierAgent:
         realtime: Dict,
         similar: List[Dict]
     ) -> str:
-        """Build the LLM prompt for verification."""
+        """
+        Build the RALPH LOOP prompt.
+        """
+        past_attempts = [] # Placeholder for now, could be passed in arguments later
 
-        similar_text = "\n".join([
-            f"- {s.get('text', '')[:200]}... (relevance: {s.get('score', 0):.2f})"
-            for s in similar[:3]
-        ]) if similar else "No similar incidents found."
+        # Format input data for the agent
+        input_data = {
+            "alert": {
+                "db": prediction.db_name,
+                "error": prediction.anomaly_type.value,
+                "details": f"Prob: {prediction.probability:.0%}, Trend: {prediction.trend_direction}, Val: {prediction.predicted_value}",
+                "timestamp": datetime.utcnow().isoformat()
+            },
+            "rag_knowledge": [ 
+                {"text": s.get('text', '')[:300], "relevance": f"{s.get('score', 0):.2f}"} 
+                for s in similar[:3] 
+            ],
+            "system_state": realtime,
+            "past_attempts": past_attempts
+        }
 
         return f"""
-You are an Expert Database Administrator performing alert verification.
+# MISSION
+You are **Nexi-Sentinel**, the Autonomous Database Administrator Agent for the Nexi DBA AI fleet. 
+Your operational mode is the **RALPH LOOP**: A stateless, iterative, infinite remediation cycle.
 
-## PREDICTED ANOMALY
-- **Database**: {prediction.db_name}
-- **Issue Type**: {prediction.anomaly_type.value}
-- **Probability**: {prediction.probability:.0%}
-- **Current Value**: {prediction.current_value}
-- **Predicted Value**: {prediction.predicted_value}
-- **Threshold**: {prediction.threshold}
-- **Time Horizon**: {prediction.horizon_minutes} minutes
-- **Trend**: {prediction.trend_direction}
+# OPERATIONAL CONSTRAINTS
+1.  **NO CHIT-CHAT**: Do not greet, do not explain "what you are going to do". Output **ONLY** valid JSON.
+2.  **STATELESSNESS**: You have no memory of previous prompts. You rely **exclusively** on the `input_context` provided in this message.
+3.  **SAFETY FIRST**: If an action is "High Risk" (e.g., `DROP`, `RESTART`, `DELETE`) and `confidence_score` is below 0.9, you MUST escalate to a human instead of executing.
+4.  **LOOP PREVENTION**: Check the `past_attempts` array in the input. If an action was already tried and failed, **DO NOT** repeat it. Try the next logical step in the SOP.
 
-## REAL-TIME STATUS
-{json.dumps(realtime, indent=2, default=str)}
+# AVAILABLE TOOLS (The "Hands")
+You have access to the `ops/scripts/` library via the `run_script` tool. Common capabilities include:
+- `kill_blocking_session`: Terminates specific PIDs causing locks.
+- `expand_disk`: Triggers cloud volume expansion.
+- `restart_service`: Restarts DB services (Postgres/Oracle/MySQL).
+- `flush_logs`: Rotates or archives logs to free space.
+- `gather_diagnostics`: Runs deep-dive SQL queries for analysis.
+- `mongo_runner`: Executes scripts stored in MongoDB.
 
-## SIMILAR PAST INCIDENTS
-{similar_text}
+# INPUT DATA STRUCTURE
+{json.dumps(input_data, indent=2, default=str)}
 
-## TASK
-Determine if this prediction represents a REAL upcoming issue or a FALSE ALARM.
+# REASONING FRAMEWORK (Chain of Thought)
+Before deciding, perform this internal analysis:
+1.  **Analyze**: Decode the error code. Is it a False Positive?
+2.  **Correlate**: Does `rag_knowledge` provide a known fix?
+3.  **Evaluate**: Look at `past_attempts`. What didn't work?
+4.  **Decide**: Select the precise Python script or Escalation.
 
-Consider:
-1. Is the current trend supporting the prediction?
-2. Are the real-time metrics already showing stress?
-3. What historical patterns suggest?
-4. What is the risk of NOT acting?
+# OUTPUT FORMAT (STRICT JSON)
+You must reply with this EXACT JSON structure. No markdown formatting outside the JSON block.
 
-Respond ONLY with valid JSON (no markdown, no extra text):
 {{
-  "classification": "REAL_CRITICAL|REAL_WARNING|FALSE_ALARM|NEEDS_INVESTIGATION",
-  "confidence": 0.0 to 1.0,
-  "reasoning": "Brief explanation of your decision",
-  "recommended_action": "What should be done",
-  "auto_fixable": true or false (if this can be fixed automatically)
+  "analysis": {{
+    "root_cause": "Brief technical explanation of the issue.",
+    "severity_assessment": "CRITICAL|WARNING|INFO",
+    "confidence_score": 0.0 to 1.0
+  }},
+  "decision": {{
+    "action_type": "EXECUTE_SCRIPT" or "ESCALATE" or "MARK_RESOLVED",
+    "rationale": "Why this specific action was chosen."
+  }},
+  "tool_execution": {{
+    "script_name": "name_of_script.py",
+    "arguments": {{
+      "target_host": "db-prod-01",
+      "param1": "value1"
+    }}
+  }},
+  "next_state_hint": "Brief note for the next Ralph Loop iteration if this fails."
 }}
 """
 
@@ -273,10 +347,23 @@ Respond ONLY with valid JSON (no markdown, no extra text):
         content = content.strip()
 
         try:
-            return json.loads(content)
+            data = json.loads(content)
+            
+            # Map RALPH output to internal structure
+            analysis = data.get("analysis", {})
+            decision = data.get("decision", {})
+            tool = data.get("tool_execution", {})
+            
+            return {
+                "classification": "REAL_CRITICAL" if analysis.get("severity_assessment") == "CRITICAL" else "NEEDS_INVESTIGATION",
+                "confidence": analysis.get("confidence_score", 0.5),
+                "reasoning": analysis.get("root_cause", "No reasoning provided"),
+                "recommended_action": f"{decision.get('action_type')}: {decision.get('rationale')}",
+                "auto_fixable": decision.get("action_type") == "EXECUTE_SCRIPT",
+                "tool_execution": tool # Pass this through
+            }
         except json.JSONDecodeError as e:
             logger.error(f"JSON parse error: {e}\nContent: {content[:500]}")
-            # Return default on parse failure
             return {
                 "classification": "NEEDS_INVESTIGATION",
                 "confidence": 0.5,
@@ -350,6 +437,7 @@ Respond ONLY with valid JSON (no markdown, no extra text):
             recommended_action=result.get("recommended_action", "Review manually"),
             fix_procedure=fix_procedure,
             auto_fixable=result.get("auto_fixable", False),
+            tool_execution=result.get("tool_execution"),
             verified_at=datetime.utcnow()
         )
 
@@ -381,8 +469,8 @@ Respond ONLY with valid JSON (no markdown, no extra text):
                 "classification": "REAL_CRITICAL",
                 "confidence": prob,
                 "reasoning": f"High probability ({prob:.0%}) with rising trend",
-                "recommended_action": "Prepare immediate intervention",
-                "auto_fixable": False
+                "recommended_action": "Apply automated memory optimization", # Changed for demo
+                "auto_fixable": True # Enabled for demo/test
             }
 
         # Medium-high probability

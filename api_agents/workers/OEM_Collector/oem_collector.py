@@ -17,7 +17,15 @@ from dataclasses import dataclass
 import httpx
 
 # Add root path for imports
+# Add root path for imports
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '../../../')))
+
+# Import Crypto after path adjustment
+try:
+    from api_agents.shared.crypto_utils import CryptoUtils
+except ImportError:
+    # Handle standalone execution path issues if any
+    pass
 
 logger = logging.getLogger("OEMCollector")
 
@@ -319,7 +327,7 @@ class OEMCollectorAgent:
                             name=inst_cfg.get("name", "OEM"),
                             url=inst_cfg.get("url"),
                             username=inst_cfg.get("username"),
-                            password=inst_cfg.get("password"),
+                            password=CryptoUtils.decrypt(inst_cfg.get("password")),
                             verify_ssl=inst_cfg.get("verify_ssl", False)
                         )
                         # Avoid duplicates

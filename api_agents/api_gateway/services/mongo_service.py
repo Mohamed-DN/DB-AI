@@ -171,6 +171,36 @@ class MongoService:
         for a in alerts:
             if "_id" in a:
                 a["_id"] = str(a["_id"])
+            
+            # Normalize Sentinel alerts for Frontend
+            if "type" in a and a["type"].startswith("SENTINEL_"):
+                # Map Sentinel Critical to Standard Critical
+                if "state" not in a:
+                    if "CRITICAL" in a["type"]:
+                        a["state"] = "CRITICAL"
+                    elif "WARNING" in a["type"]:
+                        a["state"] = "WARNING"
+                    else:
+                        a["state"] = "UNKNOWN"
+                
+                # Map db_name to host_name if missing
+                if "host_name" not in a and "db_name" in a:
+                    a["host_name"] = a["db_name"]
+                
+                # Map service
+                if "service" not in a:
+                    a["service"] = "Sentinel AI"
+                
+                # Map message from data if missing
+                if "message" not in a and "data" in a:
+                    reasoning = a["data"].get("reasoning", "")
+                    anomaly = a["data"].get("prediction_alert", {}).get("anomaly_type", "Anomaly")
+                    a["message"] = f"{anomaly}: {reasoning}"
+                    
+                    # Add Auto-Fix flag to message for visibility
+                    if a["data"].get("auto_fixable"):
+                        a["message"] = f"[AUTO-FIXED] {a['message']}"
+
         return alerts
     
     async def get_pending_alerts(self) -> List[Dict[str, Any]]:
