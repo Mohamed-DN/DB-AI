@@ -41,6 +41,12 @@ except ImportError:
 
 # Database connection libraries
 try:
+    from pymongo import MongoClient
+    PYMONGO_AVAILABLE = True
+except ImportError:
+    PYMONGO_AVAILABLE = False
+
+try:
     import psycopg2
     PSYCOPG2_AVAILABLE = True
 except ImportError:
@@ -391,6 +397,7 @@ class DiscoveryAgent:
     
     def __init__(self):
         self.mongo = MongoProxy()
+        self.db_client = None
         self.default_pg_user = os.getenv("POSTGRES_USER", "postgres")
         self.default_pg_password = os.getenv("POSTGRES_PASSWORD", "nexi2024")
         self.default_ssh_user = os.getenv("SSH_USER", "root")
@@ -398,23 +405,36 @@ class DiscoveryAgent:
         self.default_ssh_key = os.getenv("SSH_KEY_PATH", os.path.expanduser("~/.ssh/id_rsa"))
         print("✅ DiscoveryAgent V2 initialized (Autonomous Mode)")
     
+    def _get_db_client(self):
+        """Get or create reusable MongoDB client"""
+        if not PYMONGO_AVAILABLE:
+            return None
+
+        if self.db_client is None:
+            try:
+                # Use same credentials that worked for insert checks
+                # Hardcoded based on what worked in logs (admin/nexi2024)
+                self.db_client = MongoClient("mongodb://admin:nexi2024@localhost:28017/")
+            except Exception as e:
+                print(f"⚠️ Failed to create MongoDB client: {e}")
+                return None
+        return self.db_client
+
     def get_gateways(self) -> List[Dict]:
         """Get all gateways from MongoDB"""
         # Try PyMongo first
         try:
-            from pymongo import MongoClient
-            # Use same credentials that worked for insert checks
-            # Hardcoded based on what worked in logs (admin/nexi2024)
-            # ideally read from env but fallback to known working
-            client = MongoClient("mongodb://admin:nexi2024@localhost:28017/")
-            db_name = os.environ.get("MONGODB_DB", "nexi_cmdb_v2")
-            db = client[db_name]
-            gateways = list(db.gateways.find({}))
-            client.close()
-            print(f"DEBUG: get_gateways (PyMongo) found: {[g.get('_id') for g in (gateways or [])]}")
-            return gateways
+            client = self._get_db_client()
+            if client:
+                db_name = os.environ.get("MONGODB_DB", "nexi_cmdb_v2")
+                db = client[db_name]
+                gateways = list(db.gateways.find({}))
+                print(f"DEBUG: get_gateways (PyMongo) found: {[g.get('_id') for g in (gateways or [])]}")
+                return gateways
         except Exception as py_err:
             print(f"⚠️ PyMongo get_gateways failed: {py_err}, falling back to Proxy")
+            # If connection failed, invalidate client to retry next time
+            self.db_client = None
 
         try:
             gateways = self.mongo.execute_eval("db.gateways.find({}).toArray()")
@@ -819,34 +839,32 @@ class DiscoveryAgent:
         """Insert a new database document into MongoDB"""
         # Try PyMongo direct insertion first (more reliable for large docs)
         try:
-            from pymongo import MongoClient
-            client = MongoClient("mongodb://admin:nexi2024@localhost:28017/")
-            db = client["nexi_cmdb_v2"]
-            db.inventory_databases.insert_one(doc)
-            
-            name = doc.get("identity", {}).get("db_unique_name", "UNKNOWN")
-            print(f"   ✅ Inserted {name} into inventory (PyMongo)")
-            
-            # Create alert
-            alert = {
-                "severity": "INFO",
-                "state": "INFO",
-                "type": "NEW_DB_DISCOVERED",
-                "message": f"DiscoveryAgent found new database: {name}",
-                "database": name,
-                "host": doc.get("identity", {}).get("host"),
-                "engine": doc.get("identity", {}).get("engine"),
-                "timestamp": datetime.now().isoformat(),
-                "processed": False
-            }
-            db.monitoring_alerts.insert_one(alert)
-            client.close()
-            return True
-        except ImportError:
-            # Fallback to MongoProxy
-            pass
+            client = self._get_db_client()
+            if client:
+                db = client["nexi_cmdb_v2"]
+                db.inventory_databases.insert_one(doc)
+
+                name = doc.get("identity", {}).get("db_unique_name", "UNKNOWN")
+                print(f"   ✅ Inserted {name} into inventory (PyMongo)")
+
+                # Create alert
+                alert = {
+                    "severity": "INFO",
+                    "state": "INFO",
+                    "type": "NEW_DB_DISCOVERED",
+                    "message": f"DiscoveryAgent found new database: {name}",
+                    "database": name,
+                    "host": doc.get("identity", {}).get("host"),
+                    "engine": doc.get("identity", {}).get("engine"),
+                    "timestamp": datetime.now().isoformat(),
+                    "processed": False
+                }
+                db.monitoring_alerts.insert_one(alert)
+                return True
         except Exception as e:
             print(f"   ⚠️ PyMongo insert failed: {e}, falling back to Proxy")
+            # If connection failed, invalidate client to retry next time
+            self.db_client = None
 
         try:
             doc_json = json.dumps(doc, default=str)
