@@ -10,6 +10,13 @@ interface Host {
     dbs: string[];
 }
 
+const GENERIC_NAMES = ['localhost', '127.0.0.1', 'mongodb', 'postgres', 'mysql', 'oracle', 'redis', 'mariadb', 'mssql'];
+
+const isGeneric = (name: string) => {
+    if (!name) return true;
+    return GENERIC_NAMES.includes(name.toLowerCase());
+};
+
 export default function HostsTable() {
     const { data: databases, isLoading } = useDatabases();
     const { connect } = useConnection();
@@ -20,22 +27,21 @@ export default function HostsTable() {
 
     if (databases) {
         databases.forEach((db: any) => {
-            // FIX: Prioritize Container Name or DB Unique Name over Metrics Hostname
-            // Metrics often report generic names like "mongodb" or "postgres", while we want "nexi-cmdb-mongo"
-            let hostname = db.connection?.container;
+            // Prioritize Container Name or DB Unique Name over Metrics Hostname
+            // Avoid generic names like "mongodb" or "postgres", preferring specific names like "nexi-cmdb-mongo"
+            const candidates = [
+                db.connection?.container,
+                db.identity?.db_unique_name,
+                db.state?.metrics?.hostname,
+                db.connection?.host
+            ].filter(Boolean);
 
-            if (!hostname || hostname === 'localhost' || hostname === '127.0.0.1') {
-                hostname = db.identity?.db_unique_name;
-            }
+            // Find first non-generic candidate
+            let hostname = candidates.find(c => !isGeneric(c));
 
-            // Fallback to metrics if absolutely nothing else
-            if (!hostname) {
-                hostname = db.state?.metrics?.hostname;
-            }
-
-            // Fallback to connection host if still nothing
-            if (!hostname) {
-                hostname = db.connection?.host;
+            // Fallback to first generic candidate if no specific one found
+            if (!hostname && candidates.length > 0) {
+                hostname = candidates[0];
             }
 
             if (!hostname) return;
