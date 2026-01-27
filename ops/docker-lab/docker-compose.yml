@@ -27,11 +27,17 @@ services:
     ports:
       - "${FRONTEND_PORT:-4002}:80"
     depends_on:
-      - backend
+      backend:
+        condition: service_healthy
     networks:
       nexi-lab2:
         ipv4_address: 172.21.0.5
     restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:80/health || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
 
   # Backend - API Gateway & Orchestrator (V2)
   backend:
@@ -46,12 +52,19 @@ services:
       - MONGODB_URL=mongodb://${MONGO_USERNAME:-admin}:${MONGO_PASSWORD:-nexi2024}@mongodb2:27017/${MONGODB_DB:-nexi_cmdb_v2}?authSource=admin
       - REDIS_URL=redis://:${REDIS_PASSWORD:-nexi2024}@redis-core:6379/0
     depends_on:
-      - mongodb2
-      - redis-core
+      mongodb2:
+        condition: service_healthy
+      redis-core:
+        condition: service_healthy
     networks:
       nexi-lab2:
         ipv4_address: 172.21.0.6
     restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:8000/health || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
 
   # Celery Worker - Async Task Processing (V2)
   celery_worker:
@@ -67,9 +80,12 @@ services:
       - REDIS_PORT=6379
       - REDIS_PASSWORD=${REDIS_PASSWORD:-nexi2024}
     depends_on:
-      - backend
-      - redis-core
-      - mongodb2
+      backend:
+        condition: service_healthy
+      redis-core:
+        condition: service_healthy
+      mongodb2:
+        condition: service_healthy
     networks:
       nexi-lab2:
         ipv4_address: 172.21.0.7
@@ -89,8 +105,10 @@ services:
       # Example OEM Instance (Mock/Real) - Replace with real creds or use Mongo config
       - OEM_INSTANCES=OEM_TEST|https://mock-oem.nexi.lab:7803/em|sysman|welcome1|false
     depends_on:
-      - victoriametrics
-      - mongodb2
+      victoriametrics:
+        condition: service_healthy
+      mongodb2:
+        condition: service_healthy
     networks:
       nexi-lab2:
         ipv4_address: 172.21.0.8
@@ -110,8 +128,10 @@ services:
       # Configure custom thresholds via env or MongoDB
       - CHECK_INTERVAL=300
     depends_on:
-      - victoriametrics
-      - mongodb2
+      victoriametrics:
+        condition: service_healthy
+      mongodb2:
+        condition: service_healthy
     networks:
       nexi-lab2:
         ipv4_address: 172.21.0.9
@@ -134,6 +154,11 @@ services:
       nexi-lab2:
         ipv4_address: 172.21.0.10
     restart: unless-stopped
+    healthcheck:
+      test: echo 'db.runCommand("ping").ok' | mongosh localhost:27017/test --quiet
+      interval: 10s
+      timeout: 5s
+      retries: 5
 
   # Mongo Express - Web UI for MongoDB (V2)
   mongo-express2:
@@ -151,7 +176,8 @@ services:
       nexi-lab2:
         ipv4_address: 172.21.0.15
     depends_on:
-      - mongodb2
+      mongodb2:
+        condition: service_healthy
     restart: unless-stopped
 
   # Redis Core - Context & Cache (V2)
@@ -162,10 +188,17 @@ services:
     ports:
       - "${REDIS_PORT:-7379}:6379"
     command: redis-server --requirepass nexi2024 --appendonly yes --maxmemory 512mb --maxmemory-policy allkeys-lru
+    volumes:
+      - redis_core_data:/data
     networks:
       nexi-lab2:
         ipv4_address: 172.21.0.11
     restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "redis-cli", "-a", "${REDIS_PASSWORD:-nexi2024}", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
 
   # ===========================================================================
   # DISTRIBUTED GATEWAY QUEUES (Simulation)
@@ -178,10 +211,17 @@ services:
     hostname: redis-milano.nexi.lab
     ports:
       - "${REDIS_MILANO_PORT:-7380}:6379"
+    volumes:
+      - redis_milano_data:/data
     networks:
       nexi-lab2:
         ipv4_address: 172.21.1.5
     restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
 
   # Gateway 2 (Bratislava) - Redis Queue
   redis-bratislava:
@@ -190,10 +230,17 @@ services:
     hostname: redis-bratislava.nexi.lab
     ports:
       - "${REDIS_BRATISLAVA_PORT:-7381}:6379"
+    volumes:
+      - redis_bratislava_data:/data
     networks:
       nexi-lab2:
         ipv4_address: 172.21.2.5
     restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
 
   # Gateway 3 (Cairo) - Redis Queue
   redis-cairo:
@@ -202,10 +249,17 @@ services:
     hostname: redis-cairo.nexi.lab
     ports:
       - "${REDIS_CAIRO_PORT:-7382}:6379"
+    volumes:
+      - redis_cairo_data:/data
     networks:
       nexi-lab2:
         ipv4_address: 172.21.3.5
     restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
 
   # Ollama - Local LLM (V2)
   ollama2:
@@ -220,6 +274,11 @@ services:
       nexi-lab2:
         ipv4_address: 172.21.0.12
     restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:11434/ || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
     # deploy:
     #   resources:
     #     reservations:
@@ -243,7 +302,8 @@ services:
       nexi-lab2:
         ipv4_address: 172.21.0.16
     depends_on:
-      - ollama2
+      ollama2:
+        condition: service_healthy
     restart: unless-stopped
 
   # Qdrant - Vector Database (V2)
@@ -259,6 +319,11 @@ services:
       nexi-lab2:
         ipv4_address: 172.21.0.13
     restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:6333/readyz || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
 
   # ===========================================================================
   # GATEWAY 1 - Milano (Datacenter Primario) V2
@@ -602,6 +667,11 @@ services:
       nexi-lab2:
         ipv4_address: 172.21.0.33
     restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost:8428/health || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
 
   # ===========================================================================
   # MONITORING - CheckMK (Simulation)
@@ -642,3 +712,8 @@ volumes:
   grafana_data_v2:
   victoriametrics_data:
   checkmk_data:
+  # RALPH FIXED: Redis Persistence
+  redis_core_data:
+  redis_milano_data:
+  redis_bratislava_data:
+  redis_cairo_data:

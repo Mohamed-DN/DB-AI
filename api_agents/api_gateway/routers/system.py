@@ -12,6 +12,13 @@ from ..services.mongo_service import get_mongo_service
 
 router = APIRouter()
 
+
+@router.get("/health")
+async def health_check():
+    """Health check endpoint for Docker"""
+    return {"status": "ok"}
+
+
 # Paths to artifacts (hardcoded relative to user home or project)
 # Adjust these based on the actual environment
 ARTIFACTS_DIR = r"C:\Users\Mohamed\.gemini\antigravity\brain\62e0278a-33eb-4dfd-956c-7dcaae10fe92"
