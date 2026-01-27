@@ -89,7 +89,7 @@ class CollectorAgent:
         if not self.cmdb_updater: return
         
         identity = db_doc.get('identity', {})
-        conn = db_doc.get('connection', {})
+        conn = db_doc.get('connection') or {}
         
         host = conn.get('host')
         port = conn.get('port', 1521)
@@ -155,7 +155,7 @@ class CollectorAgent:
             identity = db.get('identity', {})
             name = identity.get('db_unique_name')
             engine = identity.get('engine', 'UNKNOWN')
-            is_remote = db.get('connection', {}).get('type') == 'REMOTE' or 'vbox' in name.lower()
+            is_remote = (db.get('connection') or {}).get('type') == 'REMOTE' or 'vbox' in name.lower()
             
             try:
                 # 1. Handle Remote Oracle
@@ -165,8 +165,8 @@ class CollectorAgent:
                     continue
 
                 # 2. Handle Docker Containers
-                # FIX: Use connection.container as primary source of truth (handles hyphens vs underscores)
-                container_name = db.get('connection', {}).get('container')
+                # Use connection.container as primary source of truth (handles hyphens vs underscores)
+                container_name = (db.get('connection') or {}).get('container')
                 
                 # Fallback to identity.db_name
                 if not container_name:
