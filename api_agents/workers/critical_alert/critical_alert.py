@@ -16,6 +16,7 @@ import sys
 sys.stdout.reconfigure(encoding='utf-8')
 
 import time
+import json
 import smtplib
 from datetime import datetime, timedelta
 from email.mime.text import MIMEText
@@ -327,8 +328,6 @@ class CriticalAlertAgent:
                 'timestamp': alert['timestamp'].isoformat(),
                 'processed': False
             }
-            # Fix JSON boolean for JS
-            import json
             json_doc = json.dumps(alert_doc)
             self.mongo.execute_eval(f"db.critical_alerts.insertOne({json_doc})")
         except Exception as e:
