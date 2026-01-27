@@ -10,6 +10,7 @@ import os
 import sys
 import logging
 import time
+import asyncio
 from datetime import datetime, timedelta
 from typing import Optional, List, Dict, Any
 from dataclasses import dataclass
@@ -83,12 +84,12 @@ class OEMClient:
         self.instance = instance
         self.base_url = instance.url.rstrip('/')
         self.auth = (instance.username, instance.password)
-        self.session: Optional[httpx.Client] = None
+        self.session: Optional[httpx.AsyncClient] = None
         
-    def _get_session(self) -> httpx.Client:
+    def _get_session(self) -> httpx.AsyncClient:
         """Get or create HTTP session"""
         if self.session is None:
-            self.session = httpx.Client(
+            self.session = httpx.AsyncClient(
                 auth=self.auth,
                 verify=self.instance.verify_ssl,
                 timeout=30.0,
@@ -99,23 +100,23 @@ class OEMClient:
             )
         return self.session
     
-    def close(self):
+    async def close(self):
         """Close HTTP session"""
         if self.session:
-            self.session.close()
+            await self.session.aclose()
             self.session = None
     
-    def test_connection(self) -> bool:
+    async def test_connection(self) -> bool:
         """Test OEM connection"""
         try:
             client = self._get_session()
-            resp = client.get(f"{self.base_url}/api/v2/")
+            resp = await client.get(f"{self.base_url}/api/v2/")
             return resp.status_code == 200
         except Exception as e:
             logger.error(f"OEM connection test failed: {e}")
             return False
     
-    def get_targets(self, target_type: str = "oracle_database") -> List[Dict]:
+    async def get_targets(self, target_type: str = "oracle_database") -> List[Dict]:
         """
         Get all targets of specified type.
         
@@ -127,7 +128,7 @@ class OEMClient:
         """
         try:
             client = self._get_session()
-            resp = client.get(
+            resp = await client.get(
                 f"{self.base_url}/api/targets",
                 params={"targetType": target_type}
             )
@@ -143,7 +144,7 @@ class OEMClient:
             logger.error(f"Error getting targets: {e}")
             return []
     
-    def get_target_metrics(
+    async def get_target_metrics(
         self,
         target_name: str,
         target_type: str = "oracle_database",
@@ -170,7 +171,7 @@ class OEMClient:
             client = self._get_session()
             
             # OEM API endpoint for metric data
-            resp = client.get(
+            resp = await client.get(
                 f"{self.base_url}/api/targets/{target_name}/metrics",
                 params={
                     "targetType": target_type,
@@ -212,7 +213,7 @@ class OEMClient:
             logger.error(f"Error getting metrics for {target_name}: {e}")
             return []
     
-    def get_historical_metrics(
+    async def get_historical_metrics(
         self,
         target_name: str,
         metric_name: str,
@@ -239,7 +240,7 @@ class OEMClient:
             end_time = datetime.utcnow()
             start_time = end_time - timedelta(hours=hours_back)
             
-            resp = client.get(
+            resp = await client.get(
                 f"{self.base_url}/api/targets/{target_name}/metrics/history",
                 params={
                     "targetType": target_type,
@@ -332,28 +333,35 @@ class OEMCollectorAgent:
         if not self.oem_clients:
             logger.warning("No OEM instances configured. Set OEM_INSTANCES env var or add to MongoDB config.")
     
-    def collect_from_instance(self, client: OEMClient) -> List[OEMMetric]:
+    async def collect_from_instance(self, client: OEMClient) -> List[OEMMetric]:
         """Collect all metrics from a single OEM instance"""
         all_metrics = []
         
         try:
-            # Get all database targets (CDBs and PDBs)
-            targets = client.get_targets("oracle_database")
-            pdbs = client.get_targets("oracle_pdb")
+            # Get all database targets (CDBs and PDBs) in parallel
+            targets_task = client.get_targets("oracle_database")
+            pdbs_task = client.get_targets("oracle_pdb")
+
+            targets, pdbs = await asyncio.gather(targets_task, pdbs_task)
             targets.extend(pdbs)
             
             logger.info(f"Found {len(targets)} targets (CDB+PDB) in {client.instance.name}")
             
+            # Create tasks for all targets
+            tasks = []
             for target in targets:
                 target_name = target.get("name") or target.get("targetName")
                 if not target_name:
                     continue
+                tasks.append(client.get_target_metrics(target_name))
+
+            # Execute all metric fetch tasks in parallel
+            if tasks:
+                results = await asyncio.gather(*tasks)
+                for metrics in results:
+                    all_metrics.extend(metrics)
                 
-                # Get current metrics
-                metrics = client.get_target_metrics(target_name)
-                all_metrics.extend(metrics)
-                
-                logger.debug(f"Collected {len(metrics)} metrics for {target_name}")
+            logger.debug(f"Collected {len(all_metrics)} metrics from {len(tasks)} targets")
             
         except Exception as e:
             logger.error(f"Error collecting from {client.instance.name}: {e}")
@@ -400,43 +408,52 @@ class OEMCollectorAgent:
             except Exception as e:
                 logger.warning(f"Failed to update inventory for {target_name}: {e}")
     
-    def run_once(self) -> Dict[str, Any]:
+    async def _process_client(self, client: OEMClient) -> Dict[str, Any]:
+        result = {"metrics": [], "error": None}
+        try:
+            if not await client.test_connection():
+                result["error"] = f"Cannot connect to {client.instance.name}"
+                return result
+
+            result["metrics"] = await self.collect_from_instance(client)
+        except Exception as e:
+            result["error"] = f"{client.instance.name}: {str(e)}"
+        finally:
+            await client.close()
+        return result
+
+    async def run_once(self) -> Dict[str, Any]:
         """Run single collection cycle"""
         results = {
-            "instances_checked": 0,
+            "instances_checked": len(self.oem_clients),
             "metrics_collected": 0,
             "metrics_pushed": 0,
             "errors": []
         }
         
+        # Process all clients in parallel
+        tasks = [self._process_client(client) for client in self.oem_clients]
+        client_results = await asyncio.gather(*tasks)
+
         all_metrics = []
+        for res in client_results:
+            if res["error"]:
+                results["errors"].append(res["error"])
+            if res["metrics"]:
+                all_metrics.extend(res["metrics"])
         
-        for client in self.oem_clients:
-            results["instances_checked"] += 1
-            
-            try:
-                # Test connection first
-                if not client.test_connection():
-                    results["errors"].append(f"Cannot connect to {client.instance.name}")
-                    continue
-                
-                # Collect metrics
-                metrics = self.collect_from_instance(client)
-                all_metrics.extend(metrics)
-                results["metrics_collected"] += len(metrics)
-                
-            except Exception as e:
-                results["errors"].append(f"{client.instance.name}: {str(e)}")
-            finally:
-                client.close()
+        results["metrics_collected"] = len(all_metrics)
         
-        # Push to VictoriaMetrics
+        # Push to VictoriaMetrics (sync call wrapped in thread)
         if all_metrics:
-            if self.push_to_victoriametrics(all_metrics):
-                results["metrics_pushed"] = len(all_metrics)
+            if self.vm:
+                success = await asyncio.to_thread(self.push_to_victoriametrics, all_metrics)
+                if success:
+                    results["metrics_pushed"] = len(all_metrics)
             
-            # Update inventory
-            self.update_inventory(all_metrics)
+            # Update inventory (sync call wrapped in thread)
+            if self.mongo:
+                await asyncio.to_thread(self.update_inventory, all_metrics)
         
         logger.info(
             f"📊 OEM Collection complete: {results['metrics_collected']} metrics "
@@ -445,17 +462,17 @@ class OEMCollectorAgent:
         
         return results
     
-    def run_continuous(self, interval_seconds: int = 300):
+    async def run_continuous(self, interval_seconds: int = 300):
         """Run collector continuously"""
         logger.info(f"🏢 OEM Collector starting (interval: {interval_seconds}s)")
         
         while True:
             try:
-                self.run_once()
+                await self.run_once()
             except Exception as e:
                 logger.error(f"Collection cycle error: {e}")
             
-            time.sleep(interval_seconds)
+            await asyncio.sleep(interval_seconds)
 
 
 if __name__ == "__main__":
@@ -486,9 +503,9 @@ if __name__ == "__main__":
     agent = OEMCollectorAgent(mongo_service=mongo, vm_client=vm)
     
     if args.once:
-        result = agent.run_once()
+        result = asyncio.run(agent.run_once())
         print(f"\n📊 OEM Collection Results:")
         for k, v in result.items():
             print(f"  {k}: {v}")
     else:
-        agent.run_continuous(args.interval)
+        asyncio.run(agent.run_continuous(args.interval))
