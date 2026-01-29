@@ -55,63 +55,55 @@ How do the components talk to each other?
 
 ```mermaid
 graph TB
-    subgraph "🌐 Client Tier"
-        UI["💻 React Dashboard (Vite)"]
+    subgraph "Managed Infrastructure"
+        DBs[("🛢️ Database Fleet (Oracle/Postgres)")]
     end
 
-    subgraph "🚀 API Gateway & Security"
-        API["⚡ FastAPI Gateway"]
-        AUTH["🔒 JWT Auth Middleware"]
-        API --- AUTH
+    subgraph "🌉 Gateway Tier (Edge Data Collection)"
+        GW["🛰️ Nexi Gateways (MIL/ROM/...)"]
+        AGENTS["📡 Collectors (OEM/CMK/Enricher)"]
+        GW --- AGENTS
     end
 
-    subgraph "🤖 Intelligence Core (Sentinel)"
-        SENTINEL["🧠 Sentinel Orchestrator"]
+    subgraph "🔴 Event Bus & IPC"
+        REDIS[("🔴 Redis (Stream & Queue)")]
+    end
+
+    subgraph "🧠 AI Orchestration (The Brain)"
+        SENTINEL["🤖 Sentinel Orchestrator"]
         LLM["🗣️ Ollama (Local LLM)"]
         RAG["📖 Qdrant (Vector RAG)"]
-        SENTINEL <--> LLM
-        SENTINEL <--> RAG
+        SENTINEL <--> LLM & RAG
     end
 
-    subgraph "📂 Persistence & State"
+    subgraph "🍃 Data Core"
         MONGO[("🍃 MongoDB (CMDB v2)")]
         VM[("📊 VictoriaMetrics (TSDB)")]
-        REDIS[("🔴 Redis (Real-time IPC)")]
     end
 
-    subgraph "🌉 Bridge & Ingestion Layer"
-        OEM["📡 OEM Collector Agent"]
-        CMK["🛡️ CheckMK Bridge"]
-        ENR["🧪 Enricher Agent"]
+    subgraph "💻 User Interface"
+        UI["💻 React Dashboard"]
+        API["⚡ FastAPI Gateway"]
+        UI <--> API
     end
 
-    subgraph "💾 Managed Infrastructure"
-        ORA[("🔴 Oracle Fleet")]
-        PG[("🔵 Postgres Fleet")]
-    end
-
-    %% Flow: Human -> System
-    UI <--> API
-    API <--> MONGO & VM & REDIS
-
-    %% Flow: System -> Intelligence
-    MONGO & VM & REDIS <--> SENTINEL
-
-    %% Flow: Ingestion -> Persistence
-    OEM & CMK & ENR --> MONGO
-    OEM --> VM
-
-    %% Flow: Managed -> Ingestion
-    ORA & PG --- OEM & CMK & ENR
+    %% Data Flow Logic (User Defined)
+    DBs --> GW
+    GW --> REDIS
+    REDIS --> SENTINEL
+    SENTINEL --> MONGO & VM
+    API --> MONGO & VM
 
     %% Styling
     classDef primary fill:#2563eb,stroke:#1e40af,color:#fff,stroke-width:2px;
     classDef storage fill:#1e293b,stroke:#334155,color:#cbd5e1,stroke-width:2px;
     classDef agent fill:#7c3aed,stroke:#5b21b6,color:#fff,stroke-width:2px;
+    classDef brain fill:#db2777,stroke:#9d174d,color:#fff,stroke-width:2px;
     
     class UI,API primary;
-    class MONGO,VM,REDIS,ORA,PG storage;
-    class SENTINEL,OEM,CMK,ENR agent;
+    class MONGO,VM,REDIS,DBs storage;
+    class GW,AGENTS agent;
+    class SENTINEL,LLM,RAG brain;
 ```
 
 ### Key Flows
