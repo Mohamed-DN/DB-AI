@@ -54,26 +54,64 @@ The "Brain" of the system relies on two key technologies working in tandem:
 How do the components talk to each other?
 
 ```mermaid
-graph TD
-    %% Sources
-    DBs[(Databases)] -->|Metrics| OEM[OEM Collector]
-    DBs -->|Status| CMK[CheckMK Bridge]
+graph TB
+    subgraph "🌐 Client Tier"
+        UI["💻 React Dashboard (Vite)"]
+    end
+
+    subgraph "🚀 API Gateway & Security"
+        API["⚡ FastAPI Gateway"]
+        AUTH["🔒 JWT Auth Middleware"]
+        API --- AUTH
+    end
+
+    subgraph "🤖 Intelligence Core (Sentinel)"
+        SENTINEL["🧠 Sentinel Orchestrator"]
+        LLM["🗣️ Ollama (Local LLM)"]
+        RAG["📖 Qdrant (Vector RAG)"]
+        SENTINEL <--> LLM
+        SENTINEL <--> RAG
+    end
+
+    subgraph "📂 Persistence & State"
+        MONGO[("🍃 MongoDB (CMDB v2)")]
+        VM[("📊 VictoriaMetrics (TSDB)")]
+        REDIS[("🔴 Redis (Real-time IPC)")]
+    end
+
+    subgraph "🌉 Bridge & Ingestion Layer"
+        OEM["📡 OEM Collector Agent"]
+        CMK["🛡️ CheckMK Bridge"]
+        ENR["🧪 Enricher Agent"]
+    end
+
+    subgraph "💾 Managed Infrastructure"
+        ORA[("🔴 Oracle Fleet")]
+        PG[("🔵 Postgres Fleet")]
+    end
+
+    %% Flow: Human -> System
+    UI <--> API
+    API <--> MONGO & VM & REDIS
+
+    %% Flow: System -> Intelligence
+    MONGO & VM & REDIS <--> SENTINEL
+
+    %% Flow: Ingestion -> Persistence
+    OEM & CMK & ENR --> MONGO
+    OEM --> VM
+
+    %% Flow: Managed -> Ingestion
+    ORA & PG --- OEM & CMK & ENR
+
+    %% Styling
+    classDef primary fill:#2563eb,stroke:#1e40af,color:#fff,stroke-width:2px;
+    classDef storage fill:#1e293b,stroke:#334155,color:#cbd5e1,stroke-width:2px;
+    classDef agent fill:#7c3aed,stroke:#5b21b6,color:#fff,stroke-width:2px;
     
-    %% Ingestion
-    OEM -->|JSON| Mongo[(MongoDB)]
-    CMK -->|Sync| Mongo
-    
-    %% Processing
-    Mongo -->|Stream| Sentinel["🤖 Sentinel Agent"]
-    
-    %% AI Loop
-    Sentinel -->|Query| Qdrant["Qdrant (RAG)"]
-    Sentinel -->|Context| LLM["Ollama (LLM)"]
-    LLM -->|Decision| Sentinel
-    
-    %% Action
-    Sentinel -->|Auto-Fix| Executors["⚡ Action Executors"]
-    Sentinel -->|Alert| FE["💻 Dashboard"]
+    class UI,API primary;
+    class MONGO,VM,REDIS,ORA,PG storage;
+    class SENTINEL,OEM,CMK,ENR agent;
 ```
 
 ### Key Flows
