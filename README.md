@@ -55,55 +55,69 @@ How do the components talk to each other?
 
 ```mermaid
 graph TB
-    subgraph "Managed Infrastructure"
-        DBs[("🛢️ Database Fleet (Oracle/Postgres)")]
+    subgraph "🌐 Client & Visualization"
+        UI["� React Dashboard"]
+        GRAFANA["📊 Grafana (Metrics View)"]
     end
 
-    subgraph "🌉 Gateway Tier (Edge Data Collection)"
-        GW["🛰️ Nexi Gateways (MIL/ROM/...)"]
-        AGENTS["📡 Collectors (OEM/CMK/Enricher)"]
-        GW --- AGENTS
+    subgraph "🚀 API & Security Registry"
+        API["⚡ FastAPI Gateway"]
+        AUTH[("� Postgres (Auth DB)")]
+        UI <--> API
+        API <--> AUTH
     end
 
-    subgraph "🔴 Event Bus & IPC"
-        REDIS[("🔴 Redis (Stream & Queue)")]
-    end
-
-    subgraph "🧠 AI Orchestration (The Brain)"
-        SENTINEL["🤖 Sentinel Orchestrator"]
+    subgraph "� AI Orchestration Core (Sentinel)"
+        SENTINEL["� Sentinel Orchestrator"]
+        PROPHET["🔮 Prophet (AI Predictor)"]
+        LANGFUSE["🛰️ Langfuse (Agent Traces)"]
         LLM["🗣️ Ollama (Local LLM)"]
         RAG["📖 Qdrant (Vector RAG)"]
+        
         SENTINEL <--> LLM & RAG
+        SENTINEL <--> PROPHET
+        SENTINEL --> LANGFUSE
     end
 
-    subgraph "🍃 Data Core"
+    subgraph "🔴 Messaging & Real-time IPC"
+        REDIS[("🔴 Redis (Edge Events)")]
+    end
+
+    subgraph "📂 Persistence Layers"
         MONGO[("🍃 MongoDB (CMDB v2)")]
         VM[("📊 VictoriaMetrics (TSDB)")]
     end
 
-    subgraph "💻 User Interface"
-        UI["💻 React Dashboard"]
-        API["⚡ FastAPI Gateway"]
-        UI <--> API
+    subgraph "🌉 Bridge & Gateways"
+        GW["�️ Nexi Gateways (Edge)"]
+        EXT["📡 Collectors (OEM/CMK)"]
+        GW --- EXT
     end
 
-    %% Data Flow Logic (User Defined)
-    DBs --> GW
+    subgraph "💾 Managed Ecosystem"
+        FLEET[("🛢️ Oracle & Postgres Fleet")]
+    end
+
+    %% Flow Logic
+    FLEET --> GW
     GW --> REDIS
-    REDIS --> SENTINEL
-    SENTINEL --> MONGO & VM
-    API --> MONGO & VM
+    REDIS <--> SENTINEL
+    SENTINEL <--> MONGO & VM
+    API <--> MONGO & VM
+    GRAFANA <--> VM
 
     %% Styling
     classDef primary fill:#2563eb,stroke:#1e40af,color:#fff,stroke-width:2px;
     classDef storage fill:#1e293b,stroke:#334155,color:#cbd5e1,stroke-width:2px;
     classDef agent fill:#7c3aed,stroke:#5b21b6,color:#fff,stroke-width:2px;
     classDef brain fill:#db2777,stroke:#9d174d,color:#fff,stroke-width:2px;
+    classDef obs fill:#ea580c,stroke:#9a3412,color:#fff,stroke-width:2px;
     
     class UI,API primary;
-    class MONGO,VM,REDIS,DBs storage;
-    class GW,AGENTS agent;
-    class SENTINEL,LLM,RAG brain;
+    class MONGO,VM,REDIS,AUTH,FLEET storage;
+    class GW,EXT agent;
+    class SENTINEL,LLM,RAG,PROPHET brain;
+    class GRAFANA,LANGFUSE obs;
 ```
 
 ### Key Flows
