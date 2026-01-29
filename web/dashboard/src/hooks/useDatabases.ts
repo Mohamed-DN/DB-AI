@@ -11,12 +11,14 @@ export function useDashboardStats() {
     });
 }
 
-// Databases list hook
-export function useDatabases() {
-    return useQuery<Database[]>({
-        queryKey: ['databases'],
-        queryFn: api.getDatabases,
+// Databases list hook (Pagination + Search + Index)
+export function useDatabases(page = 1, search = '', startsWith = '', filterBy = 'name') {
+    return useQuery({
+        queryKey: ['databases', page, search, startsWith, filterBy],
+        queryFn: () => api.getDatabases((page - 1) * 1000, 1000, search, startsWith, filterBy),
         refetchInterval: 30000,
+        // Keep previous data while fetching new page (better UX)
+        placeholderData: (previousData) => previousData,
     });
 }
 

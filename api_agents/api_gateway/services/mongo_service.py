@@ -29,21 +29,23 @@ class MongoService:
     _instance: Optional["MongoService"] = None
     
     def __init__(self):
-        # Build connection string from environment
-        host = os.getenv("MONGODB_HOST", "localhost")
-        port = os.getenv("MONGODB_PORT", "28017")
-        user = os.getenv("MONGO_USERNAME", "admin")
-        password = os.getenv("MONGO_PASSWORD", "nexi2024")
-        db_name = os.getenv("MONGODB_DB", "nexi_cmdb_v2")
-        
-        self.connection_string = f"mongodb://{user}:{password}@{host}:{port}/?authSource=admin"
+        host = "localhost"
+        port = "27017"
+        db_name = "nexi_cmdb_v2"
+        self.connection_string = f"mongodb://{host}:{port}/"
         self.db_name = db_name
         
         # Create async client
         self.client = AsyncIOMotorClient(self.connection_string)
         self.db = self.client[self.db_name]
         
+        print(f"[DEBUG] [MongoService] Connection String: {self.connection_string}")
         print(f"[MongoService] Connected to {host}:{port}/{db_name}")
+
+    def _get_db(self):
+        """Helper for routers using older method name."""
+        return self.db
+
     
     @classmethod
     def get_instance(cls) -> "MongoService":
@@ -56,10 +58,52 @@ class MongoService:
     # Inventory Operations
     # =========================================================================
     
-    async def get_inventory(self) -> List[Dict[str, Any]]:
-        """Get all databases from inventory."""
-        cursor = self.db.inventory_databases.find({}, {"_id": 0})
-        return await cursor.to_list(length=None)
+    async def create_indexes(self):
+        """Create indexes for performance."""
+        # Unique Name Index for fast lookup and A-Z sorting
+        await self.db.inventory_databases.create_index("identity.db_unique_name")
+        # Host Index
+        await self.db.inventory_databases.create_index("connection.host")
+        print("[MongoService] Indexes ensured.")
+
+    async def get_inventory(self, skip: int = 0, limit: int = 100, search: str = None, starts_with: str = None, filter_by: str = "name") -> Dict[str, Any]:
+        """Get paginated databases from inventory with search/filter."""
+        query = {}
+        
+        if starts_with:
+            # Prefix search (A-Z Index)
+            regex = f"^{re.escape(starts_with)}"
+            if filter_by == "host":
+                query["connection.host"] = {"$regex": regex, "$options": "i"}
+            else:
+                query["identity.db_unique_name"] = {"$regex": regex, "$options": "i"}
+                
+        elif search:
+            # General fuzzy search
+            query = {
+                "$or": [
+                    {"identity.db_unique_name": {"$regex": search, "$options": "i"}},
+                    {"connection.host": {"$regex": search, "$options": "i"}},
+                    {"identity.engine": {"$regex": search, "$options": "i"}}
+                ]
+            }
+
+        total = await self.db.inventory_databases.count_documents(query)
+        cursor = self.db.inventory_databases.find(query, {"_id": 0}).skip(skip).limit(limit)
+        
+        # Sort A-Z if browsing by letter
+        if starts_with:
+            sort_field = "connection.host" if filter_by == "host" else "identity.db_unique_name"
+            cursor.sort(sort_field, 1)
+            
+        items = await cursor.to_list(length=limit)
+        
+        return {
+            "items": items,
+            "total": total,
+            "page": (skip // limit) + 1,
+            "limit": limit
+        }
     
     async def get_database(self, db_name: str) -> Optional[Dict[str, Any]]:
         """Get a single database by unique name."""

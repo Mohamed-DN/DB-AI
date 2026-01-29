@@ -1,0 +1,69 @@
+[CONFIG] Loading from c:\AI-Nexi\Nexi_DB_AI\.env
+[CONFIG] Langfuse observability enabled
+[OK] Config imported
+[DEPS] MongoProxy connected
+[OK] Inventory Router imported
+[OK] Alerts Router imported
+[OK] Agents Router imported
+[OK] LLM Router imported
+[OK] System Router imported
+[OK] Metrics Router imported
+[OK] Emails Router imported
+[OK] Connection Router imported
+[OK] Tasks Router imported
+[OK] Workflows Router imported
+[OK] Auth Router imported
+[OK] OEM Router imported
+c:\AI-Nexi\Nexi_DB_AI\api_agents\api_gateway\main.py:107: DeprecationWarning: 
+        on_event is deprecated, use lifespan event handlers instead.
+
+        Read more about it in the
+        [FastAPI docs for Lifespan Events](https://fastapi.tiangolo.com/advanced/events/).
+        
+  @app.on_event("startup")
+Starting server on port 8005...
+INFO:     Started server process [51100]
+INFO:     Waiting for application startup.
+============================================================
+🚀 Nexi AI CMDB v3.2.0 - With Authentication
+📁 Routers loaded: inventory, alerts, agents, llm, system, metrics, emails, connection, tasks, workflows, auth
+🌐 CORS Origins: ['http://localhost:4002', 'http://localhost:3002', 'http://localhost:5173', 'http://127.0.0.1:4002']
+🔒 Authentication enabled
+❌ Startup Error - Failed to initialize Auth Service or OEM configs: attempted relative import with no known parent package
+   The application will continue, but authentication or OEM features might not work correctly.
+============================================================
+INFO:     Application startup complete.
+INFO:     Uvicorn running on http://0.0.0.0:8005 (Press CTRL+C to quit)
+[DEBUG] [MongoService] Connection String: mongodb://localhost:27017/
+[MongoService] Connected to localhost:27017/nexi_cmdb_v2
+INFO:     127.0.0.1:52783 - "GET /api/system/status HTTP/1.1" 200 OK
+INFO:     127.0.0.1:58063 - "GET /api/system/status HTTP/1.1" 200 OK
+INFO:     127.0.0.1:58068 - "POST /api/auth/login HTTP/1.1" 401 Unauthorized
+INFO:     127.0.0.1:51318 - "GET /api/system/status HTTP/1.1" 200 OK
+INFO:     127.0.0.1:64720 - "GET /api/system/status HTTP/1.1" 200 OK
+INFO:     127.0.0.1:50125 - "GET /api/system/status HTTP/1.1" 200 OK
+INFO:     127.0.0.1:57129 - "GET /api/system/status HTTP/1.1" 200 OK
+INFO:     127.0.0.1:62867 - "GET /api/system/status HTTP/1.1" 200 OK
+INFO:     127.0.0.1:62871 - "POST /api/auth/login HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53820 - "GET /api/system/status HTTP/1.1" 200 OK
+INFO:     127.0.0.1:61512 - "GET /api/system/status HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53536 - "GET /api/system/status HTTP/1.1" 200 OK
+INFO:     127.0.0.1:55158 - "GET /api/system/status HTTP/1.1" 200 OK
+INFO:     127.0.0.1:56509 - "GET /api/system/status HTTP/1.1" 200 OK
+INFO:     127.0.0.1:56511 - "GET /api/system/status HTTP/1.1" 200 OK
+INFO:     127.0.0.1:56518 - "POST /api/auth/login HTTP/1.1" 401 Unauthorized
+INFO:     127.0.0.1:62813 - "GET /api/system/status HTTP/1.1" 200 OK
+INFO:     127.0.0.1:58467 - "GET /api/system/status HTTP/1.1" 200 OK
+INFO:     127.0.0.1:56366 - "POST /api/auth/login HTTP/1.1" 200 OK
+INFO:     127.0.0.1:62143 - "GET /api/auth/me HTTP/1.1" 200 OK
+INFO:     127.0.0.1:58934 - "GET /api/auth/me HTTP/1.1" 200 OK
+INFO:     127.0.0.1:51714 - "GET /api/alerts HTTP/1.1" 200 OK
+INFO:     127.0.0.1:51715 - "GET /api/inventory HTTP/1.1" 200 OK
+INFO:     127.0.0.1:58467 - "GET /api/system/status HTTP/1.1" 200 OK
+INFO:     127.0.0.1:63503 - "GET /api/oem/targets HTTP/1.1" 200 OK
+INFO:     127.0.0.1:61013 - "GET /api/oem/instances HTTP/1.1" 200 OK
+INFO:     127.0.0.1:57566 - "GET /api/system/status HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53036 - "GET /api/system/status HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52529 - "GET /api/system/status HTTP/1.1" 200 OK
+INFO:     127.0.0.1:63704 - "GET /api/system/status HTTP/1.1" 200 OK
+INFO:     127.0.0.1:65126 - "GET /api/system/status HTTP/1.1" 200 OK

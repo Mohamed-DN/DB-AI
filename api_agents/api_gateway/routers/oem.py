@@ -65,7 +65,7 @@ async def get_oem_instances() -> List[OEMInstanceResponse]:
     
     try:
         mongo = get_mongo_service()
-        db = mongo._get_db()
+        db = mongo.db
         
         # Get OEM configs from MongoDB
         configs = await db["oem_instances"].find().to_list(100)
@@ -97,7 +97,7 @@ async def add_oem_instance(instance: OEMInstanceConfig) -> Dict[str, Any]:
     
     try:
         mongo = get_mongo_service()
-        db = mongo._get_db()
+        db = mongo.db
         
         # Check if already exists
         existing = await db["oem_instances"].find_one({"url": instance.url})
@@ -138,7 +138,7 @@ async def delete_oem_instance(instance_name: str) -> Dict[str, Any]:
     
     try:
         mongo = get_mongo_service()
-        db = mongo._get_db()
+        db = mongo.db
         
         result = await db["oem_instances"].delete_one({"name": instance_name})
         
@@ -163,7 +163,7 @@ async def get_oem_targets() -> List[Dict[str, Any]]:
     
     try:
         mongo = get_mongo_service()
-        db = mongo._get_db()
+        db = mongo.db
         
         # Get databases with OEM metrics
         filter_query = {"oem_metrics": {"$exists": True}}
@@ -207,7 +207,7 @@ async def get_target_metrics(target_name: str) -> Dict[str, Any]:
     
     try:
         mongo = get_mongo_service()
-        db = mongo._get_db()
+        db = mongo.db
         
         # Get database from inventory
         database = await db["databases"].find_one({
@@ -270,7 +270,7 @@ async def get_oem_status() -> Dict[str, Any]:
     
     try:
         mongo = get_mongo_service()
-        db = mongo._get_db()
+        db = mongo.db
         
         # Count instances
         instance_count = await db["oem_instances"].count_documents({})

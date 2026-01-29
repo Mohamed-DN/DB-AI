@@ -9,13 +9,14 @@ router = APIRouter()
 
 
 @router.get("/inventory")
-async def get_inventory():
-    """Get all databases enriched with Business Service info"""
+async def get_inventory(skip: int = 0, limit: int = 1000, search: str = None, starts_with: str = None, filter_by: str = "name"):
+    """Get paginated databases enriched with Business Service info"""
     try:
         mongo = get_mongo_service()
         
-        # 1. Fetch Inventory
-        dbs = await mongo.get_inventory()
+        # 1. Fetch Inventory (paginated)
+        result = await mongo.get_inventory(skip=skip, limit=limit, search=search, starts_with=starts_with, filter_by=filter_by)
+        dbs = result["items"]
         
         # 2. Fetch Business Services
         services = await mongo.get_business_services()
@@ -65,7 +66,7 @@ async def get_inventory():
                         db['identity']['engine'] = 'ORACLE'
                     if 'topology' not in db['identity']:
                         db['identity']['topology'] = 'RAC' if db['identity'].get('is_rac') else 'SINGLE'
-
+            
             # Connection Normalization
             if 'connection' not in db:
                 if 'instance_details' in db:
@@ -87,7 +88,7 @@ async def get_inventory():
                     db['configuration']['version'] = db['database_core']['version_info'].get('full_version')
                 elif 'cluster_identity' in db:
                     db['configuration']['version'] = db['cluster_identity'].get('version_full')
-
+            
             # Ensure minimal required fields
             if 'identity' not in db:
                 db['identity'] = {'db_unique_name': 'UNKNOWN_DB', 'engine': 'UNKNOWN'}
@@ -101,7 +102,12 @@ async def get_inventory():
             if svc_info:
                 db['business_service'] = svc_info
         
-        return dbs
+        return {
+            "items": dbs,
+            "total": result["total"],
+            "page": result["page"],
+            "limit": result["limit"]
+        }
     except Exception as e:
         print(f"Error fetching inventory: {e}")
         raise HTTPException(status_code=500, detail=str(e))

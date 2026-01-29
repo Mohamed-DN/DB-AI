@@ -1,5 +1,5 @@
-import { Terminal, SquareTerminal, Trash2, ChevronDown, ChevronUp, Database, RefreshCw, Loader } from 'lucide-react';
-import { useState } from 'react';
+import { Terminal, SquareTerminal, Trash2, ChevronDown, ChevronUp, Database, RefreshCw, Loader, Search, Layers, ChevronRight, ChevronLeft } from 'lucide-react';
+import { useState, useMemo } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { useDatabases, useDeleteDatabase } from '../../hooks/useDatabases';
 import { useConnection } from '../../context/ConnectionContext';
@@ -70,7 +70,7 @@ function DatabaseRow({ db }: { db: DatabaseType }) {
 
     const pdbs = db.pdbs || db.configuration?.oracle_specific?.pdbs || [];
     const hasPdbs = pdbs.length > 0;
-    const service = (db as any).business_service; // Type assertion until types updated
+    const service = (db as any).business_service;
 
     const handleSqlConnect = () => {
         connect(db.identity.db_unique_name, 'sql');
@@ -155,63 +155,37 @@ function DatabaseRow({ db }: { db: DatabaseType }) {
                 <tr className="bg-gray-900/30">
                     <td colSpan={7} className="px-6 py-4">
                         <div className="grid grid-cols-3 gap-8 text-sm">
-                            {/* Census / Ownership */}
                             <div className="space-y-2">
                                 <h4 className="text-gray-400 font-semibold uppercase text-xs tracking-wider mb-2">Business Census</h4>
                                 <div className="grid grid-cols-[100px_1fr] gap-1">
                                     <span className="text-gray-500">Service:</span>
                                     <span className="text-gray-300">{service?.name || "N/A"}</span>
-
                                     <span className="text-gray-500">SNOW Group:</span>
                                     <span className="text-cyan-400 font-mono text-xs">{service?.snow_group || "UNASSIGNED"}</span>
-
                                     <span className="text-gray-500">On-call:</span>
                                     <span className="text-orange-400">{service?.reperibility || "N/A"}</span>
-
-                                    <span className="text-gray-500">BAO:</span>
-                                    <div className="flex flex-col">
-                                        <span className="text-white">{service?.contacts?.bao?.name || "Unknown"}</span>
-                                        <span className="text-xs text-gray-500">{service?.contacts?.bao?.email}</span>
-                                        <span className="text-xs text-gray-500">{service?.contacts?.bao?.phone}</span>
-                                    </div>
                                 </div>
                             </div>
-
-                            {/* Technical Details */}
                             <div className="space-y-2">
                                 <h4 className="text-gray-400 font-semibold uppercase text-xs tracking-wider mb-2">Technical Census</h4>
                                 <div className="grid grid-cols-[100px_1fr] gap-1">
+                                    <span className="text-gray-500">Gateway:</span>
+                                    <span className="text-purple-400 font-mono text-xs">{db.identity.gateway_ref || "DIRECT/UNKNOWN"}</span>
                                     <span className="text-gray-500">Version:</span>
                                     <span className="text-gray-300">{db.configuration?.version || "Unknown"}</span>
-
-                                    <span className="text-gray-500">Gateway:</span>
-                                    <span className="text-gray-300">{db.identity.gateway_ref || "Direct"}</span>
-
                                     <span className="text-gray-500">OS:</span>
                                     <span className="text-gray-300">{(db.state.metrics as any)?.os?.name || "Linux"}</span>
-
-                                    <span className="text-gray-500">Licensing:</span>
-                                    <span className="text-purple-400">Standard Edition</span>
                                 </div>
                             </div>
-
-                            {/* Capacity / Other */}
                             <div className="space-y-2">
                                 <h4 className="text-gray-400 font-semibold uppercase text-xs tracking-wider mb-2">Capacity & Policy</h4>
                                 <div className="grid grid-cols-[100px_1fr] gap-1">
                                     <span className="text-gray-500">Storage:</span>
-                                    <span className="text-gray-300">{(db.state.metrics as any)?.disk_io || "N/A"} (Current)</span>
-
-                                    <span className="text-gray-500">Max Size:</span>
-                                    <span className="text-gray-300">Not Set</span>
-
-                                    <span className="text-gray-500">Retention:</span>
-                                    <span className="text-gray-300">30 Days (Default)</span>
+                                    <span className="text-gray-300">{(db.state.metrics as any)?.disk_io || "N/A"}</span>
                                 </div>
                             </div>
                         </div>
 
-                        {/* PDB List */}
                         {hasPdbs && (
                             <div className="mt-4 pt-4 border-t border-gray-700/50">
                                 <h4 className="text-gray-400 font-semibold uppercase text-xs tracking-wider mb-2">Pluggable Databases (PDBs)</h4>
@@ -231,16 +205,85 @@ function DatabaseRow({ db }: { db: DatabaseType }) {
     );
 }
 
+function GatewayGroup({ gateway, dbs }: { gateway: string, dbs: DatabaseType[] }) {
+    const [open, setOpen] = useState(true);
+    const onlineCount = dbs.filter(d => d.state?.status === 'UP').length;
+
+    return (
+        <div className="border-b border-gray-800">
+            <button
+                onClick={() => setOpen(!open)}
+                className="w-full px-6 py-3 bg-gray-900/50 hover:bg-gray-800/80 transition-colors flex items-center justify-between group"
+            >
+                <div className="flex items-center gap-3">
+                    <ChevronDown className={`w-4 h-4 text-gray-400 transition-transform ${open ? '' : '-rotate-90'}`} />
+                    <span className="font-semibold text-gray-200">{gateway || "Direct / Unknown"}</span>
+                    <span className="px-2 py-0.5 rounded-full bg-gray-800 text-xs text-gray-400 group-hover:bg-gray-700">
+                        {dbs.length} DBs
+                    </span>
+                </div>
+                <div className="flex items-center gap-4 text-xs font-mono">
+                    <span className="text-green-400">{onlineCount} UP</span>
+                    <span className="text-gray-600">|</span>
+                    <span className="text-red-400">{dbs.length - onlineCount} DOWN</span>
+                </div>
+            </button>
+            {open && (
+                <div className="border-t border-gray-800">
+                    <table className="w-full">
+                        <thead className="bg-gray-900/20 text-xs uppercase text-gray-500">
+                            <tr>
+                                <th className="px-6 py-2 text-left">Status</th>
+                                <th className="px-6 py-2 text-left">Name</th>
+                                <th className="px-6 py-2 text-left">Engine</th>
+                                <th className="px-6 py-2 text-left">Host</th>
+                                <th className="px-6 py-2 text-left">Port</th>
+                                <th className="px-6 py-2 text-left">Env</th>
+                                <th className="px-6 py-2 text-left">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody className="bg-gray-900/10">
+                            {dbs.map(db => <DatabaseRow key={db._id} db={db} />)}
+                        </tbody>
+                    </table>
+                </div>
+            )}
+        </div>
+    );
+}
+
 export default function InventoryTable() {
-    const { data: databases, isLoading, error } = useDatabases();
+    const [page, setPage] = useState(1);
+    const [search, setSearch] = useState('');
+    const [startsWith, setStartsWith] = useState('');
+    const [filterBy, setFilterBy] = useState('name'); // 'name' or 'host'
+    const [grouped, setGrouped] = useState(false);
+
+    // Using corrected useDatabases hook
+    const { data, isLoading, error } = useDatabases(page, search, startsWith, filterBy);
     const queryClient = useQueryClient();
     const [isRefreshing, setIsRefreshing] = useState(false);
+
+    // Handle both array (legacy) and InventoryResponse object
+    const items = Array.isArray(data) ? data : (data?.items || []);
+    const total = Array.isArray(data) ? data.length : (data?.total || 0);
+    const totalPages = Math.ceil(total / 1000) || 1;
+
+    // Grouping Logic
+    const groupedData = useMemo(() => {
+        if (!grouped || !items) return {};
+        return items.reduce((acc, db) => {
+            const gw = db.identity.gateway_ref || "Unknown";
+            if (!acc[gw]) acc[gw] = [];
+            acc[gw].push(db);
+            return acc;
+        }, {} as Record<string, DatabaseType[]>);
+    }, [items, grouped]);
 
     const handleRefresh = async () => {
         setIsRefreshing(true);
         try {
             await fetch('/api/action/collect', { method: 'POST' });
-            // Wait 2 seconds for Collector to perform its check
             setTimeout(() => {
                 queryClient.invalidateQueries({ queryKey: ['databases'] });
                 setIsRefreshing(false);
@@ -251,67 +294,161 @@ export default function InventoryTable() {
         }
     };
 
+    const handleLetterClick = (letter: string) => {
+        if (startsWith === letter) {
+            setStartsWith(''); // Toggle off
+        } else {
+            setStartsWith(letter);
+            setSearch(''); // Clear text search if using index
+            setPage(1);
+        }
+    };
+
+    const alphabet = "#ABCDEFGHIJKLMNOPQRSTUVWXYZ".split("");
+
     if (isLoading) {
         return (
-            <div className="glass p-8">
-                <div className="animate-pulse space-y-4">
-                    {[...Array(5)].map((_, i) => (
-                        <div key={i} className="h-12 bg-gray-800 rounded"></div>
-                    ))}
-                </div>
+            <div className="glass p-8 text-center text-gray-400">
+                <Loader className="w-8 h-8 mx-auto mb-4 animate-spin text-blue-500" />
+                <p>Loading Inventory...</p>
             </div>
         );
     }
 
     if (error) {
-        return (
-            <div className="glass p-8 text-center text-red-400">
-                Error loading inventory
-            </div>
-        );
-    }
-
-    // Handle empty database case
-    if (!databases || databases.length === 0) {
-        return (
-            <div className="glass p-8 text-center text-gray-400">
-                <Database className="w-12 h-12 mx-auto mb-4 opacity-30" />
-                <p>No databases in inventory</p>
-                <p className="text-sm mt-2">Click "Auto-Discovery" to scan for databases</p>
-            </div>
-        );
+        return <div className="glass p-8 text-center text-red-400">Error loading inventory</div>;
     }
 
     return (
-        <div className="glass overflow-hidden">
-            <table className="w-full">
-                <thead className="bg-gray-800/50">
-                    <tr>
-                        <th className="px-6 py-4 text-left text-xs font-medium text-gray-400 uppercase tracking-wider flex items-center gap-2">
-                            Status
+        <div className="glass overflow-hidden flex flex-col">
+            {/* Toolbar */}
+            <div className="p-4 bg-gray-900/40 border-b border-white/5 flex flex-col gap-4">
+
+                <div className="flex flex-wrap items-center justify-between gap-4">
+                    <div className="flex items-center gap-3 flex-1 min-w-[200px]">
+                        <div className="relative flex-1 max-w-md">
+                            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500" />
+                            <input
+                                type="text"
+                                placeholder="Search DB, Host, IP..."
+                                className="bg-black/20 border border-white/10 rounded-lg pl-9 pr-4 py-2 text-sm w-full focus:outline-none focus:border-blue-500/50 transition-colors text-white"
+                                value={search}
+                                onChange={(e) => { setSearch(e.target.value); setStartsWith(''); setPage(1); }}
+                            />
+                        </div>
+
+                        <div className="flex bg-black/20 rounded-lg p-1 border border-white/10">
                             <button
-                                onClick={handleRefresh}
-                                disabled={isRefreshing}
-                                title="Force Refresh Status"
-                                className={`hover:text-white transition-colors ${isRefreshing ? 'animate-spin text-blue-400' : ''}`}
+                                onClick={() => setFilterBy('name')}
+                                className={`px-3 py-1 rounded text-xs transition-colors ${filterBy === 'name' ? 'bg-blue-600 text-white' : 'text-gray-400 hover:text-white'}`}
                             >
-                                {isRefreshing ? <Loader className="w-4 h-4" /> : <RefreshCw className="w-4 h-4" />}
+                                Name
                             </button>
-                        </th>
-                        <th className="px-6 py-4 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">Name</th>
-                        <th className="px-6 py-4 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">Engine</th>
-                        <th className="px-6 py-4 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">Host</th>
-                        <th className="px-6 py-4 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">Port</th>
-                        <th className="px-6 py-4 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">Env</th>
-                        <th className="px-6 py-4 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">Actions</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {databases?.map((db) => (
-                        <DatabaseRow key={db._id} db={db} />
+                            <button
+                                onClick={() => setFilterBy('host')}
+                                className={`px-3 py-1 rounded text-xs transition-colors ${filterBy === 'host' ? 'bg-blue-600 text-white' : 'text-gray-400 hover:text-white'}`}
+                            >
+                                Host
+                            </button>
+                        </div>
+                    </div>
+
+                    <div className="flex items-center gap-3">
+                        <button
+                            onClick={() => setGrouped(!grouped)}
+                            className={`flex items-center gap-2 px-3 py-2 rounded-lg text-sm border transition-colors ${grouped ? 'bg-blue-500/20 border-blue-500/50 text-blue-400' : 'bg-transparent border-white/10 text-gray-400 hover:text-white'}`}
+                        >
+                            <Layers className="w-4 h-4" />
+                            Group by Gateway
+                        </button>
+
+                        <div className="h-6 w-px bg-white/10 mx-1" />
+
+                        <button
+                            onClick={handleRefresh}
+                            disabled={isRefreshing}
+                            className={`p-2 hover:bg-white/5 rounded-lg transition-colors ${isRefreshing ? 'animate-spin text-blue-400' : 'text-gray-400'}`}
+                        >
+                            {isRefreshing ? <Loader className="w-4 h-4" /> : <RefreshCw className="w-4 h-4" />}
+                        </button>
+                    </div>
+                </div>
+
+                {/* Alphabet Filter */}
+                <div className="flex flex-wrap gap-1 px-1">
+                    {alphabet.map(letter => (
+                        <button
+                            key={letter}
+                            onClick={() => handleLetterClick(letter === '#' ? '' : letter)}
+                            className={`w-8 h-8 flex items-center justify-center rounded text-xs font-mono transition-colors ${startsWith === letter ? 'bg-blue-600 text-white shadow-lg shadow-blue-500/20' : 'bg-gray-800/50 text-gray-400 hover:bg-gray-700 hover:text-white'}`}
+                        >
+                            {letter}
+                        </button>
                     ))}
-                </tbody>
-            </table>
+                </div>
+            </div>
+
+            {/* Content */}
+            <div className="overflow-x-auto min-h-[400px]">
+                {items.length === 0 ? (
+                    <div className="p-12 text-center text-gray-500">
+                        <Database className="w-12 h-12 mx-auto mb-4 opacity-20" />
+                        <p>No databases found matching your search.</p>
+                    </div>
+                ) : grouped ? (
+                    // Grouped View
+                    <div className="divide-y divide-gray-800">
+                        {Object.entries(groupedData).map(([gw, dbs]) => (
+                            <GatewayGroup key={gw} gateway={gw} dbs={dbs} />
+                        ))}
+                    </div>
+                ) : (
+                    // Table View
+                    <table className="w-full">
+                        <thead className="bg-gray-800/50">
+                            <tr>
+                                <th className="px-6 py-4 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">Status</th>
+                                <th className="px-6 py-4 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">Name</th>
+                                <th className="px-6 py-4 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">Engine</th>
+                                <th className="px-6 py-4 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">Host</th>
+                                <th className="px-6 py-4 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">Port</th>
+                                <th className="px-6 py-4 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">Env</th>
+                                <th className="px-6 py-4 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody className="divide-y divide-gray-800/50">
+                            {items.map((db) => (
+                                <DatabaseRow key={db._id} db={db} />
+                            ))}
+                        </tbody>
+                    </table>
+                )}
+            </div>
+
+            {/* Pagination Footer */}
+            <div className="p-4 bg-gray-900/40 border-t border-white/5 flex items-center justify-between text-sm">
+                <span className="text-gray-500">
+                    Showing {items.length} of {total} databases
+                </span>
+
+                <div className="flex items-center gap-2">
+                    <button
+                        onClick={() => setPage(p => Math.max(1, p - 1))}
+                        disabled={page === 1}
+                        className="p-1 rounded hover:bg-white/5 disabled:opacity-30 disabled:hover:bg-transparent"
+                    >
+                        <ChevronLeft className="w-5 h-5 text-gray-400" />
+                    </button>
+                    <span className="text-gray-300">Page {page} of {totalPages}</span>
+                    <button
+                        onClick={() => setPage(p => Math.min(totalPages, p + 1))}
+                        disabled={page >= totalPages}
+                        className="p-1 rounded hover:bg-white/5 disabled:opacity-30 disabled:hover:bg-transparent"
+                    >
+                        <ChevronRight className="w-5 h-5 text-gray-400" />
+                    </button>
+                </div>
+            </div>
         </div>
     );
 }

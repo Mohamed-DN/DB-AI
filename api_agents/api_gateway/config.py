@@ -13,7 +13,7 @@ if os.path.exists(env_v2_path):
     print(f"[CONFIG] Loading from {env_v2_path}")
     load_dotenv(env_v2_path, override=True)
 elif os.path.exists(env_path):
-    print(f"[CONFIG] Loading from {env_path}")
+    print(f"[CONFIG] Loading from {os.path.abspath(env_path)}")
     load_dotenv(env_path)
 else:
     print("[CONFIG] Warning: No .env file found")

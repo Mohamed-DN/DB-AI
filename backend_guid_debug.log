@@ -1,0 +1,19 @@
+DEBUG: STARTING FROM c:\AI-Nexi\Nexi_DB_AI\api_agents\api_gateway\main.py
+DEBUG: MONGODB_PORT from ENV: None
+DEBUG: sys.path: ['c:\\AI-Nexi\\Nexi_DB_AI\\api_agents\\api_gateway', 'c:\\AI-Nexi\\Nexi_DB_AI', 'C:\\Program Files\\WindowsApps\\PythonSoftwareFoundation.Python.3.13_3.13.2544.0_x64__qbz5n2kfra8p0\\python313.zip']
+[CONFIG] Loading from c:\AI-Nexi\Nexi_DB_AI\.env
+[CONFIG] Langfuse observability enabled
+[OK] Config imported
+[ERROR] IMPORT ERROR: unexpected indent (mongo_service.py, line 31)
+Traceback (most recent call last):
+  File "c:\AI-Nexi\Nexi_DB_AI\api_agents\api_gateway\main.py", line 32, in <module>
+    from api_agents.api_gateway.routers.inventory import router as inventory_router
+  File "c:\AI-Nexi\Nexi_DB_AI\api_agents\api_gateway\routers\__init__.py", line 4, in <module>
+    from .inventory import router as inventory_router
+  File "c:\AI-Nexi\Nexi_DB_AI\api_agents\api_gateway\routers\inventory.py", line 5, in <module>
+    from ..services.mongo_service import get_mongo_service
+  File "c:\AI-Nexi\Nexi_DB_AI\api_agents\api_gateway\services\__init__.py", line 4, in <module>
+    from .mongo_service import MongoService, get_mongo_service
+  File "c:\AI-Nexi\Nexi_DB_AI\api_agents\api_gateway\services\mongo_service.py", line 31
+    host = "localhost"
+IndentationError: unexpected indent

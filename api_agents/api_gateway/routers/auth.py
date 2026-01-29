@@ -36,7 +36,7 @@ async def get_current_user(token: str = Depends(oauth2_scheme)) -> UserResponse:
             headers={"WWW-Authenticate": "Bearer"},
         )
     
-    user = await auth_service.get_user(token_data.username)
+    user = auth_service.get_user(token_data.username)
     if user is None:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
@@ -109,7 +109,12 @@ async def login(login_request: LoginRequest):
     Use this token in the Authorization header: `Bearer <token>`
     """
     auth_service = get_auth_service()
-    user = await auth_service.authenticate_user(login_request.username, login_request.password)
+    try:
+        user = auth_service.authenticate_user(login_request.username, login_request.password)
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        raise HTTPException(status_code=500, detail=str(e))
     
     if not user:
         raise HTTPException(
@@ -136,7 +141,7 @@ async def login_for_access_token(form_data: OAuth2PasswordRequestForm = Depends(
     OAuth2 compatible token endpoint (for Swagger UI).
     """
     auth_service = get_auth_service()
-    user = await auth_service.authenticate_user(form_data.username, form_data.password)
+    user = auth_service.authenticate_user(form_data.username, form_data.password)
     
     if not user:
         raise HTTPException(
@@ -176,7 +181,7 @@ async def change_password(
     auth_service = get_auth_service()
     
     # Verify current password
-    user = await auth_service.authenticate_user(current_user.username, password_change.current_password)
+    user = auth_service.authenticate_user(current_user.username, password_change.current_password)
     if not user:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
@@ -184,7 +189,7 @@ async def change_password(
         )
     
     # Update password
-    success = await auth_service.update_password(current_user.username, password_change.new_password)
+    success = auth_service.update_password(current_user.username, password_change.new_password)
     if not success:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
@@ -206,7 +211,7 @@ async def list_users(
 ):
     """List all users (Admin only)."""
     auth_service = get_auth_service()
-    return await auth_service.list_users(skip=skip, limit=limit)
+    return auth_service.list_users(skip=skip, limit=limit)
 
 
 @router.post("/auth/users", response_model=UserResponse, tags=["User Management"])
@@ -217,7 +222,7 @@ async def create_user(
     """Create a new user (Admin only)."""
     auth_service = get_auth_service()
     try:
-        return await auth_service.create_user(user_create)
+        return auth_service.create_user(user_create)
     except ValueError as e:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
@@ -238,7 +243,7 @@ async def delete_user(
         )
     
     auth_service = get_auth_service()
-    success = await auth_service.delete_user(username)
+    success = auth_service.delete_user(username)
     
     if not success:
         raise HTTPException(

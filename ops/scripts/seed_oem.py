@@ -2,7 +2,7 @@ import pymongo
 from datetime import datetime
 
 # Connect
-client = pymongo.MongoClient("mongodb://admin:nexi2024@localhost:28017/?authSource=admin")
+client = pymongo.MongoClient("mongodb://localhost:27017/")
 db = client["nexi_cmdb_v2"]
 
 # 1. Seed Instance

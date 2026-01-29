@@ -7,8 +7,13 @@ Version: 3.2.0 - With Authentication
 import sys
 import os
 
+import os
+import sys
+
 # Add project root to path
-sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '../../')))
+PROJECT_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), '../../'))
+if PROJECT_ROOT not in sys.path:
+    sys.path.insert(0, PROJECT_ROOT)
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
@@ -103,6 +108,7 @@ app.include_router(oem_router, prefix="/api", tags=["OEM"])
 async def startup_event():
     print("=" * 60)
     print("🚀 Nexi AI CMDB v3.2.0 - With Authentication")
+
     print(f"📁 Routers loaded: inventory, alerts, agents, llm, system, metrics, emails, connection, tasks, workflows, auth")
     print(f"🌐 CORS Origins: {ALLOWED_ORIGINS}")
     print("🔒 Authentication enabled")
@@ -111,10 +117,27 @@ async def startup_event():
         # Ensure default admin user exists
         from .services.auth_service import get_auth_service
         auth_service = get_auth_service()
-        await auth_service.ensure_admin_exists()
+        
+        from .services.mongo_service import get_mongo_service
+        mongo = get_mongo_service()
+        db = mongo.db
+        
+        # Get OEM configs from MongoDB
+        configs = await db["oem_instances"].find().to_list(100)
+        
+        # Ensure validation indexes
+        await mongo.create_indexes()
+        
+        # Ensure admin user exists for each OEM instance
+        for config in configs:
+            auth_service.ensure_admin_exists(config.get("instance_id"))
+        
+        # Ensure admin user exists for the default instance (no instance_id)
+        auth_service.ensure_admin_exists(None)
+        
     except Exception as e:
-        print(f"❌ Startup Error - Failed to initialize Auth Service: {e}")
-        print("   The application will continue, but authentication might not work.")
+        print(f"❌ Startup Error - Failed to initialize Auth Service or OEM configs: {e}")
+        print("   The application will continue, but authentication or OEM features might not work correctly.")
     
     print("=" * 60)
 
@@ -126,6 +149,6 @@ if __name__ == "__main__":
     sys.stdout.reconfigure(encoding='utf-8')
     import uvicorn
     
-    port = int(os.getenv("BACKEND_PORT", 8000))
+    port = int(os.getenv("BACKEND_PORT", 8005))
     print(f"Starting server on port {port}...")
     uvicorn.run(app, host="0.0.0.0", port=port)

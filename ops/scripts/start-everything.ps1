@@ -2,10 +2,13 @@
 $ErrorActionPreference = "SilentlyContinue"
 
 Write-Host "1. Killing old processes..." -ForegroundColor Yellow
-Get-NetTCPConnection -LocalPort 8000, 3002 | Select-Object -ExpandProperty OwningProcess -Unique | ForEach-Object { 
+Get-NetTCPConnection -LocalPort 8005, 4002 | Select-Object -ExpandProperty OwningProcess -Unique | ForEach-Object { 
     Write-Host "   Killing PID $_"
     Stop-Process -Id $_ -Force
 }
+
+Write-Host "1b. Checking Docker..." -ForegroundColor Yellow
+docker start nexi-postgres-auth
 
 Write-Host "2. Cleaning duplicates..." -ForegroundColor Yellow
 $env:PYTHONPATH = "c:\AI-Nexi\Nexi_DB_AI"

@@ -123,31 +123,26 @@ body {
 }
 
 /* Hover: Icon Dances and Glows */
-.nav-item:hover svg {
-  animation: icon-dance 2s ease-in-out infinite;
-  filter: drop-shadow(0 0 8px rgba(139, 92, 246, 0.8)) drop-shadow(0 0 20px rgba(59, 130, 246, 0.5));
-  color: #a78bfa;
-}
-
 .nav-item:hover {
   background: rgba(55, 65, 81, 0.6);
   color: #ffffff;
-  border-color: rgba(139, 92, 246, 0.4);
-  box-shadow: 0 0 25px rgba(139, 92, 246, 0.2),
-    inset 0 0 15px rgba(139, 92, 246, 0.1);
+  border-color: rgba(55, 65, 81, 0.8);
+}
+
+.nav-item:hover svg {
+  color: #60a5fa;
+  /* Blue-400 */
 }
 
 /* Active state with pulsing glow */
 .nav-item.active {
-  background: linear-gradient(135deg, rgba(59, 130, 246, 0.25) 0%, rgba(139, 92, 246, 0.25) 100%);
-  border-color: rgba(139, 92, 246, 0.5);
-  color: #a78bfa;
-  animation: active-pulse 2s ease-in-out infinite;
+  background: rgba(59, 130, 246, 0.15);
+  border-color: rgba(59, 130, 246, 0.4);
+  color: #60a5fa;
 }
 
 .nav-item.active svg {
-  filter: drop-shadow(0 0 6px rgba(139, 92, 246, 0.6));
-  animation: icon-float 2s ease-in-out infinite;
+  filter: drop-shadow(0 0 2px rgba(59, 130, 246, 0.4));
 }
 
 /* Glow ring on hover */
@@ -190,9 +185,7 @@ body {
 }
 
 .btn-primary:hover svg {
-  /* Continuous wiggle on hover */
-  animation: icon-wiggle 1s ease-in-out infinite;
-  filter: drop-shadow(0 0 10px rgba(255, 255, 255, 0.8));
+  transform: translateX(2px);
 }
 
 .btn-primary:hover {
@@ -346,42 +339,7 @@ body {
 }
 
 /* NEW: Icon Dance for Nav Hover */
-@keyframes icon-dance {
-
-  0%,
-  100% {
-    transform: translateY(-3px) scale(1.15) rotate(0deg);
-  }
-
-  25% {
-    transform: translateY(-5px) scale(1.2) rotate(-10deg);
-  }
-
-  50% {
-    transform: translateY(-3px) scale(1.3) rotate(0deg);
-  }
-
-  75% {
-    transform: translateY(-5px) scale(1.2) rotate(10deg);
-  }
-}
-
-/* NEW: Icon Wiggle for Button Hover */
-@keyframes icon-wiggle {
-
-  0%,
-  100% {
-    transform: rotate(0deg) scale(1.2);
-  }
-
-  25% {
-    transform: rotate(-15deg) scale(1.3);
-  }
-
-  75% {
-    transform: rotate(15deg) scale(1.3);
-  }
-}
+/* Removed icon-dance and icon-wiggle animations */
 
 /* NEW: Telemetry Equalizer/Wave Effect */
 @keyframes equalizer {

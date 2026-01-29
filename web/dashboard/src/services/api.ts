@@ -42,9 +42,34 @@ api.interceptors.response.use(
 );
 
 // Inventory
-export const getDatabases = async (): Promise<Database[]> => {
-    const { data } = await api.get('/inventory');
-    return data || [];
+export interface InventoryResponse {
+    items: Database[];
+    total: number;
+    page: number;
+    limit: number;
+}
+
+export const getDatabases = async (
+    skip = 0,
+    limit = 1000,
+    search = '',
+    startsWith = '',
+    filterBy = 'name'
+): Promise<InventoryResponse> => {
+    const { data } = await api.get('/inventory', {
+        params: {
+            skip,
+            limit,
+            search,
+            starts_with: startsWith,
+            filter_by: filterBy
+        }
+    });
+    // Handle legacy array response fallback
+    if (Array.isArray(data)) {
+        return { items: data, total: data.length, page: 1, limit: data.length };
+    }
+    return data;
 };
 
 // Alerts
@@ -61,13 +86,16 @@ export interface DashboardStats {
 }
 
 export const getDashboardStats = async (): Promise<DashboardStats> => {
-    const [inventory, alerts] = await Promise.all([
+    const [inventoryResponse, alerts] = await Promise.all([
         getDatabases(),
         getAlerts(),
     ]);
 
+    // inventoryResponse is InventoryResponse object
+    const inventory = inventoryResponse.items || [];
+
     return {
-        totalDatabases: inventory.length,
+        totalDatabases: inventoryResponse.total || inventory.length,
         criticalAlerts: alerts.filter((a: any) => a.state === 'CRITICAL' && !a.processed).length,
         healthyAssets: inventory.filter((d: any) => d.state?.status === 'UP').length,
     };

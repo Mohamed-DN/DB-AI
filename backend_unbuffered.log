@@ -1,0 +1,50 @@
+DEBUG: STARTING FROM c:\AI-Nexi\Nexi_DB_AI\api_agents\api_gateway\main.py
+DEBUG: MONGODB_PORT from ENV: None
+DEBUG: sys.path: ['c:\\AI-Nexi\\Nexi_DB_AI', 'c:\\AI-Nexi\\Nexi_DB_AI\\api_agents\\api_gateway', 'C:\\Program Files\\WindowsApps\\PythonSoftwareFoundation.Python.3.13_3.13.2544.0_x64__qbz5n2kfra8p0\\python313.zip']
+[CONFIG] Loading from c:\AI-Nexi\Nexi_DB_AI\.env
+[CONFIG] Langfuse observability enabled
+[OK] Config imported
+[DEPS] MongoProxy connected
+[OK] Inventory Router imported
+[OK] Alerts Router imported
+[OK] Agents Router imported
+[OK] LLM Router imported
+[OK] System Router imported
+[OK] Metrics Router imported
+[OK] Emails Router imported
+[OK] Connection Router imported
+[OK] Tasks Router imported
+[OK] Workflows Router imported
+[OK] Auth Router imported
+[OK] OEM Router imported
+c:\AI-Nexi\Nexi_DB_AI\api_agents\api_gateway\main.py:111: DeprecationWarning: 
+        on_event is deprecated, use lifespan event handlers instead.
+
+        Read more about it in the
+        [FastAPI docs for Lifespan Events](https://fastapi.tiangolo.com/advanced/events/).
+        
+  @app.on_event("startup")
+Starting server on port 8005...
+INFO:     Started server process [18440]
+INFO:     Waiting for application startup.
+============================================================
+🚀 Nexi AI CMDB v3.2.0 - [MODIFIED_BY_AGENT]
+📁 Routers loaded: inventory, alerts, agents, llm, system, metrics, emails, connection, tasks, workflows, auth
+🌐 CORS Origins: ['http://localhost:4002', 'http://localhost:3002', 'http://localhost:5173', 'http://127.0.0.1:4002']
+🔒 Authentication enabled
+❌ Startup Error - Failed to initialize Auth Service: attempted relative import with no known parent package
+   The application will continue, but authentication might not work.
+============================================================
+INFO:     Application startup complete.
+INFO:     Uvicorn running on http://0.0.0.0:8005 (Press CTRL+C to quit)
+[DEBUG] [MongoService] Connection String: mongodb://admin:nexi2024@localhost:27017/?authSource=admin
+[MongoService] Connected to localhost:27017/nexi_cmdb_v2
+INFO:     127.0.0.1:63251 - "GET /api/system/status HTTP/1.1" 200 OK
+DEBUG_API: Using DB nexi_cmdb_v2 on port mongodb://admin:nexi2024@localhost:27017/?authSource=admin
+Error fetching OEM instances: Authentication failed., full error: {'ok': 0.0, 'errmsg': 'Authentication failed.', 'code': 18, 'codeName': 'AuthenticationFailed'}
+INFO:     127.0.0.1:63564 - "GET /api/oem/instances HTTP/1.1" 200 OK
+INFO:     127.0.0.1:63563 - "GET /api/system/status HTTP/1.1" 200 OK
+INFO:     127.0.0.1:49463 - "GET /api/system/status HTTP/1.1" 200 OK
+INFO:     127.0.0.1:56896 - "GET /api/system/status HTTP/1.1" 200 OK
+INFO:     127.0.0.1:55244 - "GET /api/system/status HTTP/1.1" 200 OK
+INFO:     127.0.0.1:55802 - "GET /api/system/status HTTP/1.1" 200 OK

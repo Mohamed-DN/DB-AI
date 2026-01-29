@@ -1,0 +1,31 @@
+Connecting to mongodb://localhost:27017/...
+Found Databases: ['AI_DBA_Repository', 'Nexi_DB_AI', 'admin', 'config', 'fabridb', 'local', 'nexi_cmdb_v2']
+
+--- Analysis of DB: 'AI_DBA_Repository' ---
+  - Metadata: 1 docs
+  - Log: 0 docs
+  - tablespace: 7 docs
+  - oper: 0 docs
+  - Oracle_Inventory: 2 docs
+  [TOTAL] AI_DBA_Repository: 10 documents
+
+--- Analysis of DB: 'Nexi_DB_AI' ---
+  - ai_system_tools: 10 docs
+  - ai_tools: 3 docs
+  [TOTAL] Nexi_DB_AI: 13 documents
+
+--- Analysis of DB: 'fabridb' ---
+  - cmdb: 4176 docs
+  - error_histori: 204406 docs
+  - hist: 97288 docs
+  - collect_tx: 56 docs
+  - gatway: 2 docs
+  [TOTAL] fabridb: 305928 documents
+
+--- Analysis of DB: 'nexi_cmdb_v2' ---
+  - users: 1 docs
+  - oem_instances: 1 docs
+  - databases: 2 docs
+  - monitoring_alerts: 1 docs
+  - inventory_databases: 3 docs
+  [TOTAL] nexi_cmdb_v2: 8 documents

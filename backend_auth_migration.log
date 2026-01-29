@@ -1,0 +1,36 @@
+[CONFIG] Loading from c:\AI-Nexi\Nexi_DB_AI\.env
+[CONFIG] Langfuse observability enabled
+[OK] Config imported
+[DEPS] MongoProxy connected
+[OK] Inventory Router imported
+[OK] Alerts Router imported
+[OK] Agents Router imported
+[OK] LLM Router imported
+[OK] System Router imported
+[OK] Metrics Router imported
+[OK] Emails Router imported
+[OK] Connection Router imported
+[OK] Tasks Router imported
+[OK] Workflows Router imported
+[OK] Auth Router imported
+[OK] OEM Router imported
+c:\AI-Nexi\Nexi_DB_AI\api_agents\api_gateway\main.py:107: DeprecationWarning: 
+        on_event is deprecated, use lifespan event handlers instead.
+
+        Read more about it in the
+        [FastAPI docs for Lifespan Events](https://fastapi.tiangolo.com/advanced/events/).
+        
+  @app.on_event("startup")
+Starting server on port 8005...
+INFO:     Started server process [32828]
+INFO:     Waiting for application startup.
+============================================================
+🚀 Nexi AI CMDB v3.2.0 - With Authentication
+📁 Routers loaded: inventory, alerts, agents, llm, system, metrics, emails, connection, tasks, workflows, auth
+🌐 CORS Origins: ['http://localhost:4002', 'http://localhost:3002', 'http://localhost:5173', 'http://127.0.0.1:4002']
+🔒 Authentication enabled
+❌ Startup Error - Failed to initialize Auth Service or OEM configs: attempted relative import with no known parent package
+   The application will continue, but authentication or OEM features might not work correctly.
+============================================================
+INFO:     Application startup complete.
+INFO:     Uvicorn running on http://0.0.0.0:8005 (Press CTRL+C to quit)

@@ -1,0 +1,59 @@
+[CONFIG] Loading from c:\AI-Nexi\Nexi_DB_AI\.env
+[CONFIG] Langfuse observability enabled
+[OK] Config imported
+[DEPS] MongoProxy connected
+[OK] Inventory Router imported
+[OK] Alerts Router imported
+[OK] Agents Router imported
+[OK] LLM Router imported
+[OK] System Router imported
+[OK] Metrics Router imported
+[OK] Emails Router imported
+[OK] Connection Router imported
+[OK] Tasks Router imported
+[OK] Workflows Router imported
+[OK] Auth Router imported
+[OK] OEM Router imported
+c:\AI-Nexi\Nexi_DB_AI\api_agents\api_gateway\main.py:107: DeprecationWarning: 
+        on_event is deprecated, use lifespan event handlers instead.
+
+        Read more about it in the
+        [FastAPI docs for Lifespan Events](https://fastapi.tiangolo.com/advanced/events/).
+        
+  @app.on_event("startup")
+Starting server on port 8005...
+INFO:     Started server process [55544]
+INFO:     Waiting for application startup.
+============================================================
+🚀 Nexi AI CMDB v3.2.0 - With Authentication
+📁 Routers loaded: inventory, alerts, agents, llm, system, metrics, emails, connection, tasks, workflows, auth
+🌐 CORS Origins: ['http://localhost:4002', 'http://localhost:3002', 'http://localhost:5173', 'http://127.0.0.1:4002']
+🔒 Authentication enabled
+[DEBUG] Importing Auth Service ABSOLUTE...
+[DEBUG] auth_service ALREADY IN SYS.MODULES
+[DEBUG] Import SUCCESS
+[DEBUG] Getting Auth Service instance...
+[DEBUG] AuthService.__init__ started
+[DEBUG] Calling get_postgres_service...
+[PostgresService] Creating tables on postgresql://admin:nexi2024@localhost:5432/nexi_auth_db...
+[PostgresService] Tables created.
+[DEBUG] Calling get_casbin_service...
+INFO:casbin.policy:Model:
+INFO:casbin.policy:r.r: sub, obj, act
+INFO:casbin.policy:p.p: sub, obj, act
+INFO:casbin.policy:e.e: some(where (p_eft == allow))
+INFO:casbin.policy:m.m: g(r_sub, p_sub) && r_obj == p_obj && r_act == p_act
+INFO:casbin.policy:g.g: _, _
+INFO:casbin.policy:Policy:
+INFO:casbin.policy:p : sub, obj, act : []
+INFO:casbin.policy:g : _, _ : []
+INFO:casbin.policy:Role links for: g
+INFO:casbin.role:
+[CasbinService] Enforcer initialized with Postgres Adapter
+[DEBUG] AuthService init done
+[DEBUG] Got Auth Service instance
+❌ Startup Error - Failed to initialize Auth Service or OEM configs: attempted relative import with no known parent package
+   The application will continue, but authentication or OEM features might not work correctly.
+============================================================
+INFO:     Application startup complete.
+INFO:     Uvicorn running on http://0.0.0.0:8005 (Press CTRL+C to quit)
