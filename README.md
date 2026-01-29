@@ -86,6 +86,17 @@ graph TD
 
 ---
 
+## 📈 High-Density Management (Scalability)
+
+The system is designed to handle **4000+ databases** without lag or confusion.
+
+- **Fast Search**: Global search by Name, Host, or IP with backend MongoDB indexing (sub-second prefix lookups).
+- **Alphabetical Index (A-Z)**: Quickly filter resources by their first letter. Toggle between **"Name"** and **"Host"** index modes.
+- **Hierarchical Grouping**: Optional "Group by Gateway" view with online/offline counters for aggregated control.
+- **Batched Loading**: Pagination (1000 items/page) ensures the UI remains responsive even with massive inventories.
+
+---
+
 ## 🛠️ Operational Guide
 
 The system is containerized and managed via Docker Compose.
