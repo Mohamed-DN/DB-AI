@@ -1,5 +1,5 @@
 # =============================================================================
-# NEXI DBA AI - AMBIENTE DI LABORATORIO V2 (SHADOW MODE)
+# M-DN DBA AI - AMBIENTE DI LABORATORIO V2 (SHADOW MODE)
 # =============================================================================
 # Questo docker-compose crea un ambiente PARALLELO per testare il sistema DBA AI
 # Usa variabili d'ambiente dal file .env (o .env.v2 copiato in .env)
@@ -8,7 +8,7 @@
 version: '3.8'
 
 networks:
-  nexi-lab2:
+  m-dn-lab2:
     driver: bridge
     ipam:
       config:
@@ -22,14 +22,14 @@ services:
   # Frontend - React Dashboard (V2)
   frontend:
     build: ../../web/dashboard
-    container_name: nexi-frontend
-    hostname: frontend.nexi.lab
+    container_name: m-dn-frontend
+    hostname: frontend.m-dn.lab
     ports:
       - "${FRONTEND_PORT:-4002}:80"
     depends_on:
       - backend
     networks:
-      nexi-lab2:
+      m-dn-lab2:
         ipv4_address: 172.21.0.5
     restart: unless-stopped
 
@@ -38,18 +38,18 @@ services:
     build:
       context: ../..
       dockerfile: api_agents/Dockerfile
-    container_name: nexi-backend
-    hostname: backend.nexi.lab
+    container_name: m-dn-backend
+    hostname: backend.m-dn.lab
     ports:
       - "${BACKEND_PORT:-8000}:8000"
     environment:
-      - MONGODB_URL=mongodb://${MONGO_USERNAME:-admin}:${MONGO_PASSWORD:-nexi2024}@mongodb2:27017/${MONGODB_DB:-nexi_cmdb_v2}?authSource=admin
-      - REDIS_URL=redis://:${REDIS_PASSWORD:-nexi2024}@redis-core:6379/0
+      - MONGODB_URL=mongodb://${MONGO_USERNAME:-admin}:${MONGO_PASSWORD:-pippopippo_1234}@mongodb2:27017/${MONGODB_DB:-m-dn_cmdb_v2}?authSource=admin
+      - REDIS_URL=redis://:${REDIS_PASSWORD:-pippopippo_1234}@redis-core:6379/0
     depends_on:
       - mongodb2
       - redis-core
     networks:
-      nexi-lab2:
+      m-dn-lab2:
         ipv4_address: 172.21.0.6
     restart: unless-stopped
 
@@ -58,20 +58,20 @@ services:
     build:
       context: ../..
       dockerfile: api_agents/Dockerfile
-    container_name: nexi-celery-worker
-    hostname: celery-worker.nexi.lab
+    container_name: m-dn-celery-worker
+    hostname: celery-worker.m-dn.lab
     command: celery -A orchestrator.celery_app worker --loglevel=info --queues=default,metrics,alerts,discovery
     environment:
-      - MONGODB_URL=mongodb://${MONGO_USERNAME:-admin}:${MONGO_PASSWORD:-nexi2024}@mongodb2:27017/${MONGODB_DB:-nexi_cmdb_v2}?authSource=admin
+      - MONGODB_URL=mongodb://${MONGO_USERNAME:-admin}:${MONGO_PASSWORD:-pippopippo_1234}@mongodb2:27017/${MONGODB_DB:-m-dn_cmdb_v2}?authSource=admin
       - REDIS_HOST=redis-core
       - REDIS_PORT=6379
-      - REDIS_PASSWORD=${REDIS_PASSWORD:-nexi2024}
+      - REDIS_PASSWORD=${REDIS_PASSWORD:-pippopippo_1234}
     depends_on:
       - backend
       - redis-core
       - mongodb2
     networks:
-      nexi-lab2:
+      m-dn-lab2:
         ipv4_address: 172.21.0.7
     restart: unless-stopped
 
@@ -80,19 +80,19 @@ services:
     build:
       context: ../..
       dockerfile: api_agents/Dockerfile
-    container_name: nexi-oem-collector
-    hostname: oem-collector.nexi.lab
+    container_name: m-dn-oem-collector
+    hostname: oem-collector.m-dn.lab
     command: python api_agents/workers/oem_collector/oem_collector.py --interval 60
     environment:
       - VICTORIAMETRICS_URL=http://victoriametrics:8428
-      - MONGODB_URL=mongodb://${MONGO_USERNAME:-admin}:${MONGO_PASSWORD:-nexi2024}@mongodb2:27017/${MONGODB_DB:-nexi_cmdb_v2}?authSource=admin
+      - MONGODB_URL=mongodb://${MONGO_USERNAME:-admin}:${MONGO_PASSWORD:-pippopippo_1234}@mongodb2:27017/${MONGODB_DB:-m-dn_cmdb_v2}?authSource=admin
       # Example OEM Instance (Mock/Real) - Replace with real creds or use Mongo config
-      - OEM_INSTANCES=OEM_TEST|https://mock-oem.nexi.lab:7803/em|sysman|welcome1|false
+      - OEM_INSTANCES=OEM_TEST|https://mock-oem.m-dn.lab:7803/em|sysman|welcome1|false
     depends_on:
       - victoriametrics
       - mongodb2
     networks:
-      nexi-lab2:
+      m-dn-lab2:
         ipv4_address: 172.21.0.8
     restart: unless-stopped
 
@@ -101,54 +101,54 @@ services:
     build:
       context: ../..
       dockerfile: api_agents/Dockerfile
-    container_name: nexi-sentinel-predictor
-    hostname: sentinel-predictor.nexi.lab
+    container_name: m-dn-sentinel-predictor
+    hostname: sentinel-predictor.m-dn.lab
     command: python api_agents/workers/sentinel/predictor_agent.py
     environment:
       - VICTORIAMETRICS_URL=http://victoriametrics:8428
-      - MONGODB_URL=mongodb://${MONGO_USERNAME:-admin}:${MONGO_PASSWORD:-nexi2024}@mongodb2:27017/${MONGODB_DB:-nexi_cmdb_v2}?authSource=admin
+      - MONGODB_URL=mongodb://${MONGO_USERNAME:-admin}:${MONGO_PASSWORD:-pippopippo_1234}@mongodb2:27017/${MONGODB_DB:-m-dn_cmdb_v2}?authSource=admin
       # Configure custom thresholds via env or MongoDB
       - CHECK_INTERVAL=300
     depends_on:
       - victoriametrics
       - mongodb2
     networks:
-      nexi-lab2:
+      m-dn-lab2:
         ipv4_address: 172.21.0.9
     restart: unless-stopped
 
   # MongoDB - CMDB Database (V2)
   mongodb2:
     image: mongo:7
-    container_name: nexi-mongodb2
-    hostname: mongodb2.nexi.lab
+    container_name: m-dn-mongodb2
+    hostname: mongodb2.m-dn.lab
     ports:
       - "${MONGODB_PORT:-28017}:27017"
     environment:
       MONGO_INITDB_ROOT_USERNAME: ${MONGO_USERNAME:-admin}
-      MONGO_INITDB_ROOT_PASSWORD: ${MONGO_PASSWORD:-nexi2024}
-      MONGO_INITDB_DATABASE: ${MONGODB_DB:-nexi_cmdb_v2}
+      MONGO_INITDB_ROOT_PASSWORD: ${MONGO_PASSWORD:-pippopippo_1234}
+      MONGO_INITDB_DATABASE: ${MONGODB_DB:-m-dn_cmdb_v2}
     volumes:
       - mongodb_data_v2:/data/db
     networks:
-      nexi-lab2:
+      m-dn-lab2:
         ipv4_address: 172.21.0.10
     restart: unless-stopped
 
   # Mongo Express - Web UI for MongoDB (V2)
   mongo-express2:
     image: mongo-express:latest
-    container_name: nexi-mongo-express2
-    hostname: mongo-express2.nexi.lab
+    container_name: m-dn-mongo-express2
+    hostname: mongo-express2.m-dn.lab
     ports:
       - "${MONGO_EXPRESS_PORT:-9081}:8081"
     environment:
       ME_CONFIG_MONGODB_ADMINUSERNAME: ${MONGO_USERNAME:-admin}
-      ME_CONFIG_MONGODB_ADMINPASSWORD: ${MONGO_PASSWORD:-nexi2024}
-      ME_CONFIG_MONGODB_URL: mongodb://${MONGO_USERNAME:-admin}:${MONGO_PASSWORD:-nexi2024}@mongodb2:27017/
+      ME_CONFIG_MONGODB_ADMINPASSWORD: ${MONGO_PASSWORD:-pippopippo_1234}
+      ME_CONFIG_MONGODB_URL: mongodb://${MONGO_USERNAME:-admin}:${MONGO_PASSWORD:-pippopippo_1234}@mongodb2:27017/
       ME_CONFIG_BASICAUTH: "false"
     networks:
-      nexi-lab2:
+      m-dn-lab2:
         ipv4_address: 172.21.0.15
     depends_on:
       - mongodb2
@@ -157,13 +157,13 @@ services:
   # Redis Core - Context & Cache (V2)
   redis-core:
     image: redis:7-alpine
-    container_name: nexi-redis-core
-    hostname: redis-core.nexi.lab
+    container_name: m-dn-redis-core
+    hostname: redis-core.m-dn.lab
     ports:
       - "${REDIS_PORT:-7379}:6379"
-    command: redis-server --requirepass nexi2024 --appendonly yes --maxmemory 512mb --maxmemory-policy allkeys-lru
+    command: redis-server --requirepass pippopippo_1234 --appendonly yes --maxmemory 512mb --maxmemory-policy allkeys-lru
     networks:
-      nexi-lab2:
+      m-dn-lab2:
         ipv4_address: 172.21.0.11
     restart: unless-stopped
 
@@ -174,50 +174,50 @@ services:
   # Gateway 1 (Milano) - Redis Queue
   redis-milano:
     image: redis:7-alpine
-    container_name: nexi-redis-milano
-    hostname: redis-milano.nexi.lab
+    container_name: m-dn-redis-milano
+    hostname: redis-milano.m-dn.lab
     ports:
       - "${REDIS_MILANO_PORT:-7380}:6379"
     networks:
-      nexi-lab2:
+      m-dn-lab2:
         ipv4_address: 172.21.1.5
     restart: unless-stopped
 
   # Gateway 2 (Bratislava) - Redis Queue
   redis-bratislava:
     image: redis:7-alpine
-    container_name: nexi-redis-bratislava
-    hostname: redis-bratislava.nexi.lab
+    container_name: m-dn-redis-bratislava
+    hostname: redis-bratislava.m-dn.lab
     ports:
       - "${REDIS_BRATISLAVA_PORT:-7381}:6379"
     networks:
-      nexi-lab2:
+      m-dn-lab2:
         ipv4_address: 172.21.2.5
     restart: unless-stopped
 
   # Gateway 3 (Cairo) - Redis Queue
   redis-cairo:
     image: redis:7-alpine
-    container_name: nexi-redis-cairo
-    hostname: redis-cairo.nexi.lab
+    container_name: m-dn-redis-cairo
+    hostname: redis-cairo.m-dn.lab
     ports:
       - "${REDIS_CAIRO_PORT:-7382}:6379"
     networks:
-      nexi-lab2:
+      m-dn-lab2:
         ipv4_address: 172.21.3.5
     restart: unless-stopped
 
   # Ollama - Local LLM (V2)
   ollama2:
     image: ollama/ollama:latest
-    container_name: nexi-ollama2
-    hostname: ollama2.nexi.lab
+    container_name: m-dn-ollama2
+    hostname: ollama2.m-dn.lab
     ports:
       - "${OLLAMA_PORT:-12434}:11434"
     volumes:
       - ollama_data_v2:/root/.ollama
     networks:
-      nexi-lab2:
+      m-dn-lab2:
         ipv4_address: 172.21.0.12
     restart: unless-stopped
     # deploy:
@@ -231,8 +231,8 @@ services:
     # Open WebUI - ChatGPT-like interface for Ollama (V2)
   open-webui2:
     image: ghcr.io/open-webui/open-webui:main
-    container_name: nexi-open-webui2
-    hostname: open-webui2.nexi.lab
+    container_name: m-dn-open-webui2
+    hostname: open-webui2.m-dn.lab
     ports:
       - "${OPEN_WEBUI_PORT:-4001}:8080"
     environment:
@@ -240,7 +240,7 @@ services:
     volumes:
       - open_webui_data_v2:/app/backend/data
     networks:
-      nexi-lab2:
+      m-dn-lab2:
         ipv4_address: 172.21.0.16
     depends_on:
       - ollama2
@@ -249,14 +249,14 @@ services:
   # Qdrant - Vector Database (V2)
   qdrant2:
     image: qdrant/qdrant:latest
-    container_name: nexi-qdrant2
-    hostname: qdrant2.nexi.lab
+    container_name: m-dn-qdrant2
+    hostname: qdrant2.m-dn.lab
     ports:
       - "${QDRANT_PORT:-7333}:6333"
     volumes:
       - qdrant_data_v2:/qdrant/storage
     networks:
-      nexi-lab2:
+      m-dn-lab2:
         ipv4_address: 172.21.0.13
     restart: unless-stopped
 
@@ -266,12 +266,12 @@ services:
 
   gateway-milano2:
     build: ./gateway-ssh
-    container_name: nexi-gw-milano2
-    hostname: gw-milano2.nexi.lab
+    container_name: m-dn-gw-milano2
+    hostname: gw-milano2.m-dn.lab
     ports:
       - "${GW_MILANO_PORT:-3221}:22"
     networks:
-      nexi-lab2:
+      m-dn-lab2:
         ipv4_address: 172.21.1.1
     depends_on:
       - pg-milano-prod2
@@ -281,52 +281,52 @@ services:
   # PostgreSQL Milano - PROD (V2)
   pg-milano-prod2:
     image: postgres:15
-    container_name: nexi-pg-milano-prod2
-    hostname: pg-milano-prod2.nexi.lab
+    container_name: m-dn-pg-milano-prod2
+    hostname: pg-milano-prod2.m-dn.lab
     environment:
       POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: nexi2024
+      POSTGRES_PASSWORD: pippopippo_1234
       POSTGRES_DB: payments_prod
     volumes:
       - pg_milano_prod_data_v2:/var/lib/postgresql/data
     networks:
-      nexi-lab2:
+      m-dn-lab2:
         ipv4_address: 172.21.1.10
     restart: unless-stopped
 
   # PostgreSQL Milano - DEV (V2)
   pg-milano-dev2:
     image: postgres:15
-    container_name: nexi-pg-milano-dev2
-    hostname: pg-milano-dev2.nexi.lab
+    container_name: m-dn-pg-milano-dev2
+    hostname: pg-milano-dev2.m-dn.lab
     ports:
       - "${PG_MILANO_DEV_PORT:-6433}:5432"
     environment:
       POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: nexi2024
+      POSTGRES_PASSWORD: pippopippo_1234
       POSTGRES_DB: payments_dev
     volumes:
       - pg_milano_dev_data_v2:/var/lib/postgresql/data
     networks:
-      nexi-lab2:
+      m-dn-lab2:
         ipv4_address: 172.21.1.11
     restart: unless-stopped
 
   # PostgreSQL Milano - STAGING (V2)
   pg-milano-stg2:
     image: postgres:15
-    container_name: nexi-pg-milano-stg2
-    hostname: pg-milano-stg2.nexi.lab
+    container_name: m-dn-pg-milano-stg2
+    hostname: pg-milano-stg2.m-dn.lab
     ports:
       - "${PG_MILANO_STG_PORT:-6435}:5432"
     environment:
       POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: nexi2024
+      POSTGRES_PASSWORD: pippopippo_1234
       POSTGRES_DB: payments_stg
     volumes:
       - pg_milano_stg_data_v2:/var/lib/postgresql/data
     networks:
-      nexi-lab2:
+      m-dn-lab2:
         ipv4_address: 172.21.1.12
     restart: unless-stopped
 
@@ -336,12 +336,12 @@ services:
 
   gateway-bratislava2:
     build: ./gateway-ssh
-    container_name: nexi-gw-bratislava2
-    hostname: gw-bratislava2.nexi.lab
+    container_name: m-dn-gw-bratislava2
+    hostname: gw-bratislava2.m-dn.lab
     ports:
       - "${GW_BRATISLAVA_PORT:-3222}:22"
     networks:
-      nexi-lab2:
+      m-dn-lab2:
         ipv4_address: 172.21.2.1
     depends_on:
       - pg-bratislava-prod2
@@ -351,34 +351,34 @@ services:
   # PostgreSQL Bratislava - PROD (V2)
   pg-bratislava-prod2:
     image: postgres:15
-    container_name: nexi-pg-bratislava-prod2
-    hostname: pg-bratislava-prod2.nexi.lab
+    container_name: m-dn-pg-bratislava-prod2
+    hostname: pg-bratislava-prod2.m-dn.lab
     environment:
       POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: nexi2024
+      POSTGRES_PASSWORD: pippopippo_1234
       POSTGRES_DB: cards_prod
     volumes:
       - pg_bratislava_prod_data_v2:/var/lib/postgresql/data
     networks:
-      nexi-lab2:
+      m-dn-lab2:
         ipv4_address: 172.21.2.10
     restart: unless-stopped
 
   # PostgreSQL Bratislava - DEV (V2)
   pg-bratislava-dev2:
     image: postgres:15
-    container_name: nexi-pg-bratislava-dev2
-    hostname: pg-bratislava-dev2.nexi.lab
+    container_name: m-dn-pg-bratislava-dev2
+    hostname: pg-bratislava-dev2.m-dn.lab
     ports:
       - "${PG_BRATISLAVA_DEV_PORT:-6434}:5432"
     environment:
       POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: nexi2024
+      POSTGRES_PASSWORD: pippopippo_1234
       POSTGRES_DB: cards_dev
     volumes:
       - pg_bratislava_dev_data_v2:/var/lib/postgresql/data
     networks:
-      nexi-lab2:
+      m-dn-lab2:
         ipv4_address: 172.21.2.11
     restart: unless-stopped
 
@@ -388,12 +388,12 @@ services:
 
   gateway-cairo2:
     build: ./gateway-ssh
-    container_name: nexi-gw-cairo2
-    hostname: gw-cairo2.nexi.lab
+    container_name: m-dn-gw-cairo2
+    hostname: gw-cairo2.m-dn.lab
     ports:
       - "${GW_CAIRO_PORT:-3223}:22"
     networks:
-      nexi-lab2:
+      m-dn-lab2:
         ipv4_address: 172.21.3.1
     depends_on:
       - oracle-cairo-primary2
@@ -403,38 +403,38 @@ services:
   # Oracle Cairo - PRIMARY (V2)
   oracle-cairo-primary2:
     image: gvenzl/oracle-free:23-slim
-    container_name: nexi-oracle-cairo-primary2
-    hostname: oracle-cairo-primary2.nexi.lab
+    container_name: m-dn-oracle-cairo-primary2
+    hostname: oracle-cairo-primary2.m-dn.lab
     ports:
       - "${ORACLE_CAIRO_PRIMARY_PORT:-2521}:1521"
     environment:
-      ORACLE_PASSWORD: nexi2024
+      ORACLE_PASSWORD: pippopippo_1234
       ORACLE_DATABASE: JUPITER
-      APP_USER: nexi_app
+      APP_USER: m-dn_app
       APP_USER_PASSWORD: app2024
     volumes:
       - oracle_cairo_prim_data_v2:/opt/oracle/oradata
     networks:
-      nexi-lab2:
+      m-dn-lab2:
         ipv4_address: 172.21.3.10
     restart: unless-stopped
 
   # Oracle Cairo - REPLICA (GoldenGate Target) V2
   oracle-cairo-replica2:
     image: gvenzl/oracle-free:23-slim
-    container_name: nexi-oracle-cairo-replica2
-    hostname: oracle-cairo-replica2.nexi.lab
+    container_name: m-dn-oracle-cairo-replica2
+    hostname: oracle-cairo-replica2.m-dn.lab
     ports:
       - "${ORACLE_CAIRO_REPLICA_PORT:-2522}:1521"
     environment:
-      ORACLE_PASSWORD: nexi2024
+      ORACLE_PASSWORD: pippopippo_1234
       ORACLE_DATABASE: JUPITER
-      APP_USER: nexi_app
+      APP_USER: m-dn_app
       APP_USER_PASSWORD: app2024
     volumes:
       - oracle_cairo_repl_data_v2:/opt/oracle/oradata
     networks:
-      nexi-lab2:
+      m-dn-lab2:
         ipv4_address: 172.21.3.11
     restart: unless-stopped
 
@@ -445,8 +445,8 @@ services:
   # PostgreSQL for Langfuse
   langfuse-db:
     image: postgres:15-alpine
-    container_name: nexi-langfuse-db2
-    hostname: langfuse-db.nexi.lab
+    container_name: m-dn-langfuse-db2
+    hostname: langfuse-db.m-dn.lab
     environment:
       POSTGRES_USER: langfuse
       POSTGRES_PASSWORD: langfuse2024
@@ -454,15 +454,15 @@ services:
     volumes:
       - langfuse_db_data_v2:/var/lib/postgresql/data
     networks:
-      nexi-lab2:
+      m-dn-lab2:
         ipv4_address: 172.21.0.20
     restart: unless-stopped
 
   # Langfuse - LLM Observability (V2 - stable, PostgreSQL-only)
   langfuse:
     image: langfuse/langfuse:2
-    container_name: nexi-langfuse2
-    hostname: langfuse.nexi.lab
+    container_name: m-dn-langfuse2
+    hostname: langfuse.m-dn.lab
     ports:
       - "${LANGFUSE_PORT:-3001}:3000"
     environment:
@@ -473,19 +473,19 @@ services:
       NEXTAUTH_SECRET: super-secret-langfuse-key-change-in-prod
       SALT: super-secret-salt-change-in-prod
       # Headless Initialization - Auto-create org, project, user, API keys
-      LANGFUSE_INIT_ORG_ID: nexi-org
-      LANGFUSE_INIT_ORG_NAME: Nexi DBA
-      LANGFUSE_INIT_PROJECT_ID: nexi-dba-ai
-      LANGFUSE_INIT_PROJECT_NAME: Nexi DBA AI
-      LANGFUSE_INIT_PROJECT_PUBLIC_KEY: pk-lf-nexi-dba-ai-v2
-      LANGFUSE_INIT_PROJECT_SECRET_KEY: sk-lf-nexi-dba-ai-v2-secret
-      LANGFUSE_INIT_USER_EMAIL: admin@nexi.lab
-      LANGFUSE_INIT_USER_NAME: Nexi DBA Admin
-      LANGFUSE_INIT_USER_PASSWORD: NexiDBA2024!
+      LANGFUSE_INIT_ORG_ID: m-dn-org
+      LANGFUSE_INIT_ORG_NAME: M-DN DBA
+      LANGFUSE_INIT_PROJECT_ID: m-dn-dba-ai
+      LANGFUSE_INIT_PROJECT_NAME: M-DN DBA AI
+      LANGFUSE_INIT_PROJECT_PUBLIC_KEY: pk-lf-m-dn-dba-ai-v2
+      LANGFUSE_INIT_PROJECT_SECRET_KEY: sk-lf-m-dn-dba-ai-v2-secret
+      LANGFUSE_INIT_USER_EMAIL: admin@m-dn.lab
+      LANGFUSE_INIT_USER_NAME: M-DN DBA Admin
+      LANGFUSE_INIT_USER_PASSWORD: M-DNDBA2024!
     depends_on:
       - langfuse-db
     networks:
-      nexi-lab2:
+      m-dn-lab2:
         ipv4_address: 172.21.0.21
     restart: unless-stopped
 
@@ -496,8 +496,8 @@ services:
   # Prometheus - Metrics Collection
   prometheus:
     image: prom/prometheus:latest
-    container_name: nexi-prometheus2
-    hostname: prometheus.nexi.lab
+    container_name: m-dn-prometheus2
+    hostname: prometheus.m-dn.lab
     ports:
       - "${PROMETHEUS_PORT:-9090}:9090"
     volumes:
@@ -508,23 +508,23 @@ services:
       - '--storage.tsdb.path=/prometheus'
       - '--web.enable-lifecycle'
     networks:
-      nexi-lab2:
+      m-dn-lab2:
         ipv4_address: 172.21.0.30
     restart: unless-stopped
 
   # Grafana - Dashboards
   grafana:
     image: grafana/grafana:latest
-    container_name: nexi-grafana2
-    hostname: grafana.nexi.lab
+    container_name: m-dn-grafana2
+    hostname: grafana.m-dn.lab
     ports:
       - "${GRAFANA_PORT:-3003}:3000"
     environment:
       GF_SECURITY_ADMIN_USER: admin
-      GF_SECURITY_ADMIN_PASSWORD: NexiGrafana2024!
+      GF_SECURITY_ADMIN_PASSWORD: pippopippo_1234
       GF_SECURITY_ALLOW_EMBEDDING: "true"
       GF_AUTH_ANONYMOUS_ENABLED: "true"
-      GF_AUTH_ANONYMOUS_ORG_NAME: "Nexi DBA"
+      GF_AUTH_ANONYMOUS_ORG_NAME: "M-DN DBA"
       GF_AUTH_ANONYMOUS_ORG_ROLE: "Viewer"
       GF_SERVER_ROOT_URL: "http://localhost:3003"
     volumes:
@@ -533,23 +533,23 @@ services:
     depends_on:
       - prometheus
     networks:
-      nexi-lab2:
+      m-dn-lab2:
         ipv4_address: 172.21.0.31
     restart: unless-stopped
 
   # PostgreSQL Exporter - Metrics for PostgreSQL
   postgres-exporter:
     image: prometheuscommunity/postgres-exporter:latest
-    container_name: nexi-pg-exporter2
-    hostname: pg-exporter.nexi.lab
+    container_name: m-dn-pg-exporter2
+    hostname: pg-exporter.m-dn.lab
     ports:
       - "${PG_EXPORTER_PORT:-9187}:9187"
     environment:
-      DATA_SOURCE_NAME: "postgresql://nexi_app:app2024@pg-milano-prod2:5432/nexi_prod?sslmode=disable"
+      DATA_SOURCE_NAME: "postgresql://m-dn_app:app2024@pg-milano-prod2:5432/m-dn_prod?sslmode=disable"
     depends_on:
       - pg-milano-prod2
     networks:
-      nexi-lab2:
+      m-dn-lab2:
         ipv4_address: 172.21.0.32
     restart: unless-stopped
 
@@ -558,19 +558,19 @@ services:
     build:
       context: ../..
       dockerfile: ops/docker-lab/Dockerfile.checkmk-exporter
-    container_name: nexi-checkmk-exporter
-    hostname: checkmk-exporter.nexi.lab
+    container_name: m-dn-checkmk-exporter
+    hostname: checkmk-exporter.m-dn.lab
     ports:
       - "${CHECKMK_EXPORTER_PORT:-9106}:9106"
     environment:
-      CHECKMK_URL: "http://checkmk:5000/nexi_monitor/check_mk/api/1.0"
+      CHECKMK_URL: "http://checkmk:5000/m-dn_monitor/check_mk/api/1.0"
       CHECKMK_USER: cmkadmin
-      CHECKMK_PASSWORD: nexi2024
+      CHECKMK_PASSWORD: pippopippo_1234
       CHECKMK_EXPORTER_PORT: "9106"
     depends_on:
       - checkmk
     networks:
-      nexi-lab2:
+      m-dn-lab2:
         ipv4_address: 172.21.0.34
     restart: unless-stopped
 
@@ -585,8 +585,8 @@ services:
 
   victoriametrics:
     image: victoriametrics/victoria-metrics:latest
-    container_name: nexi-victoriametrics
-    hostname: victoriametrics.nexi.lab
+    container_name: m-dn-victoriametrics
+    hostname: victoriametrics.m-dn.lab
     ports:
       - "${VICTORIAMETRICS_PORT:-8428}:8428"
       - "${VICTORIAMETRICS_GRAPHITE_PORT:-2003}:2003" # Graphite for CheckMK Raw
@@ -599,7 +599,7 @@ services:
       - '--retentionPeriod=365d' # 1 year retention
       - '--maxLabelsPerTimeseries=30'
     networks:
-      nexi-lab2:
+      m-dn-lab2:
         ipv4_address: 172.21.0.33
     restart: unless-stopped
 
@@ -609,17 +609,17 @@ services:
 
   checkmk:
     image: checkmk/check-mk-raw:2.2.0-latest
-    container_name: nexi-checkmk
-    hostname: checkmk.nexi.lab
+    container_name: m-dn-checkmk
+    hostname: checkmk.m-dn.lab
     ports:
       - "8080:5000"
       - "8002:8000" # Agent receiver
     networks:
-      nexi-lab2:
+      m-dn-lab2:
         ipv4_address: 172.21.0.40
     environment:
-      CMK_SITE_ID: nexi_monitor
-      CMK_PASSWORD: nexi2024
+      CMK_SITE_ID: m-dn_monitor
+      CMK_PASSWORD: pippopippo_1234
     volumes:
       - checkmk_data:/omd/sites
     restart: unless-stopped

@@ -15,8 +15,8 @@ async def create_admin():
     print(f"Hash length: {len(password_hash)}")
     
     # Connect to MongoDB
-    client = AsyncIOMotorClient("mongodb://admin:nexi2024@localhost:28017/?authSource=admin")
-    db = client["nexi_cmdb_v2"]
+    client = AsyncIOMotorClient("mongodb://admin:pippopippo_1234@localhost:28017/?authSource=admin")
+    db = client["m-dn_cmdb_v2"]
     
     # Delete existing admin
     result = await db.users.delete_many({"username": "admin"})
@@ -25,7 +25,7 @@ async def create_admin():
     # Insert new admin
     user_doc = {
         "username": "admin",
-        "email": "admin@nexi.lab",
+        "email": "admin@m-dn.lab",
         "full_name": "System Administrator",
         "role": "admin",
         "databases_scope": ["*"],

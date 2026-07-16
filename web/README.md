@@ -1,7 +1,7 @@
 # 🌐 Web Frontend
 
 ## 🎯 Scopo
-Questa cartella contiene tutto il codice relativo all'interfaccia utente (UI) del sistema Nexi DBA AI. Include sia la nuova dashboard React che la legacy UI.
+Questa cartella contiene tutto il codice relativo all'interfaccia utente (UI) del sistema M-DN DBA AI. Include sia la nuova dashboard React che la legacy UI.
 
 ## 📂 File Manifest
 - **`dashboard/`**: (Directory) La nuova applicazione React (Vite + TypeScript) che funge da interfaccia principale.

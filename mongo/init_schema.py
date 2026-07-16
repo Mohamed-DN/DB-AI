@@ -1,5 +1,5 @@
 """
-MongoDB Schema and Index Management for Nexi DBA AI
+MongoDB Schema and Index Management for M-DN DBA AI
 Optimized for 3000+ database scale in banking environment.
 
 Run this script to initialize/update MongoDB schema validation and indexes.
@@ -11,8 +11,8 @@ from datetime import datetime
 
 
 # MongoDB connection
-MONGO_URI = os.getenv("MONGODB_URI", "mongodb://admin:nexi2024@localhost:28017")
-DB_NAME = os.getenv("MONGODB_DB", "nexi_cmdb_v2")
+MONGO_URI = os.getenv("MONGODB_URI", "mongodb://admin:pippopippo_1234@localhost:28017")
+DB_NAME = os.getenv("MONGODB_DB", "m-dn_cmdb_v2")
 
 
 # =============================================================================
@@ -286,7 +286,7 @@ async def create_indexes(db, collection_name: str, indexes: list):
 async def run_migration():
     """Run full schema and index migration"""
     print("=" * 60)
-    print("🏦 Nexi DBA AI - MongoDB Schema Migration")
+    print("🏦 M-DN DBA AI - MongoDB Schema Migration")
     print(f"📅 {datetime.now().isoformat()}")
     print(f"🎯 Target: {DB_NAME}")
     print("=" * 60)

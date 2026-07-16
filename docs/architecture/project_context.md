@@ -7,7 +7,7 @@
 ## 🎯 Quick Context
 
 ```yaml
-Project: Nexi DBA AI
+Project: M-DN DBA AI
 Purpose: AI-powered database monitoring and management CMDB
 Version: V3 (Shadow Mode on V2 ports)
 Stack: Python/FastAPI + React + MongoDB + Ollama LLM

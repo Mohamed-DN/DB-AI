@@ -78,8 +78,8 @@ class CollectorConfig:
     instances: List[CheckMKInstance] = field(default_factory=list)
     
     # MongoDB settings
-    mongo_uri: str = "mongodb://admin:nexi2024@localhost:28017/"
-    mongo_db: str = "nexi_cmdb_v2"
+    mongo_uri: str = "mongodb://admin:pippopippo_1234@localhost:28017/"
+    mongo_db: str = "m-dn_cmdb_v2"
     
     # VictoriaMetrics Graphite endpoint
     graphite_host: str = "localhost"
@@ -115,9 +115,9 @@ def discover_checkmk_from_gateways(mongo_uri: str, mongo_db: str) -> List[CheckM
             gw_id = gw.get("_id", "unknown")
             datacenter = gw.get("datacenter", gw.get("location", "unknown"))
             checkmk_port = gw.get("checkmk_port", 8080)
-            checkmk_site = gw.get("checkmk_site", "nexi_monitor")
+            checkmk_site = gw.get("checkmk_site", "m-dn_monitor")
             checkmk_user = gw.get("checkmk_user", os.getenv("CHECKMK_USER", "cmkadmin"))
-            checkmk_pass = gw.get("checkmk_password", os.getenv("CHECKMK_PASSWORD", "nexi2024"))
+            checkmk_pass = gw.get("checkmk_password", os.getenv("CHECKMK_PASSWORD", "pippopippo_1234"))
             
             # Multi-protocol support fields
             checkmk_version = gw.get("checkmk_version", "2.x")
@@ -184,8 +184,8 @@ def discover_checkmk_from_gateways(mongo_uri: str, mongo_db: str) -> List[CheckM
 def get_default_config() -> CollectorConfig:
     """Load configuration strictly from MongoDB gateways"""
     
-    mongo_uri = os.getenv("MONGO_URI", "mongodb://admin:nexi2024@localhost:28017/")
-    mongo_db = os.getenv("MONGO_DB", "nexi_cmdb_v2")
+    mongo_uri = os.getenv("MONGO_URI", "mongodb://admin:pippopippo_1234@localhost:28017/")
+    mongo_db = os.getenv("MONGO_DB", "m-dn_cmdb_v2")
     
     # ALWAYS try to discover from MongoDB gateways collection
     # This aligns with user requirement: "pescare i nomi delle machine da mongo"

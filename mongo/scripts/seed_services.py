@@ -21,8 +21,8 @@ try:
             "name": "General IT Infrastructure",
             "description": "Core database infrastructure",
             "contacts": {
-                "bao": {"name": "Admin", "email": "admin@nexi.it", "phone": "+390234567890", "department": "IT Ops"},
-                "dl_team": "db-admins@nexi.it"
+                "bao": {"name": "Admin", "email": "admin@m-dn.it", "phone": "+390234567890", "department": "IT Ops"},
+                "dl_team": "db-admins@m-dn.it"
             },
             "snow_group": "DBA_L2_SUPPORT",
             "reperibility_number": "+39000111222",

@@ -57,7 +57,7 @@ except ImportError:
     LANGFUSE_ENABLED = False
     print("[INFO] Langfuse not installed, observability disabled")
 
-app = FastAPI(title="Nexi AI CMDB", version="2.0.0", description="AI-Powered Database Management")
+app = FastAPI(title="M-DN AI CMDB", version="2.0.0", description="AI-Powered Database Management")
 
 SAFE_IDENTIFIER_RE = re.compile(r"^[A-Za-z0-9._/\-]+$")
 
@@ -97,7 +97,7 @@ class ModelSwitchRequest(BaseModel):
 
 @app.get("/")
 def read_root():
-    return {"status": "Nexi AI CMDB Backend Running"}
+    return {"status": "M-DN AI CMDB Backend Running"}
 
 @app.get("/api/inventory")
 def get_inventory():
@@ -295,7 +295,7 @@ def connect_db(db_name, mode="sql"):
                 cmd = f'start cmd /k "docker exec -it {container} bash"'
             else: # sql
                 if engine == 'ORACLE':
-                    cmd = f'start cmd /k "docker exec -it {container} sqlplus sys/nexi2024 as sysdba"'
+                    cmd = f'start cmd /k "docker exec -it {container} sqlplus sys/pippopippo_1234 as sysdba"'
                 elif engine == 'POSTGRES':
                     cmd = f'start cmd /k "docker exec -it {container} psql -U postgres"'
                 else:
@@ -535,7 +535,7 @@ def chat_with_ai(request: ChatRequest):
         active_alerts = "Unknown"
         db_list = "Unable to fetch"
     
-    system_prompt = f"""You are NEXI DBA, an EXPERT Database Administrator AI with 20+ years of experience.
+    system_prompt = f"""You are M-DN DBA, an EXPERT Database Administrator AI with 20+ years of experience.
 You are a MULTI-DATABASE EXPERT specializing in:
 - **Oracle** (19c, 12c, 21c, RAC, Data Guard, RMAN, ASM, AWR, PDBs, CDBs)
 - **PostgreSQL** (8+, 15+, replication, extensions, pg_stat)
@@ -583,7 +583,7 @@ You are a MULTI-DATABASE EXPERT specializing in:
 
 🎯 EXAMPLES OF GOOD RESPONSES:
 User: "oracle pdb on cairo"
-→ List the PDBs on NEXI-ORACLE-CAIRO-PRIMARY with:
+→ List the PDBs on M-DN-ORACLE-CAIRO-PRIMARY with:
 ```sql
 SELECT pdb_name, status, open_mode FROM cdb_pdbs ORDER BY pdb_name;
 ```
@@ -619,7 +619,7 @@ Remember: BE HELPFUL, BE DECISIVE, SOLVE THE PROBLEM!
             try:
                 trace = langfuse.trace(
                     name="chat_with_ai",
-                    user_id="nexi-dba-user",
+                    user_id="m-dn-dba-user",
                     metadata={"db_count": str(db_count), "active_alerts": str(active_alerts)}
                 )
                 generation = trace.generation(
@@ -662,7 +662,7 @@ Remember: BE HELPFUL, BE DECISIVE, SOLVE THE PROBLEM!
                     from Agents.CriticalAlert.main import EmailSender
                     sender = EmailSender()
                     to = action_json.get("to", "mohamed.d.n.2002@gmail.com")
-                    subj = action_json.get("subject", "Nexi AI Alert")
+                    subj = action_json.get("subject", "M-DN AI Alert")
                     body = action_json.get("body", "No content")
                     sender.send_alert(to, subj, body)
                     return f"✅ **Action Executed**: Email sent to {to}\n\n{reply}"
@@ -791,7 +791,7 @@ def trigger_check():
     """Trigger CriticalAlert Agent"""
     try:
         script_path = os.path.abspath(os.path.join(os.path.dirname(__file__), '../../Agents/CriticalAlert/main.py'))
-        email = os.getenv("ALERT_EMAIL") or os.getenv("SMTP_USER") or "admin@nexi.com"
+        email = os.getenv("ALERT_EMAIL") or os.getenv("SMTP_USER") or "admin@m-dn.com"
         subprocess.Popen(
             [sys.executable, script_path, "--email", email, "--once"],
             stdout=subprocess.DEVNULL,
@@ -918,7 +918,7 @@ def connect_db(db_name: str, mode: str = "sql"):
             # Get gateway container name (default to maesdn-gateway for VirtualBox)
             gateway = db_info.get('identity', {}).get('gateway_ref', 'REMOTE_VBOX')
             # Use Cairo Oracle container as SQLPlus jump host (has SQLPlus installed)
-            sqlplus_container = "nexi-oracle-cairo-primary"
+            sqlplus_container = "m-dn-oracle-cairo-primary"
             
             if mode == "bash":
                 # Open bash shell on Cairo container
@@ -1007,24 +1007,24 @@ def set_system_status(item: dict):
     suffix = os.getenv('GATEWAY_SUFFIX', '2')
     
     lab_containers = [
-        f"nexi-mongodb{suffix}",
-        f"nexi-redis{suffix}", 
-        f"nexi-ollama{suffix}",
-        f"nexi-qdrant{suffix}",
-        f"nexi-gw-milano{suffix}",
-        f"nexi-gw-bratislava{suffix}",
-        f"nexi-gw-cairo{suffix}",
-        f"nexi-pg-milano-prod{suffix}",
-        f"nexi-pg-milano-dev{suffix}",
-        f"nexi-pg-milano-stg{suffix}",
-        f"nexi-pg-bratislava-prod{suffix}",
-        f"nexi-pg-bratislava-dev{suffix}",
-        f"nexi-oracle-cairo-primary{suffix}",
-        f"nexi-oracle-cairo-replica{suffix}",
-        f"nexi-mongo-express{suffix}",
-        f"nexi-grafana{suffix}",
-        f"nexi-prometheus{suffix}",
-        f"nexi-langfuse{suffix}",
+        f"m-dn-mongodb{suffix}",
+        f"m-dn-redis{suffix}", 
+        f"m-dn-ollama{suffix}",
+        f"m-dn-qdrant{suffix}",
+        f"m-dn-gw-milano{suffix}",
+        f"m-dn-gw-bratislava{suffix}",
+        f"m-dn-gw-cairo{suffix}",
+        f"m-dn-pg-milano-prod{suffix}",
+        f"m-dn-pg-milano-dev{suffix}",
+        f"m-dn-pg-milano-stg{suffix}",
+        f"m-dn-pg-bratislava-prod{suffix}",
+        f"m-dn-pg-bratislava-dev{suffix}",
+        f"m-dn-oracle-cairo-primary{suffix}",
+        f"m-dn-oracle-cairo-replica{suffix}",
+        f"m-dn-mongo-express{suffix}",
+        f"m-dn-grafana{suffix}",
+        f"m-dn-prometheus{suffix}",
+        f"m-dn-langfuse{suffix}",
     ]
     
     import shutil

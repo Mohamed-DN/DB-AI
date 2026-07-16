@@ -1,5 +1,5 @@
 """
-Nexi DBA AI - System Validation Script
+M-DN DBA AI - System Validation Script
 Validates all components: MongoDB, Redis, Docker containers, Ollama
 """
 import sys
@@ -96,10 +96,10 @@ class SystemValidator:
                     container_dict[name] = status
             
             expected_containers = [
-                "nexi-mongodb", "nexi-redis", "nexi-ollama", "nexi-qdrant",
-                "nexi-gw-milano", "nexi-gw-bratislava",
-                "nexi-pg-milano-prod", "nexi-pg-milano-dev",
-                "nexi-pg-bratislava-prod", "nexi-pg-bratislava-dev"
+                "m-dn-mongodb", "m-dn-redis", "m-dn-ollama", "m-dn-qdrant",
+                "m-dn-gw-milano", "m-dn-gw-bratislava",
+                "m-dn-pg-milano-prod", "m-dn-pg-milano-dev",
+                "m-dn-pg-bratislava-prod", "m-dn-pg-bratislava-dev"
             ]
             
             for container in expected_containers:
@@ -133,7 +133,7 @@ class SystemValidator:
                 model_names = [m.get("name", "") for m in models]
                 self.check("Ollama API", True)
                 self.check("LLM Model Available", len(models) > 0, 
-                          "No models found. Run: docker exec nexi-ollama ollama pull llama3:8b")
+                          "No models found. Run: docker exec m-dn-ollama ollama pull llama3:8b")
             else:
                 self.check("Ollama API", False, f"Status {resp.status_code}")
         except ImportError:

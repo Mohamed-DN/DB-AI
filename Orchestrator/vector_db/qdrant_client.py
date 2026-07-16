@@ -1,6 +1,6 @@
 """
 Qdrant Vector DB Client - Semantic Search for Knowledge Base
-Connects to Qdrant running in Docker at nexi-qdrant:6333
+Connects to Qdrant running in Docker at m-dn-qdrant:6333
 """
 
 import os
@@ -12,7 +12,7 @@ import hashlib
 class QdrantClient:
     """Client for interacting with Qdrant Vector Database"""
     
-    def __init__(self, host: str = None, collection: str = "nexi_knowledge_base"):
+    def __init__(self, host: str = None, collection: str = "m-dn_knowledge_base"):
         self.host = host or os.getenv("QDRANT_HOST", "http://localhost:6333")
         self.collection = collection
         self.embedding_dim = 384  # Default for sentence-transformers/all-MiniLM-L6-v2

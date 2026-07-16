@@ -6,10 +6,10 @@ import os
 sys.stdout.reconfigure(encoding='utf-8')
 
 # Set environment for valid connections
-os.environ["MONGODB_DB"] = "nexi_cmdb_v2"
-os.environ["MONGO_CONTAINER"] = "nexi-mongodb"
+os.environ["MONGODB_DB"] = "m-dn_cmdb_v2"
+os.environ["MONGO_CONTAINER"] = "m-dn-mongodb"
 os.environ["MONGO_USERNAME"] = "admin"
-os.environ["MONGO_PASSWORD"] = "nexi2024" # PyMongo uses this
+os.environ["MONGO_PASSWORD"] = "pippopippo_1234" # PyMongo uses this
 
 from api_agents.workers.discovery.discovery_agent import DiscoveryAgent
 
@@ -23,7 +23,7 @@ def force_discovery():
         {"ip_address": "192.168.56.102", "hostname": "rac2", "ssh_user": "root", "db_port": 1521}
     ]
     
-    gateway_id = "nexi-gw-cairo"
+    gateway_id = "m-dn-gw-cairo"
     
     for host in target_hosts:
         print(f"\n🔍 Scanning {host['ip_address']}...")

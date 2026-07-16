@@ -21,9 +21,9 @@ User → Gateway → Database
 
 | Gateway | Location | Accessible DBs |
 |---------|----------|----------------|
-| **nexi-gw-milano2** | Milan, Italy | `pg-milano-*` |
-| **nexi-gw-bratislava2** | Bratislava, Slovakia | `pg-bratislava-*` |
-| **nexi-gw-cairo2** | Cairo, Egypt | `oracle-cairo-*` |
+| **m-dn-gw-milano2** | Milan, Italy | `pg-milano-*` |
+| **m-dn-gw-bratislava2** | Bratislava, Slovakia | `pg-bratislava-*` |
+| **m-dn-gw-cairo2** | Cairo, Egypt | `oracle-cairo-*` |
 
 ## ⚙️ Usage
 

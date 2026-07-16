@@ -118,7 +118,7 @@ class CollectorAgent:
                 
                 cmdb_doc = self.cmdb_updater.transform_oracle_data(data, system_data, "REMOTE_VBOX")
                 
-                # Force preserve the original inventory name (NEXI-ORACLE-RAC1/2)
+                # Force preserve the original inventory name (M-DN-ORACLE-RAC1/2)
                 original_name = identity.get('db_unique_name')
                 if original_name:
                     cmdb_doc['identity']['db_unique_name'] = original_name

@@ -3,7 +3,7 @@
 ## Database e Modello Dati (MongoDB)
 **Analisi Stato Attuale:** L'API usa `MongoService` (Motor) mentre molti agenti usano `MongoProxy` basato su `docker exec` (mongosh). La struttura di riferimento e descritta in `mongo/schemas/definitions/...`, ma nel codice coesistono campi duplicati (`identity`, `database_core`, `cluster_identity`).
 **Problemi Identificati:**
-- Mismatch tra DB name e container: `MongoService` default `nexi_cmdb_v2`/`nexi-mongodb` vs `MongoProxy` default `nexi_cmdb`.
+- Mismatch tra DB name e container: `MongoService` default `m-dn_cmdb_v2`/`m-dn-mongodb` vs `MongoProxy` default `m-dn_cmdb`.
 - `MongoProxy` esegue JS via string interpolation con `eval` (fragile, lento, rischio injection).
 - Drift di schema e normalizzazione ad-hoc in `api_agents/api_gateway/routers/inventory.py`.
 - Dipendenze a path non esistenti (`MongoDB/src` in `api_agents/workers/Collector/src/cmdb_updater.py` e `Tests/validate_system.py`).
@@ -82,7 +82,7 @@
 **Analisi Stato Attuale:** Il sistema espone endpoint operativi e usa credenziali di default in vari agenti e tool.
 **Problemi Identificati:**
 - Nessuna autenticazione su API, possibile abuso di start/stop container.
-- Credenziali hard-coded (`root`, `nexi2024`) e account con privilegi eccessivi.
+- Credenziali hard-coded (`root`, `pippopippo_1234`) e account con privilegi eccessivi.
 - Esecuzione comandi da LLM senza approval esplicita.
 **Strategia di Miglioramento:** Introdurre auth/RBAC, secret management, policy di approvazione per azioni, audit trail e rotazione credenziali.
 **CHECKLIST DI SVILUPPO:**

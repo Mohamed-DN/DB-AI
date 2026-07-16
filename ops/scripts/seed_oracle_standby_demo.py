@@ -9,7 +9,7 @@ load_dotenv(dotenv_path='.env.v2')
 # Connect to MongoDB
 mongo_uri = f"mongodb://{os.getenv('MONGO_USERNAME')}:{os.getenv('MONGO_PASSWORD')}@localhost:{os.getenv('MONGODB_PORT', '28017')}/?authSource=admin"
 client = MongoClient(mongo_uri)
-db = client[os.getenv('MONGODB_DB', 'nexi_cmdb_v2')]
+db = client[os.getenv('MONGODB_DB', 'm-dn_cmdb_v2')]
 collection = db['inventory_databases']
 
 # Demo Data: Oracle RAC Standby (Replica)
@@ -23,7 +23,7 @@ standby_db = {
         "engine": "ORACLE",
         "host": "maamdba2ucrti03", # Different host
         "environment": "INTEGRATION",
-        "gateway_ref": "nexi-gw-cairo2"
+        "gateway_ref": "m-dn-gw-cairo2"
     },
     "metadata_version": "2.1-deep",
     "cluster_identity": {
@@ -54,7 +54,7 @@ standby_db = {
     ],
     "connection": {
         "type": "REMOTE", # Simulated Remote
-        "container": "nexi-oracle-cairo-replica2",
+        "container": "m-dn-oracle-cairo-replica2",
         "port": 1521
     },
     "ha_dr": {

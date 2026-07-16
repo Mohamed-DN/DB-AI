@@ -5,18 +5,18 @@ import requests
 import subprocess
 import json
 
-BASE_URL = "http://localhost:8080/nexi_monitor/check_mk/api/1.0"
+BASE_URL = "http://localhost:8080/m-dn_monitor/check_mk/api/1.0"
 HEADERS = {
-    "Authorization": "Bearer cmkadmin nexi2024",
+    "Authorization": "Bearer cmkadmin pippopippo_1234",
     "Content-Type": "application/json",
     "Accept": "application/json"
 }
 
 CONTAINERS = [
-    "nexi-pg-milano-prod2", "nexi-pg-milano-dev2", 
-    "nexi-pg-bratislava-prod2", "nexi-pg-bratislava-dev2",
-    "nexi-oracle-cairo-primary2", "nexi-oracle-cairo-replica2",
-    "nexi-mongodb2", "nexi-ollama2"
+    "m-dn-pg-milano-prod2", "m-dn-pg-milano-dev2", 
+    "m-dn-pg-bratislava-prod2", "m-dn-pg-bratislava-dev2",
+    "m-dn-oracle-cairo-primary2", "m-dn-oracle-cairo-replica2",
+    "m-dn-mongodb2", "m-dn-ollama2"
 ]
 
 def get_ip(container):

@@ -1,6 +1,6 @@
 # 📋 MANIFEST
 
-> Port mappings and service registry for Nexi DBA AI.
+> Port mappings and service registry for M-DN DBA AI.
 
 ---
 
@@ -9,7 +9,7 @@
 ```yaml
 Purpose: Central port reference for V2 shadow mode
 Version: V2 (all services suffixed with "2")
-Network: docker-lab_nexi-lab2 (172.21.0.0/16)
+Network: docker-lab_m-dn-lab2 (172.21.0.0/16)
 ```
 
 ---
@@ -72,21 +72,21 @@ flowchart TB
 
 | Service | Port | Container |
 |---------|------|-----------|
-| MongoDB | 28017 | nexi-mongodb2 |
-| Mongo Express | 9081 | nexi-mongo-express2 |
-| Redis | 7379 | nexi-redis2 |
-| Ollama LLM | 12434 | nexi-ollama2 |
-| Qdrant | 7333 | nexi-qdrant2 |
-| Open WebUI | 4001 | nexi-open-webui2 |
-| **Langfuse** | **3001** | nexi-langfuse2 |
+| MongoDB | 28017 | m-dn-mongodb2 |
+| Mongo Express | 9081 | m-dn-mongo-express2 |
+| Redis | 7379 | m-dn-redis2 |
+| Ollama LLM | 12434 | m-dn-ollama2 |
+| Qdrant | 7333 | m-dn-qdrant2 |
+| Open WebUI | 4001 | m-dn-open-webui2 |
+| **Langfuse** | **3001** | m-dn-langfuse2 |
 
 ### Gateways
 
 | Gateway | Port | Container |
 |---------|------|-----------|
-| Milano | 3221 | nexi-gw-milano2 |
-| Bratislava | 3222 | nexi-gw-bratislava2 |
-| Cairo | 3223 | nexi-gw-cairo2 |
+| Milano | 3221 | m-dn-gw-milano2 |
+| Bratislava | 3222 | m-dn-gw-bratislava2 |
+| Cairo | 3223 | m-dn-gw-cairo2 |
 
 ### Sample Databases
 
@@ -124,5 +124,5 @@ flowchart TB
 .\scripts\cleanup_v2.ps1
 
 # Check running containers
-docker ps --filter "name=nexi" --format "table {{.Names}}\t{{.Ports}}"
+docker ps --filter "name=m-dn" --format "table {{.Names}}\t{{.Ports}}"
 ```

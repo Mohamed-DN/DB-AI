@@ -10,7 +10,7 @@ from dotenv import load_dotenv
 load_dotenv()
 
 MONGO_URI = os.getenv("MONGO_URI", "mongodb://localhost:28017")
-DB_NAME = "Nexi_DB_AI"
+DB_NAME = "M-DN_DB_AI"
 
 async def init_tools():
     client = AsyncIOMotorClient(MONGO_URI)

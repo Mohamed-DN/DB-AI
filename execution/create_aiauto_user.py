@@ -19,11 +19,11 @@ print("=" * 70)
 # POSTGRESQL (Docker Containers)
 # ============================================================================
 pg_containers = [
-    "nexi-pg-milano-prod",
-    "nexi-pg-milano-dev", 
-    "nexi-pg-milano-stg",
-    "nexi-pg-bratislava-prod",
-    "nexi-pg-bratislava-dev"
+    "m-dn-pg-milano-prod",
+    "m-dn-pg-milano-dev", 
+    "m-dn-pg-milano-stg",
+    "m-dn-pg-bratislava-prod",
+    "m-dn-pg-bratislava-dev"
 ]
 
 print("\n[PostgreSQL - Docker Containers]")
@@ -56,8 +56,8 @@ for container in pg_containers:
 # ORACLE DOCKER (Cairo Containers)
 # ============================================================================
 oracle_containers = [
-    "nexi-oracle-cairo-primary",
-    "nexi-oracle-cairo-replica"
+    "m-dn-oracle-cairo-primary",
+    "m-dn-oracle-cairo-replica"
 ]
 
 print("\n[Oracle - Docker Containers (Cairo)]")
@@ -88,7 +88,7 @@ EXIT;
         
         # Execute
         result = subprocess.run(
-            f'docker exec {container} sqlplus -S sys/nexi2024 as sysdba @{sql_file}',
+            f'docker exec {container} sqlplus -S sys/pippopippo_1234 as sysdba @{sql_file}',
             shell=True, capture_output=True, text=True, timeout=30
         )
         

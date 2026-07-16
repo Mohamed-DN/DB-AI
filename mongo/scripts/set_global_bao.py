@@ -27,9 +27,9 @@ def set_global_bao():
         "contacts": {
             "bao": {
                 "name": "Admin User",
-                "email": "bao@nexi.lab"
+                "email": "bao@m-dn.lab"
             },
-            "dl_team": "alerts@nexi.lab"
+            "dl_team": "alerts@m-dn.lab"
         },
         "technical_mapping": {
             "db_unique_name": all_db_names # Overwrite list to ensure full coverage
@@ -46,7 +46,7 @@ def set_global_bao():
     """)
     
     print("GLOBAL BAO SET PERMANENTLY.")
-    print("   Any database alert will now route to 'bao@nexi.lab'.")
+    print("   Any database alert will now route to 'bao@m-dn.lab'.")
     print("   Check the 'emails' folder for generated alerts.")
 
 if __name__ == "__main__":

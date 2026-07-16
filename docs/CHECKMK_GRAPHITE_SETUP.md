@@ -31,8 +31,8 @@ victoriametrics:
 ## Configurazione CheckMK Raw Edition
 
 ### Passo 1: Accedi a CheckMK
-1. Vai su: `http://localhost:8080/nexi_monitor`
-2. Login: `cmkadmin` / `nexi2024`
+1. Vai su: `http://localhost:8080/m-dn_monitor`
+2. Login: `cmkadmin` / `pippopippo_1234`
 
 ### Passo 2: Configura Export Graphite
 1. Vai su **Setup** → **General** → **Global Settings**
@@ -43,7 +43,7 @@ victoriametrics:
 | Parametro | Valore |
 |-----------|--------|
 | **Protocol** | `Graphite plaintext` |
-| **Address** | `victoriametrics.nexi.lab` |
+| **Address** | `victoriametrics.m-dn.lab` |
 | **Port** | `2003` |
 | **Prefix** | `checkmk` (opzionale) |
 
@@ -88,7 +88,7 @@ checkmk_service_state == 2
 
 ### Metriche non visibili
 - Aspetta 60 secondi (intervallo CheckMK)
-- Verifica logs: `docker logs nexi-victoriametrics 2>&1 | tail -20`
+- Verifica logs: `docker logs m-dn-victoriametrics 2>&1 | tail -20`
 
 ### Formato metriche Graphite
 VictoriaMetrics converte automaticamente:

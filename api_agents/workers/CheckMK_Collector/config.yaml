@@ -11,8 +11,8 @@ global:
 
 # MongoDB connection
 mongodb:
-  uri: "${MONGO_URI:-mongodb://admin:nexi2024@localhost:28017/}"
-  database: "${MONGO_DB:-nexi_cmdb_v2}"
+  uri: "${MONGO_URI:-mongodb://admin:pippopippo_1234@localhost:28017/}"
+  database: "${MONGO_DB:-m-dn_cmdb_v2}"
 
 # VictoriaMetrics/Graphite connection
 metrics:
@@ -35,18 +35,18 @@ instances:
   # Esempio CheckMK 2.x con REST API
   - name: "milano-datacenter"
     url: "http://cmk-milano:8080"
-    site: "nexi_monitor"
+    site: "m-dn_monitor"
     datacenter: "MILANO"
     api_mode: "rest_api" # rest_api | livestatus | webapi_legacy
     api_version: "2.x"
     username: "${CHECKMK_USER:-cmkadmin}"
-    password: "${CHECKMK_PASSWORD:-nexi2024}"
+    password: "${CHECKMK_PASSWORD:-pippopippo_1234}"
     enabled: true
 
   # Esempio CheckMK 1.5.x con Livestatus (TCP)
   # - name: "legacy-datacenter"
   #   url: "http://cmk-legacy:8080"
-  #   site: "nexi_monitor"
+  #   site: "m-dn_monitor"
   #   datacenter: "LEGACY_DC"
   #   api_mode: "livestatus"
   #   api_version: "1.5.0p16"
@@ -72,7 +72,7 @@ instances:
 #   "_id": "gateway-1",
 #   "datacenter": "MILANO",
 #   "checkmk_url": "http://cmk-server:8080",
-#   "checkmk_site": "nexi_monitor",
+#   "checkmk_site": "m-dn_monitor",
 #   "checkmk_version": "1.5.0p16",     # Versione installata
 #   "checkmk_api_mode": "livestatus",  # rest_api | livestatus | webapi_legacy
 #   "checkmk_user": "cmkadmin",

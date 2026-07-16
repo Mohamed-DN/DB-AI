@@ -9,7 +9,7 @@ gateway:
 # MongoDB Connection
 mongodb:
   uri: "${MONGO_URI}"
-  database: "nexi_cmdb"
+  database: "m-dn_cmdb"
 
 # LLM Configuration (Ollama)
 llm:

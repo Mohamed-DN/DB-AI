@@ -8,7 +8,7 @@ def update_services():
     mongo = MongoProxy()
     
     # Target: Payments Core (Milano)
-    # Add NEXI-PG-MILANO-STG to its database list
+    # Add M-DN-PG-MILANO-STG to its database list
     
     print("Updates Payments Core service...")
     
@@ -23,11 +23,11 @@ def update_services():
     mongo.execute_eval("""
     db.business_services.updateOne(
         { name: 'Payments Core' },
-        { $addToSet: { "technical_mapping.db_unique_name": "NEXI-PG-MILANO-STG" } }
+        { $addToSet: { "technical_mapping.db_unique_name": "M-DN-PG-MILANO-STG" } }
     )
     """)
     
-    print("Added NEXI-PG-MILANO-STG to Payments Core.")
+    print("Added M-DN-PG-MILANO-STG to Payments Core.")
     
     # Verify
     s = mongo.execute_eval("db.business_services.findOne({name: 'Payments Core'})")

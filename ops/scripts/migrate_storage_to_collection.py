@@ -14,7 +14,7 @@ load_dotenv(dotenv_path='.env.v2')
 # Connect to MongoDB
 mongo_uri = f"mongodb://{os.getenv('MONGO_USERNAME')}:{os.getenv('MONGO_PASSWORD')}@localhost:{os.getenv('MONGODB_PORT', '28017')}/?authSource=admin"
 client = MongoClient(mongo_uri)
-db = client[os.getenv('MONGODB_DB', 'nexi_cmdb_v2')]
+db = client[os.getenv('MONGODB_DB', 'm-dn_cmdb_v2')]
 
 inventory_dbs = db['inventory_databases']
 inventory_storage = db['inventory_storage']

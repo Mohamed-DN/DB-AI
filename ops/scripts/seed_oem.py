@@ -2,13 +2,13 @@ import pymongo
 from datetime import datetime
 
 # Connect
-client = pymongo.MongoClient("mongodb://admin:nexi2024@localhost:28017/?authSource=admin")
-db = client["nexi_cmdb_v2"]
+client = pymongo.MongoClient("mongodb://admin:pippopippo_1234@localhost:28017/?authSource=admin")
+db = client["m-dn_cmdb_v2"]
 
 # 1. Seed Instance
 instance = {
     "name": "OEM Production",
-    "url": "https://oem.nexi.lab:7803/em",
+    "url": "https://oem.m-dn.lab:7803/em",
     "username": "sysman",
     "is_connected": True,
     "last_check": datetime.utcnow()
@@ -33,7 +33,7 @@ metrics = {
 target = {
     "identity": {"db_unique_name": "JUPITER", "engine": "ORACLE"},
     "state": {"status": "UP"},
-    "connection": {"host": "oracle-cairo-primary2.nexi.lab", "port": 1521},
+    "connection": {"host": "oracle-cairo-primary2.m-dn.lab", "port": 1521},
     "oem_metrics": metrics,
     "oem_last_collected": datetime.utcnow()
 }
@@ -52,7 +52,7 @@ pdb_metrics["cpu_usage_percent"] = 5.2 # Lower CPU for PDB
 pdb1 = {
     "identity": {"db_unique_name": "JUPITER_PDB1", "engine": "ORACLE"},
     "state": {"status": "OPEN"},
-    "connection": {"host": "oracle-cairo-primary2.nexi.lab", "port": 1521},
+    "connection": {"host": "oracle-cairo-primary2.m-dn.lab", "port": 1521},
     "oem_metrics": pdb_metrics,
     "oem_last_collected": datetime.utcnow()
 }

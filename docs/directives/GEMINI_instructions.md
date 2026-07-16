@@ -3,7 +3,7 @@
 > This file provides context for AI assistants working on this repository.
 
 ## Project Identity
-- **Name**: Nexi DBA AI (CMDB)
+- **Name**: M-DN DBA AI (CMDB)
 - **Purpose**: AI-powered database monitoring and management platform
 - **Version**: V3 (Shadow Mode on V2 ports)
 

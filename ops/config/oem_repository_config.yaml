@@ -15,8 +15,8 @@ graphite_host: "${GRAPHITE_HOST:-localhost}"
 graphite_port: 2003
 
 # MongoDB for history (optional)
-mongo_uri: "${MONGO_URI:-mongodb://admin:nexi2024@localhost:28017/}"
-mongo_db: "nexi_cmdb_v2"
+mongo_uri: "${MONGO_URI:-mongodb://admin:pippopippo_1234@localhost:28017/}"
+mongo_db: "m-dn_cmdb_v2"
 
 # Default collection interval (seconds)
 default_interval: 3600

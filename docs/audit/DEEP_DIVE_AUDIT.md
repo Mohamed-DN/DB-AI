@@ -1,4 +1,4 @@
-# Nexi DBA AI - Deep Dive Architectural Audit
+# M-DN DBA AI - Deep Dive Architectural Audit
 
 **Date**: 2026-01-18
 **Auditor**: AI Principal Architect
@@ -9,7 +9,7 @@
 ## Step 1: Architectural Taxonomy & Deconstruction
 
 ```
-c:\AI-Nexi\Nexi_DB_AI\
+c:\AI-M-DN\M-DN_DB_AI\
 ├── 🖥️ FRONTEND (React/Vite)
 │   └── web/dashboard/src/
 │       ├── App.tsx                 # Main layout, navigation, state
@@ -94,7 +94,7 @@ response = requests.post(f"{OLLAMA_CONFIG['base_url']}/api/generate", ...)
 |--------|--------|----------|
 | **Code Quality** | 🟡 Medium | Agents follow a consistent pattern but rely on `MongoProxy` (fragile subprocess approach). |
 | **Performance** | 🟡 Medium | `MongoProxy.execute_eval()` spawns a new `docker exec` process per call (~50-100ms overhead). |
-| **Security** | 🟡 Medium | `sanitize_identifier()` helps mitigate injection. Credentials (`nexi2024`) are in `.env` but also hardcoded as defaults. |
+| **Security** | 🟡 Medium | `sanitize_identifier()` helps mitigate injection. Credentials (`pippopippo_1234`) are in `.env` but also hardcoded as defaults. |
 | **Bug** | 🔴 Critical | **Scout Agent** has a double `$set` in upsert (L212), causing MongoDB syntax error on new inserts. |
 
 **Critical Bug** (`scout_agent.py` L212):

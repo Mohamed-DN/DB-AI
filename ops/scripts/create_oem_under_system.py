@@ -29,13 +29,13 @@ CREATE TABLE sysman_metric_hourly (target_guid RAW(16), target_name VARCHAR2(256
 CREATE TABLE sysman_metric_daily (target_guid RAW(16), target_name VARCHAR2(256), metric_name VARCHAR2(128), metric_column VARCHAR2(128), key_value VARCHAR2(256), rollup_timestamp TIMESTAMP, average NUMBER, minimum NUMBER, maximum NUMBER);
 
 -- Insert sample data
-INSERT INTO sysman_target VALUES (HEXTORAW('A1B2C3D4E5F60001A1B2C3D4E5F60001'), 'PRODDB1', 'oracle_database', 'SINGLE', 'dbserver1.nexi.local');
-INSERT INTO sysman_target VALUES (HEXTORAW('A1B2C3D4E5F60002A1B2C3D4E5F60002'), 'PRODDB2', 'oracle_database', 'SINGLE', 'dbserver2.nexi.local');
-INSERT INTO sysman_target VALUES (HEXTORAW('A1B2C3D4E5F60003A1B2C3D4E5F60003'), 'DEVDB1', 'oracle_database', 'SINGLE', 'devserver1.nexi.local');
+INSERT INTO sysman_target VALUES (HEXTORAW('A1B2C3D4E5F60001A1B2C3D4E5F60001'), 'PRODDB1', 'oracle_database', 'SINGLE', 'dbserver1.m-dn.local');
+INSERT INTO sysman_target VALUES (HEXTORAW('A1B2C3D4E5F60002A1B2C3D4E5F60002'), 'PRODDB2', 'oracle_database', 'SINGLE', 'dbserver2.m-dn.local');
+INSERT INTO sysman_target VALUES (HEXTORAW('A1B2C3D4E5F60003A1B2C3D4E5F60003'), 'DEVDB1', 'oracle_database', 'SINGLE', 'devserver1.m-dn.local');
 
-INSERT INTO sysman_os_hw VALUES ('dbserver1.nexi.local', 65536, 32, 4, 16, 32, 'NO');
-INSERT INTO sysman_os_hw VALUES ('dbserver2.nexi.local', 131072, 64, 8, 32, 64, 'NO');
-INSERT INTO sysman_os_hw VALUES ('devserver1.nexi.local', 32768, 16, 2, 8, 16, 'YES');
+INSERT INTO sysman_os_hw VALUES ('dbserver1.m-dn.local', 65536, 32, 4, 16, 32, 'NO');
+INSERT INTO sysman_os_hw VALUES ('dbserver2.m-dn.local', 131072, 64, 8, 32, 64, 'NO');
+INSERT INTO sysman_os_hw VALUES ('devserver1.m-dn.local', 32768, 16, 2, 8, 16, 'YES');
 
 INSERT INTO sysman_metric_current VALUES (HEXTORAW('A1B2C3D4E5F60001A1B2C3D4E5F60001'), 'memory_usage_sga_pga', 'sga_total', NULL, '4096', SYSTIMESTAMP);
 INSERT INTO sysman_metric_current VALUES (HEXTORAW('A1B2C3D4E5F60001A1B2C3D4E5F60001'), 'memory_usage_sga_pga', 'pga_total', NULL, '1024', SYSTIMESTAMP);

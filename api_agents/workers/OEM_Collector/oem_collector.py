@@ -4,7 +4,7 @@ OEM Collector Agent - Oracle Enterprise Manager REST API Collector
 Fetches database performance metrics from Oracle Enterprise Manager 13c+
 and ingests them into VictoriaMetrics for predictive analytics.
 
-Part of the Nexi DBA AI Monitoring System.
+Part of the M-DN DBA AI Monitoring System.
 """
 import os
 import sys
@@ -26,7 +26,7 @@ logger = logging.getLogger("OEMCollector")
 class OEMInstance:
     """Oracle Enterprise Manager instance configuration"""
     name: str
-    url: str  # e.g., https://oem.nexi.it:7803/em
+    url: str  # e.g., https://oem.m-dn.it:7803/em
     username: str
     password: str
     verify_ssl: bool = False

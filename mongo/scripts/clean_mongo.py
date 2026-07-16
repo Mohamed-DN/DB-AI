@@ -15,7 +15,7 @@ try:
     print(f"Mongo Docs by Name: {mongos}")
     
     # Delete specific redundant ones as requested
-    targets = ['mongodb', 'nexi-mongodb', 'nexi-mongo-express']
+    targets = ['mongodb', 'm-dn-mongodb', 'm-dn-mongo-express']
     
     for t in targets:
         # Check if exists

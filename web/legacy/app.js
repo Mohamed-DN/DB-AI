@@ -19,7 +19,7 @@ function showSection(id) {
         'agents': 'Agent Control Panel',
         'settings': 'Configuration'
     };
-    document.getElementById('page-title').innerText = titles[id] || 'Nexi CMDB';
+    document.getElementById('page-title').innerText = titles[id] || 'M-DN CMDB';
 
     if (id === 'dashboard') loadStats();
     if (id === 'inventory') loadInventory();
@@ -45,17 +45,17 @@ function toggleTheme() {
     if (body.classList.contains('light-mode')) {
         body.classList.remove('light-mode');
         icon.className = 'fa-solid fa-moon';
-        localStorage.setItem('nexi-theme', 'dark');
+        localStorage.setItem('m-dn-theme', 'dark');
     } else {
         body.classList.add('light-mode');
         icon.className = 'fa-solid fa-sun';
-        localStorage.setItem('nexi-theme', 'light');
+        localStorage.setItem('m-dn-theme', 'light');
     }
 }
 
 // Apply saved theme on load
 function applyStoredTheme() {
-    const savedTheme = localStorage.getItem('nexi-theme');
+    const savedTheme = localStorage.getItem('m-dn-theme');
     const icon = document.getElementById('theme-icon');
     if (savedTheme === 'light') {
         document.body.classList.add('light-mode');

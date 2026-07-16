@@ -15,7 +15,7 @@ from ..models.user import (
 )
 
 # Configuration
-SECRET_KEY = os.getenv("JWT_SECRET_KEY", "nexi-dba-ai-super-secret-key-change-in-production")
+SECRET_KEY = os.getenv("JWT_SECRET_KEY", "pippopippo_1234")
 ALGORITHM = "HS256"
 ACCESS_TOKEN_EXPIRE_MINUTES = int(os.getenv("JWT_EXPIRE_MINUTES", "480"))  # 8 hours default
 
@@ -35,12 +35,12 @@ class AuthService:
             if not self.mongo_uri:
                 # Fallback: build from individual components
                 user = os.getenv("MONGO_USERNAME", "admin")
-                password = os.getenv("MONGO_PASSWORD", "nexi2024")
+                password = os.getenv("MONGO_PASSWORD", "pippopippo_1234")
                 host = os.getenv("MONGODB_HOST", "localhost")
                 port = os.getenv("MONGODB_PORT", "28017")
                 self.mongo_uri = f"mongodb://{user}:{password}@{host}:{port}/?authSource=admin"
             
-        self.db_name = db_name or os.getenv("MONGODB_DB", "nexi_cmdb_v2")
+        self.db_name = db_name or os.getenv("MONGODB_DB", "m-dn_cmdb_v2")
         self._client: Optional[AsyncIOMotorClient] = None
         self._db = None
     
@@ -216,14 +216,14 @@ class AuthService:
             # Create default admin
             await self.create_user(UserCreate(
                 username="admin",
-                email="admin@nexi.lab",
+                email="admin@m-dn.lab",
                 full_name="System Administrator",
                 role=UserRole.ADMIN,
-                password="NexiAdmin2024!",  # Should be changed immediately
+                password="M-DNAdmin2024!",  # Should be changed immediately
                 databases_scope=["*"],
                 is_active=True
             ))
-            print("⚡ Created default admin user (username: admin, password: NexiAdmin2024!)")
+            print("⚡ Created default admin user (username: admin, password: M-DNAdmin2024!)")
             print("⚠️  Please change the default password immediately!")
 
 

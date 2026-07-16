@@ -8,8 +8,8 @@ import os
 import time
 
 # Container Lists
-PG_CONTAINERS = ["nexi-pg-milano-prod2", "nexi-pg-milano-dev2", "nexi-bratislava-prod", "nexi-pg-bratislava-prod2", "nexi-pg-bratislava-dev2"]
-ORA_CONTAINERS = ["nexi-oracle-cairo-primary2", "nexi-oracle-cairo-replica2"]
+PG_CONTAINERS = ["m-dn-pg-milano-prod2", "m-dn-pg-milano-dev2", "m-dn-bratislava-prod", "m-dn-pg-bratislava-prod2", "m-dn-pg-bratislava-dev2"]
+ORA_CONTAINERS = ["m-dn-oracle-cairo-primary2", "m-dn-oracle-cairo-replica2"]
 
 def run_cmd(cmd, shell=False):
     # Helper to print and run
@@ -17,18 +17,18 @@ def run_cmd(cmd, shell=False):
     return subprocess.run(cmd, shell=shell, capture_output=True, text=True)
 
 def get_agents_from_container():
-    print("⬇️  Copying CheckMK Agents from nexi-checkmk container...")
+    print("⬇️  Copying CheckMK Agents from m-dn-checkmk container...")
     
     # Verified Paths
-    base_path = "/opt/omd/sites/nexi_monitor/share/check_mk/agents"
+    base_path = "/opt/omd/sites/m-dn_monitor/share/check_mk/agents"
     deb_name = "check-mk-agent_2.2.0p47-1_all.deb"
     rpm_name = "check-mk-agent-2.2.0p47-1.noarch.rpm"
     
     print(f"  - Copying DEB: {deb_name}")
-    res_deb = run_cmd(f"docker cp nexi-checkmk:{base_path}/{deb_name} agent.deb")
+    res_deb = run_cmd(f"docker cp m-dn-checkmk:{base_path}/{deb_name} agent.deb")
     
     print(f"  - Copying RPM: {rpm_name}")
-    res_rpm = run_cmd(f"docker cp nexi-checkmk:{base_path}/{rpm_name} agent.rpm")
+    res_rpm = run_cmd(f"docker cp m-dn-checkmk:{base_path}/{rpm_name} agent.rpm")
     
     if res_deb.returncode != 0:
         print(f"❌ Failed to copy DEB: {res_deb.stderr}")

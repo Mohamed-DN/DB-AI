@@ -1,11 +1,11 @@
 @import "tailwindcss";
 
 :root {
-  --nexi-primary: #00A6FB;
-  --nexi-secondary: #6EE7B7;
-  --nexi-dark: #0a0f1a;
-  --nexi-surface: #111827;
-  --nexi-border: #1f2937;
+  --m-dn-primary: #00A6FB;
+  --m-dn-secondary: #6EE7B7;
+  --m-dn-dark: #0a0f1a;
+  --m-dn-surface: #111827;
+  --m-dn-border: #1f2937;
 }
 
 body {

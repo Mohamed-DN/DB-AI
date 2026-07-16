@@ -6,8 +6,8 @@
 Encrypt all sensitive database credentials at rest using industry-standard AES-256-GCM encryption to prevent unauthorized access in case of database dumps or intrusion.
 
 ## Inputs
-- **Master Key**: `NEXI_MASTER_KEY` environment variable (Base64 encoded 32-byte key).
-- **Salt**: `NEXI_ENCRYPTION_SALT` environment variable (for key derivation).
+- **Master Key**: `M-DN_MASTER_KEY` environment variable (Base64 encoded 32-byte key).
+- **Salt**: `M-DN_ENCRYPTION_SALT` environment variable (for key derivation).
 - **Plaintext Credentials**: Database passwords provided during registration.
 
 ## Execution Scripts (Layer 3)
@@ -19,7 +19,7 @@ Encrypt all sensitive database credentials at rest using industry-standard AES-2
 ```mermaid
 flowchart LR
     Input[Plaintext Password] --> PBKDF2{Key Derivation}
-    Env[NEXI_MASTER_KEY] --> PBKDF2
+    Env[M-DN_MASTER_KEY] --> PBKDF2
     PBKDF2 --> AES[AES-256-GCM]
     AES --> Encrypted[Encrypted Blob]
     Encrypted --> Mongo[(MongoDB)]

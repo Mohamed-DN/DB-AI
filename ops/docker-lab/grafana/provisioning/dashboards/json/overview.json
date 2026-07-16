@@ -588,7 +588,7 @@
     "schemaVersion": 38,
     "style": "dark",
     "tags": [
-        "nexi",
+        "m-dn",
         "overview",
         "all-databases"
     ],
@@ -601,8 +601,8 @@
     },
     "timepicker": {},
     "timezone": "browser",
-    "title": "Nexi DBA AI - Overview",
-    "uid": "nexi-overview",
+    "title": "M-DN DBA AI - Overview",
+    "uid": "m-dn-overview",
     "version": 1,
     "weekStart": ""
 }

@@ -49,7 +49,7 @@ Output: MongoDB collection (oem_metrics), VictoriaMetrics
 # In gateway_config collection
 oem_instances:
   - name: "Production OEM"
-    url: "https://oem.nexi.lab:7803/em"
+    url: "https://oem.m-dn.lab:7803/em"
     username: "sysman"
     check_ssl: true
     enabled: true

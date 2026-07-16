@@ -1,4 +1,4 @@
-﻿Loading config from C:\AI-Nexi\Nexi_DB_AI\.env.v2
+Loading config from C:\AI-M-DN\M-DN_DB_AI\.env.v2
 [OK] Langfuse observability enabled
 [OK] Backend connected to MongoProxy
 python : INFO:     
@@ -31,7 +31,7 @@ ERROR:    [Errno
 attempting to bind on 
 address ('0.0.0.0', 
 8000): [winerror 
-10048] di norma � 
+10048] di norma ? 
 consentito un solo 
 utilizzo di ogni 
 indirizzo di socket 

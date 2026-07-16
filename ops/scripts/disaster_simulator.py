@@ -39,7 +39,7 @@ def deadlock(container):
     print("  - Table Locked (Main thread)")
 
 def main():
-    target = "nexi-pg-milano-prod2" # Internal, via exec
+    target = "m-dn-pg-milano-prod2" # Internal, via exec
     print(f"💣 Starting Disaster Simulation on {target}")
     
     # 1. IO/CPU Load

@@ -248,7 +248,7 @@ class EnricherAgent:
     def __init__(self):
         self.mongo = MongoProxy()
         self.default_pg_user = os.getenv("POSTGRES_USER", "postgres")
-        self.default_pg_password = os.getenv("POSTGRES_PASSWORD", "nexi2024")
+        self.default_pg_password = os.getenv("POSTGRES_PASSWORD", "pippopippo_1234")
         print("✅ EnricherAgent initialized")
     
     def get_inventory(self) -> List[Dict]:
@@ -320,7 +320,7 @@ class EnricherAgent:
         name = identity.get("db_unique_name", "UNKNOWN")
         host = identity.get("host", "127.0.0.1")
         port = connection.get("port", 7379)
-        password = os.getenv("REDIS_PASSWORD", "nexi2024")
+        password = os.getenv("REDIS_PASSWORD", "pippopippo_1234")
         
         print(f"   🔌 Connecting to Redis: {host}:{port}...")
         enricher = RedisEnricher(host, port, password=password)
@@ -345,7 +345,7 @@ class EnricherAgent:
         host = identity.get("host", "127.0.0.1")
         port = connection.get("port", 28017)
         user = os.getenv("MONGO_USERNAME", "admin")
-        password = os.getenv("MONGO_PASSWORD", "nexi2024") # Assuming consistent creds
+        password = os.getenv("MONGO_PASSWORD", "pippopippo_1234") # Assuming consistent creds
         
         print(f"   🔌 Connecting to MongoDB: {host}:{port}...")
         enricher = MongoEnricher(host, port, user, password)

@@ -116,7 +116,7 @@ class VerifierAgent:
             logger.error(f"Failed to initialize LLM: {e}")
             self.llm = None
 
-        self.collection_name = "nexi_sop_knowledge"
+        self.collection_name = "m-dn_sop_knowledge"
 
     def get_realtime_status(self, db_name: str) -> Dict[str, Any]:
         """
@@ -449,7 +449,7 @@ if __name__ == "__main__":
     from predictor_agent import PredictionAlert, AnomalyType
 
     mock_prediction = PredictionAlert(
-        db_name="NEXI_PG_MILANO_PROD",
+        db_name="M-DN_PG_MILANO_PROD",
         anomaly_type=AnomalyType.CPU_SPIKE,
         probability=0.85,
         predicted_at=datetime.utcnow(),

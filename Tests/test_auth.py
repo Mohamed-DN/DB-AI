@@ -1,7 +1,7 @@
 """Test authentication flow directly"""
 import asyncio
 import sys
-sys.path.insert(0, "c:\\AI-Nexi\\Nexi_DB_AI")
+sys.path.insert(0, "c:\\AI-M-DN\\M-DN_DB_AI")
 sys.stdout.reconfigure(encoding='utf-8')
 
 from api_agents.api_gateway.services.auth_service import get_auth_service

@@ -384,7 +384,7 @@
     "tags": [
         "checkmk",
         "monitoring",
-        "nexi"
+        "m-dn"
     ],
     "templating": {
         "list": []
@@ -396,6 +396,6 @@
     "timepicker": {},
     "timezone": "browser",
     "title": "CheckMK Monitoring",
-    "uid": "checkmk-nexi",
+    "uid": "checkmk-m-dn",
     "version": 1
 }

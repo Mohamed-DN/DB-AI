@@ -413,7 +413,7 @@
     "schemaVersion": 38,
     "style": "dark",
     "tags": [
-        "nexi",
+        "m-dn",
         "database",
         "per-db"
     ],
@@ -455,7 +455,7 @@
     "timepicker": {},
     "timezone": "browser",
     "title": "Database Metrics - Per DB",
-    "uid": "nexi-per-db",
+    "uid": "m-dn-per-db",
     "version": 1,
     "weekStart": ""
 }

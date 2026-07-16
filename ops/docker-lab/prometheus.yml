@@ -1,4 +1,4 @@
-# Prometheus Configuration for Nexi DBA AI
+# Prometheus Configuration for M-DN DBA AI
 # Scrapes metrics from database exporters
 # Remote write enabled for VictoriaMetrics long-term storage
 
@@ -6,7 +6,7 @@ global:
   scrape_interval: 15s
   evaluation_interval: 15s
   external_labels:
-    monitor: 'nexi-dba-ai'
+    monitor: 'm-dn-dba-ai'
 
 # Remote Write to VictoriaMetrics for long-term storage
 # This enables Prometheus to keep collecting metrics while
@@ -46,7 +46,7 @@ scrape_configs:
   # PostgreSQL Exporter
   - job_name: 'postgresql'
     static_configs:
-      - targets: ['pg-exporter.nexi.lab:9187']
+      - targets: ['pg-exporter.m-dn.lab:9187']
         labels:
           db_type: 'postgresql'
           location: 'milano'

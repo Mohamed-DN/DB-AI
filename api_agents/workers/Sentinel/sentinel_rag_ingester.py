@@ -172,7 +172,7 @@ class SentinelRAGIngester:
     def __init__(
         self,
         qdrant_url: Optional[str] = None,
-        collection_name: str = "nexi_sop_knowledge",
+        collection_name: str = "m-dn_sop_knowledge",
         repo_root: Optional[str] = None
     ):
         self.qdrant_url = qdrant_url or os.getenv("QDRANT_URL", "http://localhost:7333")

@@ -2,7 +2,7 @@
 db.users.deleteMany({ username: "admin" });
 db.users.insertOne({
     username: "admin",
-    email: "admin@nexi.lab",
+    email: "admin@m-dn.lab",
     full_name: "System Administrator",
     role: "admin",
     databases_scope: ["*"],

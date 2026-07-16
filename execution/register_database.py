@@ -14,10 +14,10 @@ import sys
 from datetime import datetime
 
 # MongoDB configuration (from directive learnings)
-MONGO_CONTAINER = "nexi-cmdb-mongo"
+MONGO_CONTAINER = "m-dn-cmdb-mongo"
 MONGO_USER = "admin"
 MONGO_PASS = "admin123"
-MONGO_DB = "nexi_cmdb"
+MONGO_DB = "m-dn_cmdb"
 MONGO_COLLECTION = "inventory_databases"
 
 def execute_mongo_command(js_command):

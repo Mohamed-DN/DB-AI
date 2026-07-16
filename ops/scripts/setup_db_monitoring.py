@@ -70,16 +70,16 @@ def main():
     suffix = os.getenv('GATEWAY_SUFFIX', '2')
     
     pg_containers = [
-        f"nexi-pg-milano-prod{suffix}",
-        f"nexi-pg-milano-dev{suffix}",
-        f"nexi-bratislava-prod{suffix}", # Error in parsing potential name in mind? checking list
-        f"nexi-pg-bratislava-prod{suffix}",
-        f"nexi-pg-bratislava-dev{suffix}"
+        f"m-dn-pg-milano-prod{suffix}",
+        f"m-dn-pg-milano-dev{suffix}",
+        f"m-dn-bratislava-prod{suffix}", # Error in parsing potential name in mind? checking list
+        f"m-dn-pg-bratislava-prod{suffix}",
+        f"m-dn-pg-bratislava-dev{suffix}"
     ]
     
     ora_containers = [
-        f"nexi-oracle-cairo-primary{suffix}",
-        f"nexi-oracle-cairo-replica{suffix}"
+        f"m-dn-oracle-cairo-primary{suffix}",
+        f"m-dn-oracle-cairo-replica{suffix}"
     ]
 
     print("🚀 Starting DB Monitoring Setup...")

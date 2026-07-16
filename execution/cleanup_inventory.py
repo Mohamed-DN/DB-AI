@@ -12,12 +12,12 @@ async def cleanup():
     print("🧹 Cleaning Inventory...")
     
     # 1. Delete all entries that don't look like our real containers
-    # Real ones start with 'nexi-' and have specific types
+    # Real ones start with 'm-dn-' and have specific types
     result = await mongo.db.inventory_databases.delete_many({
         "$or": [
             {"identity.db_unique_name": None},
             {"identity.db_unique_name": "UNKNOWN"},
-            {"identity.db_unique_name": {"$not": {"$regex": "^(nexi-pg|nexi-oracle|nexi-redis|nexi-qdrant|nexi-mongo|NEXI-PG|NEXI-ORACLE|NEXI-REDIS|NEXI-QDRANT|NEXI-MONGO)"}}}
+            {"identity.db_unique_name": {"$not": {"$regex": "^(m-dn-pg|m-dn-oracle|m-dn-redis|m-dn-qdrant|m-dn-mongo|M-DN-PG|M-DN-ORACLE|M-DN-REDIS|M-DN-QDRANT|M-DN-MONGO)"}}}
         ]
     })
     print(f"🗑️ Deleted {result.deleted_count} invalid/mock entries.")

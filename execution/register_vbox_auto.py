@@ -16,14 +16,14 @@ def register_dbs():
     
     dbs = [
         {
-            "name": "NEXI-ORACLE-RAC1",
+            "name": "M-DN-ORACLE-RAC1",
             "host": "192.168.56.101",
             "service": "cdbrac", 
             "user": "sys",
             "password": "root"
         },
         {
-            "name": "NEXI-ORACLE-RAC2",
+            "name": "M-DN-ORACLE-RAC2",
             "host": "192.168.56.102",
             "service": "cdbrac",
             "user": "sys",

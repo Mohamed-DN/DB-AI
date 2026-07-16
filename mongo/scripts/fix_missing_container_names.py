@@ -8,10 +8,10 @@ def fix_container_names():
     mongo = MongoProxy()
     
     updates = [
-        ("NEXI-PG-MILANO-DEV", "nexi-pg-milano-dev"),
-        ("NEXI-PG-BRATISLAVA-DEV", "nexi-pg-bratislava-dev"),
+        ("M-DN-PG-MILANO-DEV", "m-dn-pg-milano-dev"),
+        ("M-DN-PG-BRATISLAVA-DEV", "m-dn-pg-bratislava-dev"),
         # Also check STG if it exists
-        ("NEXI-PG-MILANO-STG", "nexi-pg-milano-stg")
+        ("M-DN-PG-MILANO-STG", "m-dn-pg-milano-stg")
     ]
     
     print("Fixing missing db_name (container name)...")

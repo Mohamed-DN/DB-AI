@@ -3,20 +3,20 @@ version: '3.8'
 services:
   mongodb:
     image: mongo:7
-    container_name: nexi-cmdb-mongo
+    container_name: m-dn-cmdb-mongo
     ports:
       - "27017:27017"
     environment:
       MONGO_INITDB_ROOT_USERNAME: admin
       MONGO_INITDB_ROOT_PASSWORD: ${MONGO_PASSWORD:-admin123}
-      MONGO_INITDB_DATABASE: nexi_cmdb
+      MONGO_INITDB_DATABASE: m-dn_cmdb
     volumes:
       - mongodb_data:/data/db
     restart: unless-stopped
 
   mongo-express:
     image: mongo-express:latest
-    container_name: nexi-mongo-express
+    container_name: m-dn-mongo-express
     ports:
       - "8081:8081"
     environment:
@@ -36,7 +36,7 @@ services:
       - PUID=1000
       - PGID=1000
       - USER_NAME=admin
-      - USER_PASSWORD=nexi
+      - USER_PASSWORD=m-dn
       - PASSWORD_ACCESS=true
     ports:
       - "2244:2222"

@@ -31,7 +31,7 @@ class EmailSender:
             msg = MIMEMultipart()
             msg['From'] = self.from_email
             msg['To'] = to_email or ""
-            msg['Subject'] = f"Nexi DBA AI Alert: {subject}"
+            msg['Subject'] = f"M-DN DBA AI Alert: {subject}"
 
             html_body = f"""
             <html>
@@ -44,7 +44,7 @@ class EmailSender:
                     <p style="font-size: 16px;">{body}</p>
                     <hr>
                     <p style="color: gray; font-size: 12px;">
-                        Sent by Nexi DBA AI CriticalAlert Agent<br>
+                        Sent by M-DN DBA AI CriticalAlert Agent<br>
                         Time: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}
                     </p>
                 </div>
@@ -167,7 +167,7 @@ class CriticalAlertAgent:
         self.databases = []
         self.alerts_sent = []
         self.default_pg_user = os.getenv("POSTGRES_USER", "postgres")
-        self.default_pg_password = os.getenv("POSTGRES_PASSWORD", "nexi2024")
+        self.default_pg_password = os.getenv("POSTGRES_PASSWORD", "pippopippo_1234")
         self.default_pg_db = os.getenv("POSTGRES_DB", "postgres")
         
         # Connect to MongoDB via SyncMongoService
@@ -393,8 +393,8 @@ def main():
     agent = CriticalAlertAgent(email)
     
     # Add Docker lab databases - REMOVED, now using dynamic loading
-    # agent.add_database("localhost", 5433, "postgres", "nexi2024", "payments_dev", "PG-Milano-DEV")
-    # agent.add_database("localhost", 5434, "postgres", "nexi2024", "cards_dev", "PG-Bratislava-DEV")
+    # agent.add_database("localhost", 5433, "postgres", "pippopippo_1234", "payments_dev", "PG-Milano-DEV")
+    # agent.add_database("localhost", 5434, "postgres", "pippopippo_1234", "cards_dev", "PG-Bratislava-DEV")
     
     if args.once:
         agent.run_once()

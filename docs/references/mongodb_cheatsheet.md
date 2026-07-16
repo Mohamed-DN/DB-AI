@@ -1,6 +1,6 @@
 # 🍃 MongoDB Best Practices
 
-> **Context**: For the `mongo` layer of Nexi DBA.
+> **Context**: For the `mongo` layer of M-DN DBA.
 
 ## 🏗️ Schema Design
 - **Embed vs Reference**: Embed when data is accessed together (1:Few). Reference when data grows indefinitely (1:Many).
@@ -27,6 +27,6 @@ db.inventory_databases.createIndex({ "identity.db_unique_name": 1 }, { backgroun
 - **Backup**: `mongodump --uri="mongodb://..." --out=/backup/`
 - **Restore**: `mongorestore --uri="mongodb://..." /backup/`
 
-## 🤖 Nexi Architecture Notes
+## 🤖 M-DN Architecture Notes
 - We use **Time Series Collections** for metrics (`metrics_cpu`, `metrics_ram`) introduced in Mongo 5.0.
 - `inventory_databases` uses an "Attribute Pattern" for flexible schema support across Oracle/Postgres.

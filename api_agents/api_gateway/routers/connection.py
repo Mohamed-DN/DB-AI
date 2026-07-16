@@ -59,7 +59,7 @@ async def connect_db(db_name: str, mode: str = "sql"):
                 service = pdb_name
                 user = 'aiauto'
             
-            sqlplus_container = "nexi-oracle-cairo-primary"
+            sqlplus_container = "m-dn-oracle-cairo-primary"
             
             if mode == "bash":
                 cmd = f'start powershell -NoExit -Command "Write-Host \'Opening shell on Oracle Gateway ({sqlplus_container})...\' -ForegroundColor Cyan; docker exec -it {sqlplus_container} bash"'

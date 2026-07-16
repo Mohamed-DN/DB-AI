@@ -12,7 +12,7 @@ La Web API 1.5.x usa:
 Usage:
     client = CheckMKLegacyClient(
         base_url="http://cmk-server:8080",
-        site="nexi_monitor",
+        site="m-dn_monitor",
         username="cmkadmin",
         password="secret"
     )
@@ -423,7 +423,7 @@ if __name__ == "__main__":
     
     parser = argparse.ArgumentParser(description="CheckMK 1.5.x Legacy API CLI")
     parser.add_argument("--url", default="http://localhost:8080", help="CheckMK base URL")
-    parser.add_argument("--site", default="nexi_monitor", help="CheckMK site name")
+    parser.add_argument("--site", default="m-dn_monitor", help="CheckMK site name")
     parser.add_argument("--user", default="automation", help="Username")
     parser.add_argument("--secret", required=True, help="Automation secret")
     parser.add_argument("--test", action="store_true", help="Test connection")

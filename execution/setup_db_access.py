@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Setup Database Access for NEXI CMDB
+Setup Database Access for M-DN CMDB
 ===================================
 Creates users and configures access for:
 1. PostgreSQL: aiauto user + pg_hba.conf entries
@@ -13,17 +13,17 @@ import sys
 
 # PostgreSQL containers and their ports
 PG_CONTAINERS = [
-    "nexi-pg-milano-prod",
-    "nexi-pg-milano-stg", 
-    "nexi-pg-milano-dev",
-    "nexi-pg-bratislava-prod",
-    "nexi-pg-bratislava-dev",
+    "m-dn-pg-milano-prod",
+    "m-dn-pg-milano-stg", 
+    "m-dn-pg-milano-dev",
+    "m-dn-pg-bratislava-prod",
+    "m-dn-pg-bratislava-dev",
 ]
 
 # Oracle Docker containers
 ORACLE_CONTAINERS = [
-    "nexi-oracle-cairo-primary",
-    "nexi-oracle-cairo-replica",
+    "m-dn-oracle-cairo-primary",
+    "m-dn-oracle-cairo-replica",
 ]
 
 def run_docker_exec(container: str, command: str, user: str = None) -> tuple:
@@ -78,7 +78,7 @@ def setup_postgres_hba(container: str):
     
     # Add entries for Docker network ranges
     hba_entries = """
-# NEXI CMDB Access - Added by setup script
+# M-DN CMDB Access - Added by setup script
 host    all             aiauto          0.0.0.0/0               md5
 host    all             aiauto          172.16.0.0/12           md5
 host    all             aiauto          192.168.0.0/16          md5
@@ -95,7 +95,7 @@ host    all             all             samenet                 md5
         hba_path = "/var/lib/postgresql/data/pg_hba.conf"
     
     # Check if entries already exist
-    check_cmd = f"grep -q 'NEXI CMDB Access' {hba_path} && echo 'exists' || echo 'missing'"
+    check_cmd = f"grep -q 'M-DN CMDB Access' {hba_path} && echo 'exists' || echo 'missing'"
     _, check_result = run_docker_exec(container, check_cmd)
     
     if "exists" in check_result:
@@ -254,7 +254,7 @@ The VirtualBox Oracle RAC (192.168.56.101/102) requires manual configuration:
 
 def main():
     print("=" * 60)
-    print("NEXI CMDB - Database Access Setup")
+    print("M-DN CMDB - Database Access Setup")
     print("=" * 60)
     
     # Setup PostgreSQL containers

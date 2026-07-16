@@ -1,4 +1,4 @@
-# Nexi DBA AI - Enterprise Architecture Upgrade
+# M-DN DBA AI - Enterprise Architecture Upgrade
 
 ## Phase 1-2: Foundation ✅ COMPLETE
 - [x] CheckMK API client (in Bridge Worker)

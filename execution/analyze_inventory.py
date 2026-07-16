@@ -3,8 +3,8 @@ import os
 from pprint import pprint
 
 # Connect to MongoDB
-client = MongoClient('localhost', 28017, username='admin', password='nexi2024', authSource='admin')
-db = client.nexi_cmdb_v2
+client = MongoClient('localhost', 28017, username='admin', password='pippopippo_1234', authSource='admin')
+db = client.m-dn_cmdb_v2
 collection = db.inventory_databases
 
 # Write to file

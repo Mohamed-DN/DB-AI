@@ -15,17 +15,17 @@ def correct_fix():
     """)
     
     # 2. UPDATE CORRECT DOCUMENTS (Managed by Scout)
-    # Target: NEXI-PG-MILANO-DEV
-    print("Fixing NEXI-PG-MILANO-DEV...")
+    # Target: M-DN-PG-MILANO-DEV
+    print("Fixing M-DN-PG-MILANO-DEV...")
     mongo.execute_eval("""
     db.inventory_databases.updateOne(
-        { "identity.db_unique_name": "NEXI-PG-MILANO-DEV" },
+        { "identity.db_unique_name": "M-DN-PG-MILANO-DEV" },
         { 
             $set: {
                 "identity.db_engine": "POSTGRES",
                 "identity.engine": "POSTGRES",
                 "identity.type": "DEV",
-                "identity.host": "pg-milano-dev.nexi.lab",
+                "identity.host": "pg-milano-dev.m-dn.lab",
                 "identity.port": 5433,
                 "configuration.port": 5433,
                 "configuration.version": "15",
@@ -39,17 +39,17 @@ def correct_fix():
     )
     """)
 
-    # Target: NEXI-PG-BRATISLAVA-DEV
-    print("Fixing NEXI-PG-BRATISLAVA-DEV...")
+    # Target: M-DN-PG-BRATISLAVA-DEV
+    print("Fixing M-DN-PG-BRATISLAVA-DEV...")
     mongo.execute_eval("""
     db.inventory_databases.updateOne(
-        { "identity.db_unique_name": "NEXI-PG-BRATISLAVA-DEV" },
+        { "identity.db_unique_name": "M-DN-PG-BRATISLAVA-DEV" },
         { 
             $set: {
                 "identity.db_engine": "POSTGRES",
                 "identity.engine": "POSTGRES",
                 "identity.type": "DEV",
-                "identity.host": "pg-bratislava-dev.nexi.lab",
+                "identity.host": "pg-bratislava-dev.m-dn.lab",
                 "identity.port": 5434,
                 "configuration.port": 5434,
                 "configuration.version": "15",

@@ -61,7 +61,7 @@ sentinel:
   prediction_horizon_hours: 4
   confidence_threshold: 0.75
   data_lookback_days: 7
-  alert_email: dba-team@nexi.lab
+  alert_email: dba-team@m-dn.lab
 ```
 
 ---

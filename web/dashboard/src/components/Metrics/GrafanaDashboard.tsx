@@ -15,8 +15,8 @@ interface GrafanaDashboardProps {
  * GrafanaDashboard - Embeds Grafana dashboards or panels via iframe
  * 
  * Usage:
- *   <GrafanaDashboard dashboardUid="nexi-capacity" />
- *   <GrafanaDashboard dashboardUid="nexi-main" panelId={2} />
+ *   <GrafanaDashboard dashboardUid="m-dn-capacity" />
+ *   <GrafanaDashboard dashboardUid="m-dn-main" panelId={2} />
  */
 export const GrafanaDashboard: React.FC<GrafanaDashboardProps> = ({
     dashboardUid,

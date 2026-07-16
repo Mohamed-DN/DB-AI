@@ -262,8 +262,8 @@ class DatabaseMetadataExtractor:
             credentials.append((user, password))
         
         # Add defaults
-        credentials.append(("postgres", os.getenv("POSTGRES_PASSWORD", "nexi2024")))
-        credentials.append(("aiauto", os.getenv("AIAUTO_PASSWORD", "nexi2024")))
+        credentials.append(("postgres", os.getenv("POSTGRES_PASSWORD", "pippopippo_1234")))
+        credentials.append(("aiauto", os.getenv("AIAUTO_PASSWORD", "pippopippo_1234")))
         
         last_error = None
         
@@ -392,7 +392,7 @@ class DiscoveryAgent:
     def __init__(self):
         self.mongo = MongoProxy()
         self.default_pg_user = os.getenv("POSTGRES_USER", "postgres")
-        self.default_pg_password = os.getenv("POSTGRES_PASSWORD", "nexi2024")
+        self.default_pg_password = os.getenv("POSTGRES_PASSWORD", "pippopippo_1234")
         self.default_ssh_user = os.getenv("SSH_USER", "root")
         self.default_ssh_password = os.getenv("SSH_PASSWORD", "")
         self.default_ssh_key = os.getenv("SSH_KEY_PATH", os.path.expanduser("~/.ssh/id_rsa"))
@@ -404,10 +404,10 @@ class DiscoveryAgent:
         try:
             from pymongo import MongoClient
             # Use same credentials that worked for insert checks
-            # Hardcoded based on what worked in logs (admin/nexi2024)
+            # Hardcoded based on what worked in logs (admin/pippopippo_1234)
             # ideally read from env but fallback to known working
-            client = MongoClient("mongodb://admin:nexi2024@localhost:28017/")
-            db_name = os.environ.get("MONGODB_DB", "nexi_cmdb_v2")
+            client = MongoClient("mongodb://admin:pippopippo_1234@localhost:28017/")
+            db_name = os.environ.get("MONGODB_DB", "m-dn_cmdb_v2")
             db = client[db_name]
             gateways = list(db.gateways.find({}))
             client.close()
@@ -600,7 +600,7 @@ class DiscoveryAgent:
         # Add defaults requested by user
         credentials.append(("sys", "root"))
         credentials.append(("c##aiauto", "root"))
-        credentials.append(("c##aiauto", "nexi2024"))
+        credentials.append(("c##aiauto", "pippopippo_1234"))
         
         # Common service names to try
         service_names = ["cdbrac", "pdb1", "ORCL", "XE", "FREE", "ORCLCDB"]
@@ -820,8 +820,8 @@ class DiscoveryAgent:
         # Try PyMongo direct insertion first (more reliable for large docs)
         try:
             from pymongo import MongoClient
-            client = MongoClient("mongodb://admin:nexi2024@localhost:28017/")
-            db = client["nexi_cmdb_v2"]
+            client = MongoClient("mongodb://admin:pippopippo_1234@localhost:28017/")
+            db = client["m-dn_cmdb_v2"]
             db.inventory_databases.insert_one(doc)
             
             name = doc.get("identity", {}).get("db_unique_name", "UNKNOWN")

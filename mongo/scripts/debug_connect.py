@@ -8,7 +8,7 @@ def check_db():
     mongo = MongoProxy()
     
     # Check Milano DEV
-    name = "NEXI-PG-MILANO-DEV"
+    name = "M-DN-PG-MILANO-DEV"
     print(f"Checking {name}...")
     doc = mongo.execute_eval(f"db.inventory_databases.findOne({{ 'identity.db_unique_name': '{name}' }})")
     
@@ -25,7 +25,7 @@ def check_db():
         print("❌ ERROR: Document not found!")
 
     # Check Bratislava DEV
-    name = "NEXI-PG-BRATISLAVA-DEV"
+    name = "M-DN-PG-BRATISLAVA-DEV"
     print(f"\nChecking {name}...")
     doc = mongo.execute_eval(f"db.inventory_databases.findOne({{ 'identity.db_unique_name': '{name}' }})")
     if doc:

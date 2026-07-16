@@ -1,6 +1,6 @@
 """
 CheckMK Bridge Agent - Placeholder
-This agent syncs Nexi CMDB with CheckMK monitoring.
+This agent syncs M-DN CMDB with CheckMK monitoring.
 """
 import argparse
 import time

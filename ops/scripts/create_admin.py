@@ -7,8 +7,8 @@ pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
 async def create_admin():
     # Connect to MongoDB
-    client = AsyncIOMotorClient("mongodb://admin:nexi2024@localhost:28017")
-    db = client["nexi_cmdb_v2"]
+    client = AsyncIOMotorClient("mongodb://admin:pippopippo_1234@localhost:28017")
+    db = client["m-dn_cmdb_v2"]
     
     # Delete existing admin if any
     await db.users.delete_many({"username": "admin"})
@@ -19,7 +19,7 @@ async def create_admin():
     # Insert admin user
     await db.users.insert_one({
         "username": "admin",
-        "email": "admin@nexi.lab",
+        "email": "admin@m-dn.lab",
         "full_name": "System Administrator",
         "role": "admin",
         "databases_scope": ["*"],

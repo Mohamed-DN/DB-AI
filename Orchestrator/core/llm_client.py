@@ -40,7 +40,7 @@ class LLMClient:
     def analyze_alert(self, alert: Dict) -> Dict:
         """Analyze an alert and decide on action"""
         
-        system_prompt = """You are the AI Brain of the Nexi CMDB system. 
+        system_prompt = """You are the AI Brain of the M-DN CMDB system. 
         Your job is to analyze database alerts and decide on the appropriate response.
         If a database is DOWN, you MUST draft a high-priority email to the DBA team.
         Return your response in JSON format with fields: 'severity', 'action', 'email_subject', 'email_body'."""

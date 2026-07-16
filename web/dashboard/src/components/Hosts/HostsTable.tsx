@@ -21,7 +21,7 @@ export default function HostsTable() {
     if (databases) {
         databases.forEach((db: any) => {
             // FIX: Prioritize Container Name or DB Unique Name over Metrics Hostname
-            // Metrics often report generic names like "mongodb" or "postgres", while we want "nexi-cmdb-mongo"
+            // Metrics often report generic names like "mongodb" or "postgres", while we want "m-dn-cmdb-mongo"
             let hostname = db.connection?.container;
 
             if (!hostname || hostname === 'localhost' || hostname === '127.0.0.1') {

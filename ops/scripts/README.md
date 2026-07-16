@@ -1,6 +1,6 @@
 # 🛠️ Scripts
 
-> Automation scripts for deploying, managing, and maintaining the Nexi DBA AI environment.
+> Automation scripts for deploying, managing, and maintaining the M-DN DBA AI environment.
 
 This directory contains Powershell and Shell scripts to handle the lifecycle of the application, including starting containers, cleaning up resources, and managing models.
 

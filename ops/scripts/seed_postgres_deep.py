@@ -7,7 +7,7 @@ env_path = os.path.join(os.path.dirname(__file__), '../.env.v2')
 load_dotenv(env_path)
 
 MONGO_URI = f"mongodb://{os.getenv('MONGO_USERNAME', 'admin')}:{os.getenv('MONGO_PASSWORD', 'password')}@localhost:{os.getenv('MONGODB_PORT', '28017')}"
-DB_NAME = os.getenv('MONGODB_DB', 'nexi_cmdb_v2')
+DB_NAME = os.getenv('MONGODB_DB', 'm-dn_cmdb_v2')
 
 client = MongoClient(MONGO_URI)
 db = client[DB_NAME]
@@ -22,12 +22,12 @@ demo_db = {
         "service_name": "payment-core-01",
         "dbid": "system_732891029384",
         "engine": "POSTGRESQL",
-        "host": "nexi-pg-milano-prod",
+        "host": "m-dn-pg-milano-prod",
         "environment": "PROD"
     },
     "connection": {
         "type": "DOCKER",
-        "container": "nexi-pg-milano-prod",
+        "container": "m-dn-pg-milano-prod",
         "port": 5432
     },
     "infrastructure": {

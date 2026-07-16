@@ -4,11 +4,11 @@ import os
 
 def ensure_gateway():
     print("🔌 Connecting to MongoDB...")
-    client = MongoClient("mongodb://admin:nexi2024@localhost:28017/")
-    db = client["nexi_cmdb_v2"]
+    client = MongoClient("mongodb://admin:pippopippo_1234@localhost:28017/")
+    db = client["m-dn_cmdb_v2"]
     
     gateway_cairo = {
-        "_id": "nexi-gw-cairo",
+        "_id": "m-dn-gw-cairo",
         "name": "Cairo Gateway",
         "region": "CAIRO",
         "type": "SSH",
@@ -41,7 +41,7 @@ def ensure_gateway():
         {"$set": gateway_cairo},
         upsert=True
     )
-    print("✅ Gateway 'nexi-gw-cairo' upserted successfully.")
+    print("✅ Gateway 'm-dn-gw-cairo' upserted successfully.")
     
     # Allow time for propagation if needed (not really needed for Mongo)
     print("Gateway Config:")

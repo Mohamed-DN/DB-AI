@@ -378,8 +378,8 @@ class CriticalAlertAgent:
                 <p><strong>Database:</strong> {alert.get('db_unique_name', 'N/A')}</p>
                 <p><strong>Message:</strong> {alert.get('message', 'N/A')}</p>
                 <p><strong>Time:</strong> {alert['timestamp']}</p>
-                <p><strong>Source:</strong> Nexi AI Sentinel</p>
-                <p style="font-size: 12px; color: #666;">This is an automated alert from the Nexi DB AI Monitoring System.</p>
+                <p><strong>Source:</strong> M-DN AI Sentinel</p>
+                <p style="font-size: 12px; color: #666;">This is an automated alert from the M-DN DB AI Monitoring System.</p>
             </div>
         </body>
         </html>

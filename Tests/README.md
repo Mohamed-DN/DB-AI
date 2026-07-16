@@ -2,7 +2,7 @@
 
 > Integration and System Validation tests.
 
-This directory contains the testing suite for ensuring the stability and correctness of the Nexi DBA AI system.
+This directory contains the testing suite for ensuring the stability and correctness of the M-DN DBA AI system.
 
 ## 📂 Directory Contents
 

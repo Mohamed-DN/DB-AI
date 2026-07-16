@@ -13,11 +13,11 @@
     // BAO: Solo Nome e Mail 
     "bao": {
       "name": "Mario Rossi",
-      "email": "mario.rossi@nexi.it"
+      "email": "mario.rossi@m-dn.it"
     },
     
     // Contatti Operativi
-    "dl_team": "dl_carte_ops@nexi.it",
+    "dl_team": "dl_carte_ops@m-dn.it",
     "reperibilita_number": "+39 335 9988776" 
   },
 

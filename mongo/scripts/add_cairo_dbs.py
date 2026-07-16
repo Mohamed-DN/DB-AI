@@ -3,7 +3,7 @@ import os
 import datetime
 
 # Add project root to path
-sys.path.append(os.path.abspath("c:/AI-Nexi/Nexi_DB_AI"))
+sys.path.append(os.path.abspath("c:/AI-M-DN/M-DN_DB_AI"))
 
 from Orchestrator.src.mongo_proxy import MongoProxy
 
@@ -14,8 +14,8 @@ def add_cairo_dbs():
     dbs = [
         {
             "identity": {
-                "db_unique_name": "NEXI-ORACLE-CAIRO-PRIMARY",
-                "db_name": "nexi-oracle-cairo-primary",
+                "db_unique_name": "M-DN-ORACLE-CAIRO-PRIMARY",
+                "db_name": "m-dn-oracle-cairo-primary",
                 "engine": "ORACLE",
                 "environment": "PROD",
                 "host": "172.20.3.10",
@@ -29,7 +29,7 @@ def add_cairo_dbs():
                 "enabled": True,
                 "type": "GOLDENGATE",
                 "role": "PRIMARY",
-                "partner_instance": "NEXI-ORACLE-CAIRO-REPLICA",
+                "partner_instance": "M-DN-ORACLE-CAIRO-REPLICA",
                 "lag_seconds": 0
             },
             "location": {
@@ -39,8 +39,8 @@ def add_cairo_dbs():
         },
         {
             "identity": {
-                "db_unique_name": "NEXI-ORACLE-CAIRO-REPLICA",
-                "db_name": "nexi-oracle-cairo-replica",
+                "db_unique_name": "M-DN-ORACLE-CAIRO-REPLICA",
+                "db_name": "m-dn-oracle-cairo-replica",
                 "engine": "ORACLE",
                 "environment": "DR",
                 "host": "172.20.3.11",
@@ -54,7 +54,7 @@ def add_cairo_dbs():
                 "enabled": True,
                 "type": "GOLDENGATE",
                 "role": "REPLICA",
-                "partner_instance": "NEXI-ORACLE-CAIRO-PRIMARY",
+                "partner_instance": "M-DN-ORACLE-CAIRO-PRIMARY",
                 "lag_seconds": 2
             },
             "location": {

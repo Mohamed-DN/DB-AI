@@ -6,9 +6,9 @@ import time
 import random
 from concurrent.futures import ThreadPoolExecutor
 
-BASE_URL = "http://localhost:8080/nexi_monitor/check_mk/api/1.0"
+BASE_URL = "http://localhost:8080/m-dn_monitor/check_mk/api/1.0"
 USERNAME = "cmkadmin"
-PASSWORD = "nexi2024"
+PASSWORD = "pippopippo_1234"
 HEADERS = {
     "Authorization": f"Bearer {USERNAME} {PASSWORD}",
     "Content-Type": "application/json",
@@ -34,7 +34,7 @@ def create_host(i):
     region = random.choice(regions)
     env = random.choice(envs)
     db_type = random.choice(types)
-    host_name = f"nexi-{db_type}-{region}-{env}-{i:04d}"
+    host_name = f"m-dn-{db_type}-{region}-{env}-{i:04d}"
     
     payload = {
         "folder": "/",

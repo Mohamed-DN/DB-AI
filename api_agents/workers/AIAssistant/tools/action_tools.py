@@ -1,5 +1,5 @@
 """
-Action Tools for Nexi AI Admin
+Action Tools for M-DN AI Admin
 Allows the AI to perform system administration tasks.
 """
 import subprocess
@@ -10,7 +10,7 @@ def manage_container(container_name: str, action: str) -> str:
     """Manage a Docker container (start, stop, restart).
     
     Args:
-        container_name: Name of the container (e.g., 'nexi-cmdb-mongo', 'nexi-postgres')
+        container_name: Name of the container (e.g., 'm-dn-cmdb-mongo', 'm-dn-postgres')
         action: One of 'start', 'stop', 'restart'
         
     Returns:

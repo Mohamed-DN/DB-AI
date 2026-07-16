@@ -16,8 +16,8 @@ from datetime import datetime
 sys.path.append(os.getcwd())
 
 # Ensure Env Vars for V2
-os.environ["MONGODB_DB"] = "nexi_cmdb_v2"
-os.environ["MONGO_CONTAINER"] = "nexi-mongodb"
+os.environ["MONGODB_DB"] = "m-dn_cmdb_v2"
+os.environ["MONGO_CONTAINER"] = "m-dn-mongodb"
 os.environ["MONGO_USERNAME"] = "admin"
 os.environ["MONGO_PASSWORD"] = "admin123"
 
@@ -25,8 +25,8 @@ from api_agents.workers.discovery.discovery_agent import DiscoveryAgent
 
 def clean_and_discover():
     # 1. Connect and Clean
-    c = MongoClient('localhost', 28017, username='admin', password='nexi2024')
-    db = c['nexi_cmdb_v2']
+    c = MongoClient('localhost', 28017, username='admin', password='pippopippo_1234')
+    db = c['m-dn_cmdb_v2']
     
     deleted = db.inventory_databases.delete_many({})
     print(f"🧹 CLEANUP: Removed {deleted.deleted_count} databases from inventory.")

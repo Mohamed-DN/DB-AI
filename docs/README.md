@@ -1,6 +1,6 @@
 # 📚 Documentation Index
 
-> **Central Knowledge Repository for Nexi DBA AI**
+> **Central Knowledge Repository for M-DN DBA AI**
 
 ## 🏗️ Architecture & Design
 - **[System Architecture](./architecture/system_architecture.md)**: High-level design diagram and components.

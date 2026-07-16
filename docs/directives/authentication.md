@@ -7,7 +7,7 @@ Secure all API endpoints using JWT-based authentication with Role-Based Access C
 
 ## Inputs
 - **User Credentials**: Username and Password submitted via login form.
-- **JWT Secret**: `NEXI_JWT_SECRET` environment variable (auto-generated if missing).
+- **JWT Secret**: `M-DN_JWT_SECRET` environment variable (auto-generated if missing).
 - **JWT Algorithm**: HS256 (default).
 
 ## Execution Scripts (Layer 3)
@@ -53,7 +53,7 @@ sequenceDiagram
    - User with `viewer` role trying `admin` action -> Return `403 Forbidden`.
 
 3. **Missing Secret**:
-   - If `NEXI_JWT_SECRET` is not set, the system generates a random one on startup (invalidating previous tokens).
+   - If `M-DN_JWT_SECRET` is not set, the system generates a random one on startup (invalidating previous tokens).
 
 ## Roles
 - **Admin**: Full access to all endpoints.

@@ -66,8 +66,8 @@ class ScraperConfig:
     graphite_port: int = 2003
     
     # MongoDB for target discovery
-    mongo_uri: str = "mongodb://admin:nexi2024@localhost:28017/"
-    mongo_db: str = "nexi_cmdb_v2"
+    mongo_uri: str = "mongodb://admin:pippopippo_1234@localhost:28017/"
+    mongo_db: str = "m-dn_cmdb_v2"
     discover_from_mongo: bool = True
     
     # Scraping settings
@@ -644,7 +644,7 @@ def main():
     parser.add_argument("--graphite-host", default="localhost", help="Graphite/VictoriaMetrics host")
     parser.add_argument("--graphite-port", type=int, default=2003, help="Graphite port")
     parser.add_argument("--mongo-uri", help="MongoDB URI for target discovery")
-    parser.add_argument("--mongo-db", default="nexi_cmdb_v2", help="MongoDB database name")
+    parser.add_argument("--mongo-db", default="m-dn_cmdb_v2", help="MongoDB database name")
     parser.add_argument("--debug", action="store_true", help="Enable debug logging")
     
     args = parser.parse_args()
@@ -668,7 +668,7 @@ def main():
         config.targets = discover_targets_from_mongo(args.mongo_uri, args.mongo_db)
     else:
         # Try default MongoDB
-        mongo_uri = os.getenv("MONGO_URI", "mongodb://admin:nexi2024@localhost:28017/")
+        mongo_uri = os.getenv("MONGO_URI", "mongodb://admin:pippopippo_1234@localhost:28017/")
         config.targets = discover_targets_from_mongo(mongo_uri, args.mongo_db)
     
     if not config.targets:

@@ -11,13 +11,13 @@ from dotenv import load_dotenv
 load_dotenv()
 
 # Create Celery app
-app = Celery('nexi_dba')
+app = Celery('m-dn_dba')
 
 # Redis configuration
 REDIS_HOST = os.getenv('REDIS_HOST', 'localhost')
 REDIS_PORT = os.getenv('REDIS_PORT', '7379')
 REDIS_DB = os.getenv('REDIS_DB', '0')
-REDIS_PASSWORD = os.getenv('REDIS_PASSWORD', 'nexi2024')
+REDIS_PASSWORD = os.getenv('REDIS_PASSWORD', 'pippopippo_1234')
 
 BROKER_URL = f"redis://:{REDIS_PASSWORD}@{REDIS_HOST}:{REDIS_PORT}/{REDIS_DB}"
 RESULT_BACKEND = f"redis://:{REDIS_PASSWORD}@{REDIS_HOST}:{REDIS_PORT}/{int(REDIS_DB)+1}"

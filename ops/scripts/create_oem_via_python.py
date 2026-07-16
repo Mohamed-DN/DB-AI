@@ -128,16 +128,16 @@ print("\n📈 Inserting sample data...")
 
 # Targets
 cursor.execute("DELETE FROM mgmt_target")
-cursor.execute("INSERT INTO mgmt_target (target_guid, target_name, target_type, type_qualifier3, host_name) VALUES (HEXTORAW('A1B2C3D4E5F60001A1B2C3D4E5F60001'), 'PRODDB1', 'oracle_database', 'SINGLE', 'dbserver1.nexi.local')")
-cursor.execute("INSERT INTO mgmt_target (target_guid, target_name, target_type, type_qualifier3, host_name) VALUES (HEXTORAW('A1B2C3D4E5F60002A1B2C3D4E5F60002'), 'PRODDB2', 'oracle_database', 'SINGLE', 'dbserver2.nexi.local')")
-cursor.execute("INSERT INTO mgmt_target (target_guid, target_name, target_type, type_qualifier3, host_name) VALUES (HEXTORAW('A1B2C3D4E5F60003A1B2C3D4E5F60003'), 'DEVDB1', 'oracle_database', 'SINGLE', 'devserver1.nexi.local')")
+cursor.execute("INSERT INTO mgmt_target (target_guid, target_name, target_type, type_qualifier3, host_name) VALUES (HEXTORAW('A1B2C3D4E5F60001A1B2C3D4E5F60001'), 'PRODDB1', 'oracle_database', 'SINGLE', 'dbserver1.m-dn.local')")
+cursor.execute("INSERT INTO mgmt_target (target_guid, target_name, target_type, type_qualifier3, host_name) VALUES (HEXTORAW('A1B2C3D4E5F60002A1B2C3D4E5F60002'), 'PRODDB2', 'oracle_database', 'SINGLE', 'dbserver2.m-dn.local')")
+cursor.execute("INSERT INTO mgmt_target (target_guid, target_name, target_type, type_qualifier3, host_name) VALUES (HEXTORAW('A1B2C3D4E5F60003A1B2C3D4E5F60003'), 'DEVDB1', 'oracle_database', 'SINGLE', 'devserver1.m-dn.local')")
 print("  ✅ 3 targets inserted")
 
 # Hosts
 cursor.execute("DELETE FROM mgmt_os_hw_summary")
-cursor.execute("INSERT INTO mgmt_os_hw_summary VALUES ('dbserver1.nexi.local', 65536, 32, 4, 16, 32, 'NO')")
-cursor.execute("INSERT INTO mgmt_os_hw_summary VALUES ('dbserver2.nexi.local', 131072, 64, 8, 32, 64, 'NO')")
-cursor.execute("INSERT INTO mgmt_os_hw_summary VALUES ('devserver1.nexi.local', 32768, 16, 2, 8, 16, 'YES')")
+cursor.execute("INSERT INTO mgmt_os_hw_summary VALUES ('dbserver1.m-dn.local', 65536, 32, 4, 16, 32, 'NO')")
+cursor.execute("INSERT INTO mgmt_os_hw_summary VALUES ('dbserver2.m-dn.local', 131072, 64, 8, 32, 64, 'NO')")
+cursor.execute("INSERT INTO mgmt_os_hw_summary VALUES ('devserver1.m-dn.local', 32768, 16, 2, 8, 16, 'YES')")
 print("  ✅ 3 hosts inserted")
 
 # Current metrics

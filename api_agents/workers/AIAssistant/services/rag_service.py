@@ -17,7 +17,7 @@ class RAGService:
         # Simple heuristic or env var for port. Defaulting to 6333 (V1) but config should handle V2 (7333)
         self.qdrant_port = int(os.getenv("QDRANT_PORT", 6333)) 
         
-        self.collection_name = os.getenv("QDRANT_COLLECTION", "nexi_knowledge")
+        self.collection_name = os.getenv("QDRANT_COLLECTION", "m-dn_knowledge")
         
         try:
             # Handle if host already has port (e.g. from env var)

@@ -41,7 +41,7 @@ const Login: React.FC<LoginProps> = ({ onLoginSuccess }) => {
                     <div className="login-logo">
                         <span className="logo-icon">🛡️</span>
                     </div>
-                    <h1 className="login-title">Nexi DBA AI</h1>
+                    <h1 className="login-title">M-DN DBA AI</h1>
                     <p className="login-subtitle">Secure Access Portal</p>
                 </div>
 
@@ -104,7 +104,7 @@ const Login: React.FC<LoginProps> = ({ onLoginSuccess }) => {
 
                 {/* Footer */}
                 <div className="login-footer">
-                    <p>Protected by Nexi Security</p>
+                    <p>Protected by M-DN Security</p>
                     <p className="version">v3.2.0</p>
                 </div>
             </div>

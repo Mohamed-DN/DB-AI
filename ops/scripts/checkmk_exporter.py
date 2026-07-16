@@ -19,9 +19,9 @@ from prometheus_client import (
 )
 
 # Configuration
-CHECKMK_URL = os.getenv("CHECKMK_URL", "http://localhost:8080/nexi_monitor/check_mk/api/1.0")
+CHECKMK_URL = os.getenv("CHECKMK_URL", "http://localhost:8080/m-dn_monitor/check_mk/api/1.0")
 CHECKMK_USER = os.getenv("CHECKMK_USER", "cmkadmin")
-CHECKMK_PASSWORD = os.getenv("CHECKMK_PASSWORD", "nexi2024")
+CHECKMK_PASSWORD = os.getenv("CHECKMK_PASSWORD", "pippopippo_1234")
 EXPORTER_PORT = int(os.getenv("CHECKMK_EXPORTER_PORT", "9106"))
 
 # Prometheus Registry
@@ -196,7 +196,7 @@ def parse_perf_data(perf_string: str) -> dict:
 def collect_metrics():
     """Collect all metrics from CheckMK"""
     start_time = time.time()
-    site = "nexi_monitor"
+    site = "m-dn_monitor"
     
     # Fetch hosts
     hosts = fetch_hosts()
@@ -204,8 +204,8 @@ def collect_metrics():
     for host_data in hosts:
         host_name = host_data.get("title") or host_data.get("id", "unknown")
         
-        # Skip non-Nexi hosts
-        if not host_name.lower().startswith("nexi-"):
+        # Skip non-M-DN hosts
+        if not host_name.lower().startswith("m-dn-"):
             continue
         
         # Get host extensions

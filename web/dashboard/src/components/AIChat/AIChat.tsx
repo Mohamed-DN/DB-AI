@@ -25,7 +25,7 @@ export default function AIChat() {
             setMessages([
                 {
                     role: 'assistant',
-                    content: `Ciao ${user.full_name || user.username}! 👋 Sono l'assistente AI di Nexi CMDB. Posso aiutarti con informazioni sui database, alert di sistema, o qualsiasi domanda sull'infrastruttura.`,
+                    content: `Ciao ${user.full_name || user.username}! 👋 Sono l'assistente AI di M-DN CMDB. Posso aiutarti con informazioni sui database, alert di sistema, o qualsiasi domanda sull'infrastruttura.`,
                     timestamp: new Date(),
                 },
             ]);

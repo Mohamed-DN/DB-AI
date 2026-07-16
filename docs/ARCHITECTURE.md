@@ -1,12 +1,12 @@
 # 🏗️ System Architecture
 
-> **The Single Source of Truth** for Nexi DBA AI Architecture.
+> **The Single Source of Truth** for M-DN DBA AI Architecture.
 
 ---
 
 ## 🎯 High-Level Overview
 
-Nexi DBA AI is an **Autonomous Database Administration System** built on a **3-Layer Architecture**:
+M-DN DBA AI is an **Autonomous Database Administration System** built on a **3-Layer Architecture**:
 1.  **Directive Layer**: Standard Operating Procedures (SOPs) that define *WHAT* to do.
 2.  **Orchestration Layer**: The AI Brain that decides *WHEN* and *WHICH* tools to use.
 3.  **Execution Layer**: Deterministic Agents and Scripts that perform the *HOW*.

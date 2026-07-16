@@ -1,7 +1,7 @@
 from pymongo import MongoClient
 try:
-    c = MongoClient('localhost', 28017, username='admin', password='nexi2024')
-    db = c['nexi_cmdb_v2']
+    c = MongoClient('localhost', 28017, username='admin', password='pippopippo_1234')
+    db = c['m-dn_cmdb_v2']
     print(f'Total DBs: {db.inventory_databases.count_documents({})}')
     
     oracles = list(db.inventory_databases.find({'identity.family': 'ORACLE'}))

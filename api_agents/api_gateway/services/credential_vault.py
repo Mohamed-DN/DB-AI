@@ -1,5 +1,5 @@
 """
-Credential Encryption Service for Nexi DBA AI
+Credential Encryption Service for M-DN DBA AI
 AES-256-GCM encryption for database credentials stored in MongoDB.
 
 This provides:
@@ -27,10 +27,10 @@ class CredentialVault:
     """
     
     # Environment variable for master key
-    MASTER_KEY_ENV = "NEXI_MASTER_KEY"
+    MASTER_KEY_ENV = "M-DN_MASTER_KEY"
     
     # Salt for key derivation (should be consistent)
-    SALT_ENV = "NEXI_ENCRYPTION_SALT"
+    SALT_ENV = "M-DN_ENCRYPTION_SALT"
     
     def __init__(self, master_key: Optional[str] = None):
         """
@@ -38,14 +38,14 @@ class CredentialVault:
         
         Args:
             master_key: Optional master key. If not provided, reads from
-                       NEXI_MASTER_KEY environment variable.
+                       M-DN_MASTER_KEY environment variable.
         """
         self._master_key = master_key or os.getenv(self.MASTER_KEY_ENV)
         
         if not self._master_key:
             # Generate a default key for development (NOT for production!)
-            self._master_key = "nexi-dev-master-key-change-in-production"
-            print("⚠️  WARNING: Using default master key. Set NEXI_MASTER_KEY for production!")
+            self._master_key = "m-dn-dev-master-key-change-in-production"
+            print("⚠️  WARNING: Using default master key. Set M-DN_MASTER_KEY for production!")
         
         # Get or generate salt
         salt_b64 = os.getenv(self.SALT_ENV)
@@ -53,7 +53,7 @@ class CredentialVault:
             self._salt = base64.b64decode(salt_b64)
         else:
             # Use a consistent salt for development
-            self._salt = b"nexi_salt_dev_16"  # 16 bytes
+            self._salt = b"m-dn_salt_dev_16"  # 16 bytes
         
         # Derive encryption key using PBKDF2
         self._encryption_key = self._derive_key(self._master_key, self._salt)
@@ -226,10 +226,10 @@ if __name__ == "__main__":
     import sys
     
     if len(sys.argv) > 1 and sys.argv[1] == "generate":
-        print("🔐 Nexi DBA AI - Credential Vault Key Generator")
+        print("🔐 M-DN DBA AI - Credential Vault Key Generator")
         print("=" * 50)
-        print(f"NEXI_MASTER_KEY={CredentialVault.generate_master_key()}")
-        print(f"NEXI_ENCRYPTION_SALT={CredentialVault.generate_salt()}")
+        print(f"M-DN_MASTER_KEY={CredentialVault.generate_master_key()}")
+        print(f"M-DN_ENCRYPTION_SALT={CredentialVault.generate_salt()}")
         print("=" * 50)
         print("Add these to your .env file for production!")
     else:

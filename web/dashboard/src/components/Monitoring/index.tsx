@@ -5,8 +5,8 @@ export function MonitoringDashboard() {
     const [activeView, setActiveView] = useState<'grafana' | 'checkmk'>('grafana');
 
     // Updated to use the new CheckMK dashboard we provisioned
-    const grafanaUrl = "http://localhost:3003/d/checkmk-nexi/checkmk-monitoring?orgId=1&refresh=30s&kiosk&from=now-1h&to=now";
-    const checkmkUrl = "http://localhost:8080/nexi_monitor/check_mk/index.py?start_url=%2Fnexi_monitor%2Fcheck_mk%2Fview.py%3Fview_name%3Dallhosts";
+    const grafanaUrl = "http://localhost:3003/d/checkmk-m-dn/checkmk-monitoring?orgId=1&refresh=30s&kiosk&from=now-1h&to=now";
+    const checkmkUrl = "http://localhost:8080/m-dn_monitor/check_mk/index.py?start_url=%2Fm-dn_monitor%2Fcheck_mk%2Fview.py%3Fview_name%3Dallhosts";
 
     const [userRole, setUserRole] = useState<'admin' | 'dev' | 'viewer'>('admin');
 
@@ -42,7 +42,7 @@ export function MonitoringDashboard() {
                         Open Grafana
                     </a>
                     <a
-                        href="http://localhost:8080/nexi_monitor"
+                        href="http://localhost:8080/m-dn_monitor"
                         target="_blank"
                         rel="noopener noreferrer"
                         className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-green-600 to-emerald-600 rounded-lg font-medium text-white hover:opacity-90 transition-all shadow-lg shadow-green-500/20"
@@ -103,7 +103,7 @@ export function MonitoringDashboard() {
                 {activeView === 'grafana' && (
                     <div className="absolute bottom-4 right-4 bg-slate-900/90 p-4 rounded-lg text-xs text-slate-400 max-w-xs">
                         Configured for Grafana on port 3003. <br />
-                        Default user: admin / NexiGrafana2024!
+                        Default user: admin / pippopippo_1234
                     </div>
                 )}
             </div>

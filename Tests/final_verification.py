@@ -17,14 +17,14 @@ def check_docker_containers():
     try:
         output = subprocess.check_output(["docker", "ps", "--format", "{{.Names}}"]).decode()
         required = [
-            "nexi-frontend", 
-            "nexi-backend", 
-            "nexi-celery-worker", 
-            "nexi-oem-collector", 
-            "nexi-sentinel-predictor",
-            "nexi-mongodb2",
-            "nexi-redis-core",
-            "nexi-victoriametrics"
+            "m-dn-frontend", 
+            "m-dn-backend", 
+            "m-dn-celery-worker", 
+            "m-dn-oem-collector", 
+            "m-dn-sentinel-predictor",
+            "m-dn-mongodb2",
+            "m-dn-redis-core",
+            "m-dn-victoriametrics"
         ]
         all_up = True
         for r in required:

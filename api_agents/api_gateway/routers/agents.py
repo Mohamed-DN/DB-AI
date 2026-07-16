@@ -132,7 +132,7 @@ def trigger_check():
     """Trigger CriticalAlert Agent"""
     try:
         script_path = os.path.abspath(os.path.join(os.path.dirname(__file__), '../../workers/CriticalAlert/critical_alert_agent.py'))
-        email = os.getenv("ALERT_EMAIL") or os.getenv("SMTP_USER") or "admin@nexi.com"
+        email = os.getenv("ALERT_EMAIL") or os.getenv("SMTP_USER") or "admin@m-dn.com"
         subprocess.Popen(
             [sys.executable, script_path, "--email", email, "--once"],
             stdout=subprocess.DEVNULL,

@@ -57,8 +57,8 @@ try:
     # More robust SQL command with proper formatting
     commands = [
         "export ORACLE_SID=cdbrac1",
-        "echo 'ALTER USER system IDENTIFIED BY Nexi2024;' | sqlplus -s / as sysdba",
-        "echo 'ALTER SESSION SET CONTAINER=FREEPDB1; ALTER USER system IDENTIFIED BY Nexi2024;' | sqlplus -s / as sysdba"
+        "echo 'ALTER USER system IDENTIFIED BY M-DN2024;' | sqlplus -s / as sysdba",
+        "echo 'ALTER SESSION SET CONTAINER=FREEPDB1; ALTER USER system IDENTIFIED BY M-DN2024;' | sqlplus -s / as sysdba"
     ]
     
     for cmd in commands:
@@ -74,12 +74,12 @@ try:
     ssh.close()
     
     print("\n  ✅ Password reset commands executed")
-    print("  🔄 Testing new password 'Nexi2024'...")
+    print("  🔄 Testing new password 'M-DN2024'...")
     
     # Test new password
     dsn = f"{VM_CONFIG['host']}:{VM_CONFIG['port']}/{VM_CONFIG['service']}"
-    conn = oracledb.connect(user='system', password='Nexi2024', dsn=dsn)
-    print(f"\n  🎉 SUCCESS! New password 'Nexi2024' works!")
+    conn = oracledb.connect(user='system', password='M-DN2024', dsn=dsn)
+    print(f"\n  🎉 SUCCESS! New password 'M-DN2024' works!")
     conn.close()
     
 except Exception as e:

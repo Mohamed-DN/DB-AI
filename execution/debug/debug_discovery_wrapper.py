@@ -9,7 +9,7 @@ sys.stdout.reconfigure(encoding='utf-8')
 from api_agents.workers.discovery.discovery_agent import DiscoveryAgent
 
 def main():
-    log_file = "c:\\AI-Nexi\\Nexi_DB_AI\\discovery_agent_debug.log"
+    log_file = "c:\\AI-M-DN\\M-DN_DB_AI\\discovery_agent_debug.log"
     print(f"Redirecting output to {log_file}")
     
     with open(log_file, 'w', encoding='utf-8') as f:

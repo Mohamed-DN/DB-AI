@@ -42,16 +42,16 @@ flowchart LR
 ### Core Sentinel Engine
 | File | Purpose |
 |------|---------|
-| [oem_collector.py](file:///c:/AI-Nexi/Nexi_DB_AI/api_agents/workers/OEM_Collector/oem_collector.py) | **NEW:** Oracle OEM metrics collector |
-| [sentinel_rag_ingester.py](file:///c:/AI-Nexi/Nexi_DB_AI/api_agents/workers/Sentinel/sentinel_rag_ingester.py) | **NEW:** SQL/Doc ingestion for RAG |
-| [sentinel_workflow.py](file:///c:/AI-Nexi/Nexi_DB_AI/api_agents/workers/Sentinel/sentinel_workflow.py) | Main orchestration workflow |
-| [predictor_agent.py](file:///c:/AI-Nexi/Nexi_DB_AI/api_agents/workers/Sentinel/predictor_agent.py) | Forecasting agent (ARIMA/Prophet) |
-| [verifier_agent.py](file:///c:/AI-Nexi/Nexi_DB_AI/api_agents/workers/Sentinel/verifier_agent.py) | LLM verification agent |
+| [oem_collector.py](file:///c:/AI-M-DN/M-DN_DB_AI/api_agents/workers/OEM_Collector/oem_collector.py) | **NEW:** Oracle OEM metrics collector |
+| [sentinel_rag_ingester.py](file:///c:/AI-M-DN/M-DN_DB_AI/api_agents/workers/Sentinel/sentinel_rag_ingester.py) | **NEW:** SQL/Doc ingestion for RAG |
+| [sentinel_workflow.py](file:///c:/AI-M-DN/M-DN_DB_AI/api_agents/workers/Sentinel/sentinel_workflow.py) | Main orchestration workflow |
+| [predictor_agent.py](file:///c:/AI-M-DN/M-DN_DB_AI/api_agents/workers/Sentinel/predictor_agent.py) | Forecasting agent (ARIMA/Prophet) |
+| [verifier_agent.py](file:///c:/AI-M-DN/M-DN_DB_AI/api_agents/workers/Sentinel/verifier_agent.py) | LLM verification agent |
 
 ### Ops & Monitoring
 | File | Purpose |
 |------|---------|
-| [sentinel_overview.json](file:///c:/AI-Nexi/Nexi_DB_AI/ops/monitoring/grafana/dashboards/sentinel_overview.json) | **NEW:** Grafana dashboard model |
+| [sentinel_overview.json](file:///c:/AI-M-DN/M-DN_DB_AI/ops/monitoring/grafana/dashboards/sentinel_overview.json) | **NEW:** Grafana dashboard model |
 
 ---
 

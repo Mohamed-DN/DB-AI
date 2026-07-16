@@ -288,7 +288,7 @@ function AppContent() {
             <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center">
               <Database className="w-4 h-4 text-white" />
             </div>
-            <h1 className="text-lg font-bold tracking-wider">NEXI SENTINEL</h1>
+            <h1 className="text-lg font-bold tracking-wider">M-DN SENTINEL</h1>
           </div>
 
           {/* Navigation */}

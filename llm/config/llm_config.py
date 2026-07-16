@@ -1,5 +1,5 @@
 """
-LLM Configuration for Nexi DBA AI
+LLM Configuration for M-DN DBA AI
 Optimized for RTX 5070 Ti (16GB VRAM)
 """
 import os

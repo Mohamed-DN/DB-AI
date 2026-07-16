@@ -40,7 +40,7 @@ def check_frontend():
         return False
 
 def check_mongo():
-    uri = "mongodb://admin:nexi2024@localhost:28017/"
+    uri = "mongodb://admin:pippopippo_1234@localhost:28017/"
     print(f"Testing MongoDB: {uri} ... ", end="")
     try:
         client = MongoClient(uri, serverSelectionTimeoutMS=2000)
@@ -56,7 +56,7 @@ def check_redis():
     port = 7379
     print(f"Testing Redis: {host}:{port} ... ", end="")
     try:
-        r = redis.Redis(host=host, port=port, password="nexi2024", socket_timeout=2)
+        r = redis.Redis(host=host, port=port, password="pippopippo_1234", socket_timeout=2)
         r.ping()
         print("✅ UP")
         return True

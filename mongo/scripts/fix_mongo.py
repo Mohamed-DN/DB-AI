@@ -7,18 +7,18 @@ from Orchestrator.src.mongo_proxy import MongoProxy
 try:
     m = MongoProxy()
     
-    # Document for nexi-cmdb-mongo
+    # Document for m-dn-cmdb-mongo
     doc = {
         "identity": {
-            "db_unique_name": "NEXI_CMDB_MONGO",
-            "db_name": "nexi-cmdb-mongo", # Container name
+            "db_unique_name": "M-DN_CMDB_MONGO",
+            "db_name": "m-dn-cmdb-mongo", # Container name
             "engine": "MONGODB",
             "topology": "STANDALONE",
             "environment": "DOCKER_LAB"
         },
         "connection": {
             "type": "DOCKER",
-            "container": "nexi-cmdb-mongo",
+            "container": "m-dn-cmdb-mongo",
             "host": "localhost",
             "port": 28017
         },
@@ -34,10 +34,10 @@ try:
     
     # Upsert
     m.upsert_database(doc)
-    print("✅ Added/Updated NEXI_CMDB_MONGO")
+    print("✅ Added/Updated M-DN_CMDB_MONGO")
     
     # Clean others if they exist now
-    m.execute_eval("db.inventory_databases.deleteMany({'identity.db_unique_name': {$in: ['mongodb', 'nexi-mongodb']}})")
+    m.execute_eval("db.inventory_databases.deleteMany({'identity.db_unique_name': {$in: ['mongodb', 'm-dn-mongodb']}})")
     print("✅ Cleaned duplicates")
 
 except Exception as e:

@@ -3,7 +3,7 @@
     "service_info": {
         "name": "Gestione Carte di Credito",
         "service_now_id": "SN_APP_00912",
-        "snow_group": "DBA_OPERATIONS_NEXI",
+        "snow_group": "DBA_OPERATIONS_M-DN",
         "status": "ACTIVE | INACTIVE | DEPRECATED",
         "criticality": "HIGH | MEDIUM | LOW",
         "business_unit": "Pagamenti Digitali"
@@ -11,16 +11,16 @@
     "contacts": {
         "bao": {
             "name": "Mario Rossi",
-            "email": "mario.rossi@nexi.it",
+            "email": "mario.rossi@m-dn.it",
             "uigp_id": "UIGP_12345"
         },
         "bao_backup": {
             "name": "Luigi Verdi",
-            "email": "luigi.verdi@nexi.it"
+            "email": "luigi.verdi@m-dn.it"
         },
-        "dl_team": "dl_carte_ops@nexi.it",
+        "dl_team": "dl_carte_ops@m-dn.it",
         "reperibilita_number": "+39 335 9988776",
-        "escalation_manager": "anna.bianchi@nexi.it"
+        "escalation_manager": "anna.bianchi@m-dn.it"
     },
     "technical_mapping": [
         {

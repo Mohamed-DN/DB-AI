@@ -156,7 +156,7 @@ class TheWatcher:
         print("👁️ 'The Watcher' started - Deep Log Forensics")
         
         # Hardcoded verification target for the demo
-        target = "nexi-oracle-cairo-primary" 
+        target = "m-dn-oracle-cairo-primary" 
         
         # For `docker logs -f`, we simply spawn the thread.
         # Note: `docker logs` combines stdout/stderr.
@@ -209,7 +209,7 @@ if __name__ == "__main__":
     
     # Manually attach the specialized Docker Streamer
     # In a full dynamic version, this would be in the discovery loop
-    target_name = "nexi-oracle-cairo-primary"
+    target_name = "m-dn-oracle-cairo-primary"
     streamer = DockerLogStreamer(target_name, "DOCKER_API", watcher.mongo)
     streamer.start()
     

@@ -1,5 +1,5 @@
 """
-Agent Orchestrator - Central entry point for all Nexi DBA AI Agents
+Agent Orchestrator - Central entry point for all M-DN DBA AI Agents
 Provides unified interface for starting, stopping, and managing agents.
 """
 import os
@@ -99,7 +99,7 @@ def list_agents():
     print("-" * 50)
 
 def main():
-    parser = argparse.ArgumentParser(description="Nexi DBA AI Agent Orchestrator")
+    parser = argparse.ArgumentParser(description="M-DN DBA AI Agent Orchestrator")
     parser.add_argument("agent", nargs="?", help="Agent name to run")
     parser.add_argument("--once", action="store_true", help="Run once and exit")
     parser.add_argument("--list", action="store_true", help="List available agents")

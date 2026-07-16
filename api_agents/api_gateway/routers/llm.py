@@ -132,7 +132,7 @@ async def get_rag_status():
         OLLAMA_CONFIG.get('base_url'),
         "http://localhost:11434",
         "http://localhost:12434", # V2 Port
-        "http://nexi-ollama2:11434" # Internal Docker DNS
+        "http://m-dn-ollama2:11434" # Internal Docker DNS
     ]
     # Filter nones and duplicates
     ollama_urls = list(dict.fromkeys([u for u in ollama_urls if u]))
@@ -164,7 +164,7 @@ async def get_rag_status():
         qdrant_host,
         "http://localhost:6333",
         "http://localhost:7333", # V2 Port
-        "http://nexi-qdrant2:6333"
+        "http://m-dn-qdrant2:6333"
     ]
     qdrant_urls = list(dict.fromkeys([u for u in qdrant_urls if u]))
 
@@ -217,7 +217,7 @@ async def chat_with_ai(request: ChatRequest):
         active_alerts = "Unknown"
         db_list = "Unable to fetch"
     
-    system_prompt = f"""You are NEXI DBA, an EXPERT Database Administrator AI with 20+ years of experience.
+    system_prompt = f"""You are M-DN DBA, an EXPERT Database Administrator AI with 20+ years of experience.
 You are a MULTI-DATABASE EXPERT specializing in:
 - **Oracle** (19c, 12c, 21c, RAC, Data Guard, RMAN, ASM, AWR, PDBs, CDBs)
 - **PostgreSQL** (8+, 15+, replication, extensions, pg_stat)
@@ -272,7 +272,7 @@ Remember: BE HELPFUL, BE DECISIVE, SOLVE THE PROBLEM!
             try:
                 trace = langfuse.trace(
                     name="chat_with_ai",
-                    user_id="nexi-dba-user",
+                    user_id="m-dn-dba-user",
                     metadata={"db_count": str(db_count), "active_alerts": str(active_alerts)}
                 )
                 generation = trace.generation(
@@ -315,8 +315,8 @@ Remember: BE HELPFUL, BE DECISIVE, SOLVE THE PROBLEM!
                     try:
                         from api_agents.workers.critical_alert.critical_alert_agent import EmailSender
                         sender = EmailSender()
-                        to = action_json.get("to", "admin@nexi.com")
-                        subj = action_json.get("subject", "Nexi AI Alert")
+                        to = action_json.get("to", "admin@m-dn.com")
+                        subj = action_json.get("subject", "M-DN AI Alert")
                         body = action_json.get("body", "No content")
                         sender.send_alert(to, subj, body)
                         return f"✅ **Action Executed**: Email sent to {to}\n\n{reply}"

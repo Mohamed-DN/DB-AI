@@ -17,9 +17,9 @@ COPY api_agents/workers/CheckMK_Collector/ /app/
 # Set environment variables (override in docker-compose or runtime)
 ENV CHECKMK_HOSTS=""
 ENV CHECKMK_USER=cmkadmin
-ENV CHECKMK_PASSWORD=nexi2024
-ENV MONGO_URI=mongodb://admin:nexi2024@mongodb:27017/
-ENV MONGO_DB=nexi_cmdb_v2
+ENV CHECKMK_PASSWORD=pippopippo_1234
+ENV MONGO_URI=mongodb://admin:pippopippo_1234@mongodb:27017/
+ENV MONGO_DB=m-dn_cmdb_v2
 ENV GRAPHITE_HOST=victoriametrics
 ENV GRAPHITE_PORT=2003
 ENV POLL_INTERVAL=60

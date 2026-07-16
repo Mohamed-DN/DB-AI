@@ -11,8 +11,8 @@ from pymongo import MongoClient
 MONGO_HOST = os.getenv("MONGODB_HOST", "localhost")
 MONGO_PORT = int(os.getenv("MONGODB_PORT", 28017))
 MONGO_USER = os.getenv("MONGO_USERNAME", "admin")
-MONGO_PASS = os.getenv("MONGO_PASSWORD", "nexi2024")
-MONGO_DB = os.getenv("MONGODB_DB", "nexi_cmdb_v2")
+MONGO_PASS = os.getenv("MONGO_PASSWORD", "pippopippo_1234")
+MONGO_DB = os.getenv("MONGODB_DB", "m-dn_cmdb_v2")
 
 print(f"Connecting to MongoDB at {MONGO_HOST}:{MONGO_PORT}...")
 
@@ -45,29 +45,29 @@ system_config_docs = [
 # 2. gateways - SSH gateways for database access
 gateways_docs = [
     {
-        "_id": "nexi-gw-milano2",
+        "_id": "m-dn-gw-milano2",
         "location": {"country": "Italy", "city": "Milan", "datacenter": "Docker Lab"},
-        "info": {"hostname": "gw-milano2.nexi.lab", "ip_address": "172.21.1.1", "os_version": "Alpine Linux"},
+        "info": {"hostname": "gw-milano2.m-dn.lab", "ip_address": "172.21.1.1", "os_version": "Alpine Linux"},
         "network": {"open_ports": [22], "status": "UP"},
-        "reachability": {"accessible_dbs": ["nexi-pg-milano-prod2", "nexi-pg-milano-dev2", "nexi-pg-milano-stg2"]},
+        "reachability": {"accessible_dbs": ["m-dn-pg-milano-prod2", "m-dn-pg-milano-dev2", "m-dn-pg-milano-stg2"]},
         "ssh_config": {"user": "admin", "auth_method": "PASSWORD"},
         "created_at": datetime.now()
     },
     {
-        "_id": "nexi-gw-bratislava2",
+        "_id": "m-dn-gw-bratislava2",
         "location": {"country": "Slovakia", "city": "Bratislava", "datacenter": "Docker Lab"},
-        "info": {"hostname": "gw-bratislava2.nexi.lab", "ip_address": "172.21.2.1"},
+        "info": {"hostname": "gw-bratislava2.m-dn.lab", "ip_address": "172.21.2.1"},
         "network": {"open_ports": [22], "status": "UP"},
-        "reachability": {"accessible_dbs": ["nexi-pg-bratislava-prod2", "nexi-pg-bratislava-dev2"]},
+        "reachability": {"accessible_dbs": ["m-dn-pg-bratislava-prod2", "m-dn-pg-bratislava-dev2"]},
         "ssh_config": {"user": "admin", "auth_method": "PASSWORD"},
         "created_at": datetime.now()
     },
     {
-        "_id": "nexi-gw-cairo2",
+        "_id": "m-dn-gw-cairo2",
         "location": {"country": "Egypt", "city": "Cairo", "datacenter": "Docker Lab"},
-        "info": {"hostname": "gw-cairo2.nexi.lab", "ip_address": "172.21.3.1"},
+        "info": {"hostname": "gw-cairo2.m-dn.lab", "ip_address": "172.21.3.1"},
         "network": {"open_ports": [22], "status": "UP"},
-        "reachability": {"accessible_dbs": ["nexi-oracle-cairo-primary2", "nexi-oracle-cairo-replica2"]},
+        "reachability": {"accessible_dbs": ["m-dn-oracle-cairo-primary2", "m-dn-oracle-cairo-replica2"]},
         "ssh_config": {"user": "admin", "auth_method": "PASSWORD"},
         "created_at": datetime.now()
     }
@@ -84,11 +84,11 @@ business_services_docs = [
             "business_unit": "Digital Payments"
         },
         "contacts": {
-            "bao": {"name": "DBA Team", "email": "dba@nexi.it"},
-            "dl_team": "dl_payments_ops@nexi.it"
+            "bao": {"name": "DBA Team", "email": "dba@m-dn.it"},
+            "dl_team": "dl_payments_ops@m-dn.it"
         },
         "technical_mapping": [
-            {"db_unique_name": "NEXI-PG-MILANO-PROD2", "gateway_ref": "nexi-gw-milano2"}
+            {"db_unique_name": "M-DN-PG-MILANO-PROD2", "gateway_ref": "m-dn-gw-milano2"}
         ],
         "compliance": {"data_classification": "CONFIDENTIAL", "gdpr_relevant": True, "pci_dss_scope": True},
         "created_at": datetime.now()
@@ -98,7 +98,7 @@ business_services_docs = [
 # 4. inventory_databases - The core database inventory (HIERARCHICAL FORMAT)
 # Following the Oracle/PostgreSQL templates defined in mongo/schemas/json/templates/
 
-def build_postgres_doc(container_name, port, environment, role, gateway="nexi-gw-milano2"):
+def build_postgres_doc(container_name, port, environment, role, gateway="m-dn-gw-milano2"):
     """Build a full hierarchical PostgreSQL document"""
     return {
         "metadata": {
@@ -160,7 +160,7 @@ def build_postgres_doc(container_name, port, environment, role, gateway="nexi-gw
         "created_at": datetime.now()
     }
 
-def build_oracle_doc(container_name, port, environment, role, gateway="nexi-gw-cairo2"):
+def build_oracle_doc(container_name, port, environment, role, gateway="m-dn-gw-cairo2"):
     """Build a full hierarchical Oracle document"""
     return {
         "metadata": {
@@ -175,7 +175,7 @@ def build_oracle_doc(container_name, port, environment, role, gateway="nexi-gw-c
                 "ip_address": "127.0.0.1",
                 "os": "OracleLinux",
                 "cloud_provider": "Docker",
-                "tenant": "NEXI"
+                "tenant": "M-DN"
             },
             "hardware": {
                 "type": "Docker Container",
@@ -214,7 +214,7 @@ def build_oracle_doc(container_name, port, environment, role, gateway="nexi-gw-c
             "cluster_roles": ["HAS"] if role == "PRIMARY" else [],
             "dataguard": {
                 "role": role,
-                "target": "nexi-oracle-cairo-replica2" if role == "PRIMARY" else "nexi-oracle-cairo-primary2",
+                "target": "m-dn-oracle-cairo-replica2" if role == "PRIMARY" else "m-dn-oracle-cairo-primary2",
                 "transport_type": "ASYNC"
             }
         },
@@ -275,18 +275,18 @@ def build_nosql_doc(container_name, port, engine, environment="INFRASTRUCTURE"):
 # Generate hierarchical documents
 inventory_databases_docs = [
     # PostgreSQL Instances
-    build_postgres_doc("nexi-pg-milano-prod2", 5432, "PRODUCTION", "PRIMARY"),
-    build_postgres_doc("nexi-pg-milano-dev2", 5433, "DEVELOPMENT", "DEV"),
-    build_postgres_doc("nexi-pg-milano-stg2", 5434, "STAGING", "STAGING"),
-    build_postgres_doc("nexi-pg-bratislava-prod2", 5437, "PRODUCTION", "PRIMARY", "nexi-gw-bratislava2"),
-    build_postgres_doc("nexi-pg-bratislava-dev2", 5438, "DEVELOPMENT", "DEV", "nexi-gw-bratislava2"),
+    build_postgres_doc("m-dn-pg-milano-prod2", 5432, "PRODUCTION", "PRIMARY"),
+    build_postgres_doc("m-dn-pg-milano-dev2", 5433, "DEVELOPMENT", "DEV"),
+    build_postgres_doc("m-dn-pg-milano-stg2", 5434, "STAGING", "STAGING"),
+    build_postgres_doc("m-dn-pg-bratislava-prod2", 5437, "PRODUCTION", "PRIMARY", "m-dn-gw-bratislava2"),
+    build_postgres_doc("m-dn-pg-bratislava-dev2", 5438, "DEVELOPMENT", "DEV", "m-dn-gw-bratislava2"),
     # Oracle Instances
-    build_oracle_doc("nexi-oracle-cairo-primary2", 1521, "PRODUCTION", "PRIMARY"),
-    build_oracle_doc("nexi-oracle-cairo-replica2", 1522, "DISASTER_RECOVERY", "REPLICA"),
+    build_oracle_doc("m-dn-oracle-cairo-primary2", 1521, "PRODUCTION", "PRIMARY"),
+    build_oracle_doc("m-dn-oracle-cairo-replica2", 1522, "DISASTER_RECOVERY", "REPLICA"),
     # NoSQL Instances
-    build_nosql_doc("nexi-mongodb2", 28017, "MONGODB"),
-    build_nosql_doc("nexi-redis2", 7379, "REDIS"),
-    build_nosql_doc("nexi-qdrant2", 6333, "QDRANT", "AI_INFRASTRUCTURE"),
+    build_nosql_doc("m-dn-mongodb2", 28017, "MONGODB"),
+    build_nosql_doc("m-dn-redis2", 7379, "REDIS"),
+    build_nosql_doc("m-dn-qdrant2", 6333, "QDRANT", "AI_INFRASTRUCTURE"),
 ]
 
 # 5. Guide Templates - JSON Schemas for Users
@@ -317,7 +317,7 @@ guide_templates_docs = [
         },
         "required_fields": ["identity.db_unique_name", "identity.host", "identity.engine"],
         "example": {
-            "identity": {"db_unique_name": "NEXI-PG-ROME-01", "family": "POSTGRESQL", "engine": "POSTGRES", "role": "PRIMARY", "environment": "PRODUCTION", "host": "10.0.0.50"},
+            "identity": {"db_unique_name": "M-DN-PG-ROME-01", "family": "POSTGRESQL", "engine": "POSTGRES", "role": "PRIMARY", "environment": "PRODUCTION", "host": "10.0.0.50"},
             "connection": {"port": 5432, "schema": "payments"}
         }
     },

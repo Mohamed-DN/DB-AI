@@ -2,7 +2,7 @@
 
 :root {
     /* ========================================
-       NEXI CORPORATE THEME - DARK MODE (Default)
+       M-DN CORPORATE THEME - DARK MODE (Default)
        ======================================== */
     --bg-color: #0a0e1a;
     --bg-secondary: #121828;
@@ -14,10 +14,10 @@
     --text-primary: #f0f2f8;
     --text-secondary: #8892a8;
 
-    /* Nexi Brand Colors */
-    --nexi-blue: #0574BD;
-    --nexi-blue-dark: #2D32AA;
-    --nexi-purple: #252889;
+    /* M-DN Brand Colors */
+    --m-dn-blue: #0574BD;
+    --m-dn-blue-dark: #2D32AA;
+    --m-dn-purple: #252889;
     --accent: #0574BD;
     --accent-light: #3498db;
     --accent-glow: rgba(5, 116, 189, 0.35);
@@ -46,7 +46,7 @@ body.light-mode {
     --bg-secondary: #ffffff;
     --card-bg: #ffffff;
     --card-bg-solid: #ffffff;
-    --navbar-bg: var(--nexi-blue);
+    --navbar-bg: var(--m-dn-blue);
     --border-color: rgba(5, 116, 189, 0.2);
 
     --text-primary: #0d1b2a;
@@ -191,16 +191,16 @@ body {
     overflow: hidden;
 }
 
-/* --- TOP HEADER (Nexi Corporate) --- */
+/* --- TOP HEADER (M-DN Corporate) --- */
 .top-header {
     height: 70px;
-    background: linear-gradient(135deg, var(--nexi-purple) 0%, var(--nexi-blue-dark) 100%);
+    background: linear-gradient(135deg, var(--m-dn-purple) 0%, var(--m-dn-blue-dark) 100%);
     display: grid;
     grid-template-columns: 1fr auto 1fr;
     /* Left (empty), Center (Logo), Right (Controls) */
     align-items: center;
     padding: 0 2rem;
-    border-bottom: 1px solid var(--nexi-blue);
+    border-bottom: 1px solid var(--m-dn-blue);
     flex-shrink: 0;
     border-bottom-left-radius: var(--radius);
     border-bottom-right-radius: var(--radius);
@@ -239,7 +239,7 @@ body {
 
 .logo-container:hover .robot-icon {
     transform: rotate(15deg) scale(1.1);
-    background: var(--nexi-blue);
+    background: var(--m-dn-blue);
 }
 
 .brand-text {
@@ -272,7 +272,7 @@ body {
     transform: rotate(20deg);
 }
 
-/* --- NAVIGATION BAR (Nexi Blue) --- */
+/* --- NAVIGATION BAR (M-DN Blue) --- */
 .nav-bar {
     background: linear-gradient(90deg, #0d1220 0%, #141c2e 50%, #0d1220 100%);
     display: flex;
@@ -457,7 +457,7 @@ body {
     left: 0;
     width: 0;
     height: 3px;
-    background: linear-gradient(90deg, var(--accent), var(--nexi-blue-dark));
+    background: linear-gradient(90deg, var(--accent), var(--m-dn-blue-dark));
     border-radius: 2px;
     animation: expandWidth 0.6s ease-out 0.2s forwards;
 }
@@ -660,7 +660,7 @@ td {
 
 tr:hover td {
     background: rgba(5, 116, 189, 0.05);
-    /* Nexi Blue tint on hover */
+    /* M-DN Blue tint on hover */
 }
 
 /* STATUS BADGES */
@@ -797,14 +797,14 @@ tr:hover td {
     color: var(--text-primary);
     transform: translateX(12px) scale(1.02);
     /* Move right and scale up */
-    border-color: var(--nexi-blue);
+    border-color: var(--m-dn-blue);
     box-shadow: -4px 4px 15px rgba(0, 0, 0, 0.1);
     /* Lifted shadow */
     z-index: 10;
 }
 
 .explorer-list li.active {
-    background: linear-gradient(90deg, var(--nexi-blue), var(--nexi-blue-dark));
+    background: linear-gradient(90deg, var(--m-dn-blue), var(--m-dn-blue-dark));
     color: #fff;
     border-color: transparent;
     transform: translateX(12px);
@@ -1114,7 +1114,7 @@ tr:hover td {
 
 .email-item:hover {
     background: var(--card-bg);
-    border-color: var(--nexi-blue);
+    border-color: var(--m-dn-blue);
     transform: translateX(8px) scale(1.01);
     box-shadow: -4px 4px 15px rgba(0, 0, 0, 0.1);
     z-index: 5;
@@ -1279,7 +1279,7 @@ tr:hover td {
 }
 
 .message.ai i {
-    background: linear-gradient(135deg, var(--accent) 0%, var(--nexi-blue-dark) 100%);
+    background: linear-gradient(135deg, var(--accent) 0%, var(--m-dn-blue-dark) 100%);
     color: #fff;
 }
 

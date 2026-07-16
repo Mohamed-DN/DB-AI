@@ -36,19 +36,19 @@ try:
             continue
             
         # If the container NAME or ID does not exist in docker ps -a, it's a ghost.
-        # We need to be careful. 'nexi-cmdb-mongo' is a name. 'cb50...' is an ID.
+        # We need to be careful. 'm-dn-cmdb-mongo' is a name. 'cb50...' is an ID.
         # all_ids has both.
         
         # Check if we should delete
         if container_ref not in all_ids:
             # Maybe it's a short ID?
-            # container_ref might be "nexi-pg-milano-dev".
+            # container_ref might be "m-dn-pg-milano-dev".
             # If that name is not in all_ids, then it's gone?
             pass 
             
             # Let's act conservatively.
             # If we see multiple entries for same 'db_unique_name'?
-            # The screenshot shows "nexi-pg-milano" twice. 
+            # The screenshot shows "m-dn-pg-milano" twice. 
             # Implies they might have DIFFERENT db_unique_names? Or same?
             # If same, MongoProxy upsert should have merged them.
             # So they must have different `db_unique_name`? 

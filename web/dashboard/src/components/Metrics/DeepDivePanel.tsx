@@ -54,9 +54,9 @@ const tablespaceData = [
 // PostgreSQL database sizes
 const pgDatabaseData = generateDailyData(30, 50, 0.015).map((d, _i) => ({
     ...d,
-    nexi_prod: d.value,
-    nexi_dev: Math.round(d.value * 0.3),
-    nexi_staging: Math.round(d.value * 0.5),
+    m-dn_prod: d.value,
+    m-dn_dev: Math.round(d.value * 0.3),
+    m-dn_staging: Math.round(d.value * 0.5),
 }));
 
 // ASM Diskgroup data
@@ -111,9 +111,9 @@ const resourceData = [
 
 // XID Age data
 const xidData = [
-    { name: 'nexi_prod', age: 450000000, pct: 22.5 },
-    { name: 'nexi_dev', age: 120000000, pct: 6 },
-    { name: 'nexi_staging', age: 280000000, pct: 14 },
+    { name: 'm-dn_prod', age: 450000000, pct: 22.5 },
+    { name: 'm-dn_dev', age: 120000000, pct: 6 },
+    { name: 'm-dn_staging', age: 280000000, pct: 14 },
 ];
 
 // Temp usage over time
@@ -344,9 +344,9 @@ export const DeepDivePanel: React.FC = () => {
                                         <YAxis stroke="#6b7280" fontSize={11} />
                                         <Tooltip content={<CustomTooltip />} />
                                         <Legend />
-                                        <Area type="monotone" dataKey="nexi_prod" name="Production" stackId="1" stroke="#8b5cf6" fill="url(#colorProd)" />
-                                        <Area type="monotone" dataKey="nexi_staging" name="Staging" stackId="1" stroke="#10b981" fill="url(#colorStg)" />
-                                        <Area type="monotone" dataKey="nexi_dev" name="Development" stackId="1" stroke="#3b82f6" fill="url(#colorDev)" />
+                                        <Area type="monotone" dataKey="m-dn_prod" name="Production" stackId="1" stroke="#8b5cf6" fill="url(#colorProd)" />
+                                        <Area type="monotone" dataKey="m-dn_staging" name="Staging" stackId="1" stroke="#10b981" fill="url(#colorStg)" />
+                                        <Area type="monotone" dataKey="m-dn_dev" name="Development" stackId="1" stroke="#3b82f6" fill="url(#colorDev)" />
                                     </AreaChart>
                                 </ResponsiveContainer>
                             </div>

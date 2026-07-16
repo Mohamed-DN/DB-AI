@@ -1,4 +1,4 @@
-# TNS Names Configuration for Nexi AI CMDB
+# TNS Names Configuration for M-DN AI CMDB
 # Location: Copy to $TNS_ADMIN/tnsnames.ora on Cairo container
 
 # =============================================================================
@@ -88,7 +88,7 @@ LUNA_RAC2 =
 # Cairo Primary
 CAIRO_PRIMARY =
   (DESCRIPTION =
-    (ADDRESS = (PROTOCOL = TCP)(HOST = nexi-oracle-cairo-primary)(PORT = 1521))
+    (ADDRESS = (PROTOCOL = TCP)(HOST = m-dn-oracle-cairo-primary)(PORT = 1521))
     (CONNECT_DATA =
       (SERVICE_NAME = FREEPDB1)
     )
@@ -97,7 +97,7 @@ CAIRO_PRIMARY =
 # Cairo Replica  
 CAIRO_REPLICA =
   (DESCRIPTION =
-    (ADDRESS = (PROTOCOL = TCP)(HOST = nexi-oracle-cairo-replica)(PORT = 1521))
+    (ADDRESS = (PROTOCOL = TCP)(HOST = m-dn-oracle-cairo-replica)(PORT = 1521))
     (CONNECT_DATA =
       (SERVICE_NAME = FREEPDB1)
     )

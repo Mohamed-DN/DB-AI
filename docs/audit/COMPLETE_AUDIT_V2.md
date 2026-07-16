@@ -1,4 +1,4 @@
-# Nexi DBA AI - Complete Technical Audit v2
+# M-DN DBA AI - Complete Technical Audit v2
 
 **Data Audit**: 2026-01-26
 **Scope**: Full codebase analysis across all domains
@@ -41,7 +41,7 @@
 ### P0.2 Hardcoded Default Admin Password
 **File**: `api_agents/api_gateway/services/auth_service.py`
 **Line**: 213
-**Issue**: Default password `NexiAdmin2024!` printed to console
+**Issue**: Default password `M-DNAdmin2024!` printed to console
 **Fix**: Require password via env var or setup wizard
 **Effort**: 1 hour
 

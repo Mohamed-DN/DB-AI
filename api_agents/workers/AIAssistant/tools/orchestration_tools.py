@@ -1,5 +1,5 @@
 """
-Orchestration Tools for Nexi AI Admin
+Orchestration Tools for M-DN AI Admin
 Allows the AI to orchestrate other agents and manage infrastructure.
 """
 import subprocess
@@ -14,7 +14,7 @@ AGENTS_BASE_PATH = Path(__file__).parent.parent.parent
 
 @tool
 def run_agent(agent_name: str, mode: str = "once", target: Optional[str] = None) -> str:
-    """Run a specific Nexi AI agent.
+    """Run a specific M-DN AI agent.
     
     Args:
         agent_name: Name of the agent ('discovery', 'enricher', 'user_provisioner', 'scout', 'collector')
@@ -73,7 +73,7 @@ def run_agent(agent_name: str, mode: str = "once", target: Optional[str] = None)
 
 @tool
 def list_agents() -> str:
-    """List all available Nexi AI agents and their status.
+    """List all available M-DN AI agents and their status.
     
     Returns:
         List of agents.

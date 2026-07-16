@@ -39,10 +39,10 @@ class SyncMongoService:
             host = os.getenv("MONGODB_HOST", "localhost")
             port = os.getenv("MONGODB_PORT", "28017")
             user = os.getenv("MONGO_USERNAME", "admin")
-            password = os.getenv("MONGO_PASSWORD", "nexi2024")
+            password = os.getenv("MONGO_PASSWORD", "pippopippo_1234")
             self.connection_string = f"mongodb://{user}:{password}@{host}:{port}/?authSource=admin"
             
-        self.db_name = os.getenv("MONGODB_DB", "nexi_cmdb_v2")
+        self.db_name = os.getenv("MONGODB_DB", "m-dn_cmdb_v2")
         
         # Create sync client
         self.client = MongoClient(self.connection_string, serverSelectionTimeoutMS=5000)

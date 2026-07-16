@@ -1,5 +1,5 @@
 """
-Nexi AI Database Assistant - LangGraph Agent
+M-DN AI Database Assistant - LangGraph Agent
 FastAPI endpoints for AI-powered database queries
 """
 import os
@@ -49,7 +49,7 @@ llm = ChatOllama(
 # Chat History Storage (Simple In-Memory for MVP)
 chat_histories = {}
 
-SYSTEM_PROMPT = """You are NexiDB, an expert Database Administrator AI.
+SYSTEM_PROMPT = """You are M-DNDB, an expert Database Administrator AI.
 Your goal is to help users manage, debug, and optimize Oracle and PostgreSQL databases.
 You have access to real-time inventory tools, execution tools, and a RAG knowledge base.
 
@@ -75,7 +75,7 @@ async def lifespan(app: FastAPI):
     
     # Init Mongo
     mongo_client = AsyncIOMotorClient(os.getenv("MONGO_URI", "mongodb://localhost:28017"))
-    db = mongo_client["Nexi_DB_AI"]
+    db = mongo_client["M-DN_DB_AI"]
     
     # Init Services
     tool_registry = ToolRegistry(db)
@@ -118,8 +118,8 @@ async def lifespan(app: FastAPI):
     mongo_client.close()
 
 app = FastAPI(
-    title="Nexi AI Admin",
-    description="Autonomous AI Administrator for Nexi CMDB",
+    title="M-DN AI Admin",
+    description="Autonomous AI Administrator for M-DN CMDB",
     version="2.2.0", # Bumped version for LangGraph
     lifespan=lifespan
 )

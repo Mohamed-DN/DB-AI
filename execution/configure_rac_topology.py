@@ -3,8 +3,8 @@ import datetime
 import sys
 
 try:
-    client = MongoClient('localhost', 28017, username='admin', password='nexi2024')
-    db = client.nexi_cmdb_v2
+    client = MongoClient('localhost', 28017, username='admin', password='pippopippo_1234')
+    db = client.m-dn_cmdb_v2
     collection = db.inventory_databases
 except Exception as e:
     print(f"Connection failed: {e}")

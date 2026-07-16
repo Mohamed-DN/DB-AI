@@ -67,32 +67,32 @@ flowchart TB
 
 | Service | Container | Port | IP |
 |---------|-----------|------|-----|
-| MongoDB | nexi-mongodb2 | 28017 | 172.21.0.10 |
-| Mongo Express | nexi-mongo-express2 | 9081 | - |
-| Redis | nexi-redis2 | 7379 | - |
+| MongoDB | m-dn-mongodb2 | 28017 | 172.21.0.10 |
+| Mongo Express | m-dn-mongo-express2 | 9081 | - |
+| Redis | m-dn-redis2 | 7379 | - |
 
 ### AI Services
 
 | Service | Container | Port | IP |
 |---------|-----------|------|-----|
-| Ollama | nexi-ollama2 | 12434 | 172.21.0.11 |
-| Qdrant | nexi-qdrant2 | 7333 | 172.21.0.12 |
-| Open WebUI | nexi-open-webui2 | 4001 | - |
+| Ollama | m-dn-ollama2 | 12434 | 172.21.0.11 |
+| Qdrant | m-dn-qdrant2 | 7333 | 172.21.0.12 |
+| Open WebUI | m-dn-open-webui2 | 4001 | - |
 
 ### Observability
 
 | Service | Container | Port | IP |
 |---------|-----------|------|-----|
-| Langfuse | nexi-langfuse2 | 3001 | 172.21.0.21 |
-| Langfuse DB | nexi-langfuse-db2 | - | 172.21.0.20 |
+| Langfuse | m-dn-langfuse2 | 3001 | 172.21.0.21 |
+| Langfuse DB | m-dn-langfuse-db2 | - | 172.21.0.20 |
 
 ### Gateways
 
 | Gateway | Container | Port | Location |
 |---------|-----------|------|----------|
-| Milano | nexi-gw-milano2 | 3221 | Italy |
-| Bratislava | nexi-gw-bratislava2 | 3222 | Slovakia |
-| Cairo | nexi-gw-cairo2 | 3223 | Egypt |
+| Milano | m-dn-gw-milano2 | 3221 | Italy |
+| Bratislava | m-dn-gw-bratislava2 | 3222 | Slovakia |
+| Cairo | m-dn-gw-cairo2 | 3223 | Egypt |
 
 ---
 

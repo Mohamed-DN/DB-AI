@@ -9,7 +9,7 @@ import getpass
 # Link to Shared Modules
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), 'Orchestrator/src')))
 # We might need to adjust path depending on where we run this.
-# Assuming running from root (c:\AI-Nexi\Nexi_DB_AI)
+# Assuming running from root (c:\AI-M-DN\M-DN_DB_AI)
 
 try:
     from Orchestrator.src.mongo_proxy import MongoProxy

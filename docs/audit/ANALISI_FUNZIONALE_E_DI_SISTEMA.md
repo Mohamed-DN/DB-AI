@@ -1,7 +1,7 @@
 # Documento 1: Analisi Funzionale e di Sistema
 
 ## Panoramica Generale
-Nexi DBA AI e un sistema di CMDB e operations per database che combina agenti autonomi, un backend API e un frontend dashboard. Il sistema scopre asset DB in ambienti Docker e remoti, aggiorna l'inventario in MongoDB, raccoglie metriche e log, genera alert, e abilita una chat AI con azioni operative supportate da LLM e RAG.
+M-DN DBA AI e un sistema di CMDB e operations per database che combina agenti autonomi, un backend API e un frontend dashboard. Il sistema scopre asset DB in ambienti Docker e remoti, aggiorna l'inventario in MongoDB, raccoglie metriche e log, genera alert, e abilita una chat AI con azioni operative supportate da LLM e RAG.
 
 ## Flussi e Funzionalita
 - 1) Avvio stack: script operativi avviano container, backend e frontend (vedi `ops/scripts/*`).

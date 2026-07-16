@@ -26,7 +26,7 @@ class OracleExtractor:
             # Using 'sh -c' to handle piping properly inside docker exec if needed, 
             # but usually passing input via stdin is cleaner.
             # We assume user is 'system' or 'sys as sysdba' via a wrapper or direct env var.
-            # For this container: user nexi_app or system? 
+            # For this container: user m-dn_app or system? 
             # We'll use 'sqlplus -S / as sysdba' assuming OS auth is set up in these containers (gvenzl/oracle-free usually allows it for oracle user)
             
             cmd = [
@@ -138,7 +138,7 @@ class OracleExtractor:
         elif "STANDBY" in srv_out.upper(): cli_role = "PHYSICAL STANDBY"
         
         # DGMGRL needs sys password. Hardcoded for lab or env var?
-        # dgmgrl sys/nexi2024@//localhost:1521/CONF "show configuration verbose"
+        # dgmgrl sys/pippopippo_1234@//localhost:1521/CONF "show configuration verbose"
         # Skipping for safety in auto-mode unless strictly required, relying on SQL views for DG details.
              
         # Build Deep JSON

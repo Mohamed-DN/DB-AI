@@ -44,7 +44,7 @@ try:
     print(f"   Container: {container}")
     print(f"   User: {current_user}")
     print("\n" + "="*60)
-    print("NEXI AI - Oracle Interactive SQL Console")
+    print("M-DN AI - Oracle Interactive SQL Console")
     print("Type SQL commands (end with ;) or 'exit' to quit")
     print("Special commands: tables, users, pdbs, sessions")
     print("="*60 + "\n")

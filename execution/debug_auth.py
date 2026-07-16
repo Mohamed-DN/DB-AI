@@ -24,7 +24,7 @@ async def test_auth():
         
         if user:
             print(f"   ✅ Admin found: {user.username}")
-            print(f"   Auth verify: {auth.verify_password('NexiAdmin2024!', user.password_hash)}")
+            print(f"   Auth verify: {auth.verify_password('M-DNAdmin2024!', user.password_hash)}")
         else:
             print("   ❌ Admin user NOT found!")
             

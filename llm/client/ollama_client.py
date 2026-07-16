@@ -1,6 +1,6 @@
 """
 Ollama LLM Client - Interface to Local LLM
-Connects to Ollama running in Docker at nexi-ollama:11434
+Connects to Ollama running in Docker at m-dn-ollama:11434
 """
 
 import os

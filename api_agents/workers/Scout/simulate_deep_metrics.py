@@ -17,7 +17,7 @@ from orchestrator.core.mongo_proxy import MongoProxy
 class MetricSimulator:
     def __init__(self):
         self.mongo = MongoProxy()
-        self.targets = ["NEXI-ORACLE-CAIRO-PRIMARY", "NEXI-PG-MILANO-PROD"]
+        self.targets = ["M-DN-ORACLE-CAIRO-PRIMARY", "M-DN-PG-MILANO-PROD"]
 
     def generate_oracle_metrics(self):
         return {

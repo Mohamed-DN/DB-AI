@@ -10,7 +10,7 @@ RUN apt-get update && apt-get install -y \
 
 # Configurazione SSH
 RUN mkdir /var/run/sshd
-RUN echo 'root:nexi2024' | chpasswd
+RUN echo 'root:pippopippo_1234' | chpasswd
 RUN sed -i 's/#PermitRootLogin prohibit-password/PermitRootLogin yes/' /etc/ssh/sshd_config
 RUN sed -i 's/#PasswordAuthentication yes/PasswordAuthentication yes/' /etc/ssh/sshd_config
 

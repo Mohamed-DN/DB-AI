@@ -1,4 +1,4 @@
-# Nexi DBA AI (CMDB V3)
+# M-DN DBA AI (CMDB V3)
 
 > **Status**: Active Development (Shadow Mode on V2)
 > **Goal**: AI-powered Autonomous Database Administration & CMDB
@@ -112,4 +112,4 @@ To achieve the **Future Architecture** (3 Gateways, Redis, 4 Sources), the work 
 
 ---
 
-> _"From Chaos to Order" - Built for Nexi by the Advanced Agentic Coding Team_
+> _"From Chaos to Order" - Built for M-DN by the Advanced Agentic Coding Team_

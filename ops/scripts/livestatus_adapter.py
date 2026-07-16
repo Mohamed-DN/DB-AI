@@ -30,7 +30,7 @@ class LivestatusConfig:
     host: Optional[str] = None          # TCP host
     port: int = 6557                     # TCP port (default Livestatus)
     timeout: int = 30                    # Connection timeout
-    site: str = "nexi_monitor"           # CheckMK site name
+    site: str = "m-dn_monitor"           # CheckMK site name
 
 
 class LivestatusError(Exception):
@@ -50,7 +50,7 @@ class LivestatusClient:
         host: Optional[str] = None,
         port: int = 6557,
         timeout: int = 30,
-        site: str = "nexi_monitor"
+        site: str = "m-dn_monitor"
     ):
         self.config = LivestatusConfig(
             socket_path=socket_path,

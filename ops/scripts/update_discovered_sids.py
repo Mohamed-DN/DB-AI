@@ -2,8 +2,8 @@
 from pymongo import MongoClient
 from datetime import datetime
 
-MONGO_URI = "mongodb://admin:nexi2024@localhost:28017/"
-MONGO_DB = "nexi_cmdb_v2"
+MONGO_URI = "mongodb://admin:pippopippo_1234@localhost:28017/"
+MONGO_DB = "m-dn_cmdb_v2"
 
 updates = [
     {

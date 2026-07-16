@@ -2,8 +2,8 @@
 from pymongo import MongoClient
 from datetime import datetime
 
-c = MongoClient('localhost', 28017, username='admin', password='nexi2024')
-db = c['nexi_cmdb_v2']
+c = MongoClient('localhost', 28017, username='admin', password='pippopippo_1234')
+db = c['m-dn_cmdb_v2']
 
 # First, clear any old Oracle entries
 db.inventory_databases.delete_many({"identity.family": "ORACLE"})

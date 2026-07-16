@@ -5,9 +5,9 @@ import pymongo
 import bcrypt
 
 # MongoDB connection
-MONGO_URI = os.getenv("MONGO_URI", "mongodb://admin:nexi2024@localhost:28017/?authSource=admin")
-DB_NAME = "nexi_cmdb_v2"
-NEW_PASSWORD = "nexi2024"
+MONGO_URI = os.getenv("MONGO_URI", "mongodb://admin:pippopippo_1234@localhost:28017/?authSource=admin")
+DB_NAME = "m-dn_cmdb_v2"
+NEW_PASSWORD = "pippopippo_1234"
 
 def main():
     try:
@@ -38,7 +38,7 @@ def main():
                 from datetime import datetime
                 db.users.insert_one({
                     "username": "admin",
-                    "email": "admin@nexi.lab",
+                    "email": "admin@m-dn.lab",
                     "full_name": "System Administrator",
                     "role": "admin",
                     "databases_scope": ["*"],

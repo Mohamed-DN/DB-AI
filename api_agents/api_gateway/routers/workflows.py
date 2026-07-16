@@ -28,7 +28,7 @@ async def analyze_alert_workflow(alert_id: str, background_tasks: BackgroundTask
         alert_info = {
             "id": alert_id,
             "message": "High CPU usage on Oracle DB",
-            "host": "nexi-oracle-cairo-primary",
+            "host": "m-dn-oracle-cairo-primary",
             "state": "CRITICAL"
         }
         

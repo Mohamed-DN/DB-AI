@@ -76,7 +76,7 @@ class CollectorConfig:
     
     # MongoDB (optional)
     mongo_uri: str = ""
-    mongo_db: str = "nexi_cmdb_v2"
+    mongo_db: str = "m-dn_cmdb_v2"
     
     # Collection settings
     default_interval: int = 3600
@@ -493,7 +493,7 @@ def load_config_from_yaml(yaml_path: str) -> CollectorConfig:
     
     # MongoDB
     config.mongo_uri = data.get('mongo_uri', '')
-    config.mongo_db = data.get('mongo_db', 'nexi_cmdb_v2')
+    config.mongo_db = data.get('mongo_db', 'm-dn_cmdb_v2')
     
     # Queries
     if 'queries' in data:

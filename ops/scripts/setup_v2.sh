@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# NEXI AI CMDB V2 - Setup & Startup Script (Mac/Linux)
+# M-DN AI CMDB V2 - Setup & Startup Script (Mac/Linux)
 # Mimics setup_v2.ps1
 
 set -e
@@ -10,7 +10,7 @@ ROOT_DIR="$SCRIPT_DIR/.."
 ENV_FILE="$ROOT_DIR/.env.v2"
 
 echo "================================================================="
-echo "   NEXI AI CMDB V2 - SETUP & STARTUP (Mac/Linux)"
+echo "   M-DN AI CMDB V2 - SETUP & STARTUP (Mac/Linux)"
 echo "================================================================="
 
 # 0. Load Configuration
@@ -125,7 +125,7 @@ if [[ "$*" != *"--skip-backend"* ]]; then
     pip install -r requirements.txt
     
     # Export specific vars for backend
-    export MONGO_CONTAINER="nexi-mongodb2"
+    export MONGO_CONTAINER="m-dn-mongodb2"
     export MONGODB_DB="$MONGODB_DB"
     export MONGO_USERNAME="$MONGO_USERNAME"
     export MONGO_PASSWORD="$MONGO_PASSWORD"
@@ -173,7 +173,7 @@ else
 fi
 
 echo -e "\n================================================================="
-echo "   NEXI AI CMDB V2 IS READY 🚀"
+echo "   M-DN AI CMDB V2 IS READY 🚀"
 echo "================================================================="
 echo "   Dashboard:    http://localhost:${FRONTEND_PORT}"
 echo "   API Docs:     http://localhost:${BACKEND_PORT}/docs"

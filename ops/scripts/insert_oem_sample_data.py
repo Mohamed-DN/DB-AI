@@ -22,13 +22,13 @@ BEGIN
     DELETE FROM mgmt_metric_hourly;
     DELETE FROM mgmt_metric_daily;
 
-    INSERT INTO mgmt_target VALUES (v_guid1, 'PRODDB1', 'oracle_database', 'SINGLE', 'dbserver1.nexi.local');
-    INSERT INTO mgmt_target VALUES (v_guid2, 'PRODDB2', 'oracle_database', 'SINGLE', 'dbserver2.nexi.local');
-    INSERT INTO mgmt_target VALUES (v_guid3, 'DEVDB1', 'oracle_database', 'SINGLE', 'devserver1.nexi.local');
+    INSERT INTO mgmt_target VALUES (v_guid1, 'PRODDB1', 'oracle_database', 'SINGLE', 'dbserver1.m-dn.local');
+    INSERT INTO mgmt_target VALUES (v_guid2, 'PRODDB2', 'oracle_database', 'SINGLE', 'dbserver2.m-dn.local');
+    INSERT INTO mgmt_target VALUES (v_guid3, 'DEVDB1', 'oracle_database', 'SINGLE', 'devserver1.m-dn.local');
 
-    INSERT INTO mgmt_os_hw_summary VALUES ('dbserver1.nexi.local', 65536, 32, 4, 16, 32, 'NO');
-    INSERT INTO mgmt_os_hw_summary VALUES ('dbserver2.nexi.local', 131072, 64, 8, 32, 64, 'NO');
-    INSERT INTO mgmt_os_hw_summary VALUES ('devserver1.nexi.local', 32768, 16, 2, 8, 16, 'YES');
+    INSERT INTO mgmt_os_hw_summary VALUES ('dbserver1.m-dn.local', 65536, 32, 4, 16, 32, 'NO');
+    INSERT INTO mgmt_os_hw_summary VALUES ('dbserver2.m-dn.local', 131072, 64, 8, 32, 64, 'NO');
+    INSERT INTO mgmt_os_hw_summary VALUES ('devserver1.m-dn.local', 32768, 16, 2, 8, 16, 'YES');
 
     INSERT INTO mgmt_metric_current VALUES (v_guid1, 'memory_usage_sga_pga', 'sga_total', NULL, '4096', SYSTIMESTAMP);
     INSERT INTO mgmt_metric_current VALUES (v_guid1, 'memory_usage_sga_pga', 'pga_total', NULL, '1024', SYSTIMESTAMP);

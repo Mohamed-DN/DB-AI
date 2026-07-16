@@ -9,10 +9,10 @@ import sys
 from datetime import datetime, timezone
 
 # MongoDB configuration
-MONGO_CONTAINER = "nexi-cmdb-mongo"
+MONGO_CONTAINER = "m-dn-cmdb-mongo"
 MONGO_USER = "admin"
 MONGO_PASS = "admin123"
-MONGO_DB = "nexi_cmdb"
+MONGO_DB = "m-dn_cmdb"
 MONGO_COLLECTION = "inventory_databases"
 
 # VirtualBox Oracle RAC configuration
@@ -35,7 +35,7 @@ VBOX_ORACLE_DATABASES = [
             "service_name": "cdbrac",
             "user": "c##aiauto",
             "password": "root",
-            "container": "nexi-oracle-cairo-primary" # Jump host
+            "container": "m-dn-oracle-cairo-primary" # Jump host
         },
         "configuration": {
             "version": "19.3.0.0",
@@ -89,7 +89,7 @@ VBOX_ORACLE_DATABASES = [
             "service_name": "cdbrac",
             "user": "c##aiauto",
             "password": "root",
-            "container": "nexi-oracle-cairo-primary"
+            "container": "m-dn-oracle-cairo-primary"
         },
          "configuration": {
             "version": "19.3.0.0",

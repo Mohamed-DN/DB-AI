@@ -3,9 +3,9 @@ from datetime import datetime
 import os
 
 # Connect to MongoDB (using default or env var)
-MONGO_URI = os.getenv("MONGO_URI", "mongodb://admin:nexi2024@localhost:28017/?authSource=admin")
+MONGO_URI = os.getenv("MONGO_URI", "mongodb://admin:pippopippo_1234@localhost:28017/?authSource=admin")
 client = pymongo.MongoClient(MONGO_URI)
-db = client["nexi_cmdb_v2"]
+db = client["m-dn_cmdb_v2"]
 
 instance = {
     "name": "OEM Docker Beast",

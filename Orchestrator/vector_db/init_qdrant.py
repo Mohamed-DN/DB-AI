@@ -6,7 +6,7 @@ def init_qdrant():
     print("🔌 Connecting to Qdrant...")
     client = qdrant_client.QdrantClient("http://localhost:6333")
     
-    collection_name = "nexi_knowledge"
+    collection_name = "m-dn_knowledge"
     
     try:
         collections = client.get_collections()

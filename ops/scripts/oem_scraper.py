@@ -19,7 +19,7 @@ Usage:
     python oem_scraper.py --oracle-host 10.0.1.10 --oracle-sid ORCL --once
     
     # OEM REST API
-    python oem_scraper.py --oem-url https://em.nexi.local:7803/em --once
+    python oem_scraper.py --oem-url https://em.m-dn.local:7803/em --once
     
     # From MongoDB inventory
     python oem_scraper.py --discover-from-mongo
@@ -58,7 +58,7 @@ class OracleTarget:
     port: int = 1521
     service_name: str = ""
     sid: str = ""
-    username: str = "nexi_monitor"
+    username: str = "m-dn_monitor"
     password: str = ""
     name: str = ""  # Friendly name
     datacenter: str = "unknown"
@@ -81,7 +81,7 @@ class OracleTarget:
 @dataclass
 class OEMServerConfig:
     """Oracle Enterprise Manager server configuration"""
-    url: str  # https://em.nexi.local:7803/em
+    url: str  # https://em.m-dn.local:7803/em
     username: str = "sysman"
     password: str = ""
     verify_ssl: bool = False
@@ -102,8 +102,8 @@ class OEMScraperConfig:
     graphite_port: int = 2003
     
     # MongoDB for discovery
-    mongo_uri: str = "mongodb://admin:nexi2024@localhost:28017/"
-    mongo_db: str = "nexi_cmdb_v2"
+    mongo_uri: str = "mongodb://admin:pippopippo_1234@localhost:28017/"
+    mongo_db: str = "m-dn_cmdb_v2"
     discover_from_mongo: bool = True
     
     # Scraping settings
@@ -698,7 +698,7 @@ def discover_oracle_from_mongo(mongo_uri: str, mongo_db: str) -> List[OracleTarg
             
             # Get credentials from connection info
             conn_info = db_doc.get("connection_info", {})
-            username = conn_info.get("monitoring_user", "nexi_monitor")
+            username = conn_info.get("monitoring_user", "m-dn_monitor")
             password = conn_info.get("monitoring_password", "")
             
             if host and (sid or service_name):
@@ -734,7 +734,7 @@ def main():
     parser.add_argument("--oracle-port", type=int, default=1521, help="Oracle port")
     parser.add_argument("--oracle-sid", help="Oracle SID")
     parser.add_argument("--oracle-service", help="Oracle service name")
-    parser.add_argument("--oracle-user", default="nexi_monitor", help="Oracle username")
+    parser.add_argument("--oracle-user", default="m-dn_monitor", help="Oracle username")
     parser.add_argument("--oracle-pass", default="", help="Oracle password")
     
     # OEM REST API
@@ -784,8 +784,8 @@ def main():
     
     # Discover from MongoDB
     if args.discover_from_mongo or args.mongo_uri:
-        mongo_uri = args.mongo_uri or os.getenv("MONGO_URI", "mongodb://admin:nexi2024@localhost:28017/")
-        config.oracle_targets.extend(discover_oracle_from_mongo(mongo_uri, "nexi_cmdb_v2"))
+        mongo_uri = args.mongo_uri or os.getenv("MONGO_URI", "mongodb://admin:pippopippo_1234@localhost:28017/")
+        config.oracle_targets.extend(discover_oracle_from_mongo(mongo_uri, "m-dn_cmdb_v2"))
     
     if not config.oracle_targets and not config.oem_servers:
         logger.error("No targets found! Use --oracle-host, --oem-url, or --discover-from-mongo")

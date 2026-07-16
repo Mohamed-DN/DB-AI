@@ -75,7 +75,7 @@ def seed_sample_data():
             "nodes": [
                 {
                     "node_name": "pgprod01-primary",
-                    "hostname": "pgprod01.nexi.local",
+                    "hostname": "pgprod01.m-dn.local",
                     "host_ip": "10.102.170.10",
                     "role": "PRIMARY",
                     "status": "OPEN"
@@ -109,8 +109,8 @@ def seed_sample_data():
                 "status": "ACTIVE"
             },
             "contacts": {
-                "bao": {"name": "Mario Rossi", "email": "mario.rossi@nexi.it"},
-                "dl_team": "dl_carte_ops@nexi.it",
+                "bao": {"name": "Mario Rossi", "email": "mario.rossi@m-dn.it"},
+                "dl_team": "dl_carte_ops@m-dn.it",
                 "reperibilita_number": "+39 335 9988776",
                 "snow_group": "DBA-Oracle-Prod"
             },
@@ -139,7 +139,7 @@ def seed_sample_data():
         {
             "_id": "dbgec2",
             "location": {"country": "Italy", "city": "Milan", "datacenter": "DC1"},
-            "info": {"ip_address": "10.102.100.5", "hostname": "dbgec2.nexi.local"},
+            "info": {"ip_address": "10.102.100.5", "hostname": "dbgec2.m-dn.local"},
             "accessible_hosts": ["10.102.161.0/24", "10.102.170.0/24"]
         }
     ]

@@ -1,5 +1,5 @@
 """
-Nexi AI CMDB - API Gateway
+M-DN AI CMDB - API Gateway
 FastAPI application with modular router architecture.
 
 Version: 3.2.0 - With Authentication
@@ -56,7 +56,7 @@ except Exception as e:
 # =============================================================================
 
 app = FastAPI(
-    title="Nexi AI CMDB",
+    title="M-DN AI CMDB",
     version="3.2.0",
     description="AI-Powered Database Management - With Authentication",
     docs_url="/docs",
@@ -102,7 +102,7 @@ app.include_router(oem_router, prefix="/api", tags=["OEM"])
 @app.on_event("startup")
 async def startup_event():
     print("=" * 60)
-    print("🚀 Nexi AI CMDB v3.2.0 - With Authentication")
+    print("🚀 M-DN AI CMDB v3.2.0 - With Authentication")
     print(f"📁 Routers loaded: inventory, alerts, agents, llm, system, metrics, emails, connection, tasks, workflows, auth")
     print(f"🌐 CORS Origins: {ALLOWED_ORIGINS}")
     print("🔒 Authentication enabled")

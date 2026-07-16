@@ -7,7 +7,7 @@ import os
 import json
 
 GRAFANA_URL = "http://localhost:3003/api"
-AUTH = ("admin", os.getenv("GF_SECURITY_ADMIN_PASSWORD", "NexiGrafana2024!"))
+AUTH = ("admin", os.getenv("GF_SECURITY_ADMIN_PASSWORD", "pippopippo_1234"))
 HEADERS = {"Content-Type": "application/json"}
 
 def create_datasource():
@@ -38,9 +38,9 @@ def create_dashboard():
     dashboard_json = {
       "dashboard": {
         "id": None,
-        "uid": "nexi-dba-v2",
-        "title": "NEXI DB: CheckMK & Critical Events V2",
-        "tags": ["nexi", "checkmk", "simulation"],
+        "uid": "m-dn-dba-v2",
+        "title": "M-DN DB: CheckMK & Critical Events V2",
+        "tags": ["m-dn", "checkmk", "simulation"],
         "timezone": "browser",
         "panels": [
           {
@@ -49,7 +49,7 @@ def create_dashboard():
             "gridPos": { "h": 6, "w": 6, "x": 0, "y": 0 },
             "datasource": "CheckMK-Simulation",
             "targets": [
-              { "expr": "sum(nexi_checkmk_alerts_count{severity='critical'}) or vector(5)", "refId": "A" } 
+              { "expr": "sum(m-dn_checkmk_alerts_count{severity='critical'}) or vector(5)", "refId": "A" } 
               # Using vector(5) to hardcode visual for simulation if metric missing
             ],
             "fieldConfig": {

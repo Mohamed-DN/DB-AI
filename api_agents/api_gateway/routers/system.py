@@ -81,7 +81,7 @@ async def read_root():
     <!DOCTYPE html>
     <html>
     <head>
-        <title>Nexi AI CMDB Dashboard</title>
+        <title>M-DN AI CMDB Dashboard</title>
         <style>
             body {{ font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; margin: 0; padding: 0; background-color: #f0f2f5; color: #333; }}
             .container {{ max-width: 1000px; margin: 40px auto; padding: 20px; }}
@@ -104,7 +104,7 @@ async def read_root():
     </head>
     <body>
         <div class="container">
-            <h1>🚀 Nexi AI CMDB Dashboard</h1>
+            <h1>🚀 M-DN AI CMDB Dashboard</h1>
             
             <div class="status-banner">
                 System Status: {status}
@@ -180,24 +180,24 @@ async def set_system_status(item: dict):
     suffix = os.getenv('GATEWAY_SUFFIX', '2')
     
     lab_containers = [
-        f"nexi-mongodb{suffix}",
-        f"nexi-redis{suffix}",
-        f"nexi-ollama{suffix}",
-        f"nexi-qdrant{suffix}",
-        f"nexi-gw-milano{suffix}",
-        f"nexi-gw-bratislava{suffix}",
-        f"nexi-gw-cairo{suffix}",
-        f"nexi-pg-milano-prod{suffix}",
-        f"nexi-pg-milano-dev{suffix}",
-        f"nexi-pg-milano-stg{suffix}",
-        f"nexi-pg-bratislava-prod{suffix}",
-        f"nexi-pg-bratislava-dev{suffix}",
-        f"nexi-oracle-cairo-primary{suffix}",
-        f"nexi-oracle-cairo-replica{suffix}",
-        f"nexi-mongo-express{suffix}",
-        f"nexi-grafana{suffix}",
-        f"nexi-prometheus{suffix}",
-        f"nexi-langfuse{suffix}",
+        f"m-dn-mongodb{suffix}",
+        f"m-dn-redis{suffix}",
+        f"m-dn-ollama{suffix}",
+        f"m-dn-qdrant{suffix}",
+        f"m-dn-gw-milano{suffix}",
+        f"m-dn-gw-bratislava{suffix}",
+        f"m-dn-gw-cairo{suffix}",
+        f"m-dn-pg-milano-prod{suffix}",
+        f"m-dn-pg-milano-dev{suffix}",
+        f"m-dn-pg-milano-stg{suffix}",
+        f"m-dn-pg-bratislava-prod{suffix}",
+        f"m-dn-pg-bratislava-dev{suffix}",
+        f"m-dn-oracle-cairo-primary{suffix}",
+        f"m-dn-oracle-cairo-replica{suffix}",
+        f"m-dn-mongo-express{suffix}",
+        f"m-dn-grafana{suffix}",
+        f"m-dn-prometheus{suffix}",
+        f"m-dn-langfuse{suffix}",
     ]
     
     docker_cmd = shutil.which("docker") or "/usr/local/bin/docker"

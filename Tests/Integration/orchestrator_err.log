@@ -1,10 +1,10 @@
 Traceback (most recent call last):
-  File "c:\AI-Nexi\Nexi_DB_AI\Orchestrator\main.py", line 78, in <module>
+  File "c:\AI-M-DN\M-DN_DB_AI\Orchestrator\main.py", line 78, in <module>
     orch.run_loop()
     ~~~~~~~~~~~~~^^
-  File "c:\AI-Nexi\Nexi_DB_AI\Orchestrator\main.py", line 66, in run_loop
+  File "c:\AI-M-DN\M-DN_DB_AI\Orchestrator\main.py", line 66, in run_loop
     alerts = self.check_new_alerts()
-  File "c:\AI-Nexi\Nexi_DB_AI\Orchestrator\main.py", line 31, in check_new_alerts
+  File "c:\AI-M-DN\M-DN_DB_AI\Orchestrator\main.py", line 31, in check_new_alerts
     alerts = list(self.alerts_col.find(
         {"state": "CRITICAL", "processed": {"$ne": True}}
     ))

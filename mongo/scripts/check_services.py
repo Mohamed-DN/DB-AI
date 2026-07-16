@@ -6,7 +6,7 @@ from src.mongo_proxy import MongoProxy
 
 def check_service_mapping():
     mongo = MongoProxy()
-    name = "NEXI-PG-MILANO-STG"
+    name = "M-DN-PG-MILANO-STG"
     print(f"Checking Business Service mapping for {name}...")
     
     service = mongo.execute_eval(f"db.business_services.findOne({{ 'technical_mapping.db_unique_name': '{name}' }})")

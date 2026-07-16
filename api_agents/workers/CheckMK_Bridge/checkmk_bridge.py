@@ -16,9 +16,9 @@ logger = logging.getLogger("CheckMK_Bridge")
 class CheckMKBridge(BaseWorker):
     def __init__(self):
         super().__init__("CheckMK_Bridge")
-        self.base_url = os.getenv("CHECKMK_URL", "http://localhost:8080/nexi_monitor/check_mk/api/1.0")
+        self.base_url = os.getenv("CHECKMK_URL", "http://localhost:8080/m-dn_monitor/check_mk/api/1.0")
         self.username = os.getenv("CHECKMK_USER", "cmkadmin")
-        self.password = os.getenv("CHECKMK_PASSWORD", "nexi2024")
+        self.password = os.getenv("CHECKMK_PASSWORD", "pippopippo_1234")
         self.mongo = MongoService()
         
         self.headers = {
@@ -58,8 +58,8 @@ class CheckMKBridge(BaseWorker):
             for host in hosts:
                 db_name = host.get("title")  # or host.get("id")
                 
-                # Filter: Only sync Nexi containers
-                if not db_name or not db_name.lower().startswith("nexi-"):
+                # Filter: Only sync M-DN containers
+                if not db_name or not db_name.lower().startswith("m-dn-"):
                     continue
 
                 attrs = host.get("extensions", {})

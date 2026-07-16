@@ -12,7 +12,7 @@
             "ip_address": "192.168.1.100",
             "os": "OracleLinux 8.10",
             "cloud_provider": "ON_PREMISE",
-            "tenant": "NEXI"
+            "tenant": "M-DN"
         },
         "hardware": {
             "type": "Physical Server",
@@ -78,7 +78,7 @@
             "services": [
                 {
                     "service_name": "PDB_PAYMENTS_SVC",
-                    "network_name": "PDB_PAYMENTS_SVC.nexi.com",
+                    "network_name": "PDB_PAYMENTS_SVC.m-dn.com",
                     "enabled": true
                 }
             ],
@@ -135,7 +135,7 @@
             "services": [
                 {
                     "service_name": "PDB_ANALYTICS_SVC",
-                    "network_name": "PDB_ANALYTICS_SVC.nexi.com",
+                    "network_name": "PDB_ANALYTICS_SVC.m-dn.com",
                     "enabled": true
                 }
             ],
@@ -188,12 +188,12 @@
                 "name": "LISTENER_SCAN1",
                 "port": 1521,
                 "protocol": "TCP",
-                "host": "scan-cluster.nexi.com",
+                "host": "scan-cluster.m-dn.com",
                 "status": "READY"
             }
         ],
         "cluster_interconnect": {
-            "scan_name": "scan-prod-cluster.nexi.com",
+            "scan_name": "scan-prod-cluster.m-dn.com",
             "scan_ips": [
                 "10.158.133.20",
                 "10.158.133.21",

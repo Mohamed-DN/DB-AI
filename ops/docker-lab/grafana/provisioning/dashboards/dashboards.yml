@@ -4,10 +4,10 @@
 apiVersion: 1
 
 providers:
-  - name: 'Nexi DBA AI'
+  - name: 'M-DN DBA AI'
     orgId: 1
-    folder: 'Nexi DBA AI'
-    folderUid: 'nexi-dba'
+    folder: 'M-DN DBA AI'
+    folderUid: 'm-dn-dba'
     type: file
     disableDeletion: false
     updateIntervalSeconds: 30
