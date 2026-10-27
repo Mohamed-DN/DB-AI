@@ -1,5 +1,9 @@
 # M-DN DBA AI (CMDB V3)
 
+DB-AI is a personal engineering project for database inventory and AI-assisted DBA workflows. It brings together collectors, ingestion workers, a MongoDB inventory and a dashboard. The roadmap below separates the intended architecture from work still open; it does not establish autonomous production operation.
+
+**Start here:** [architecture](docs/ARCHITECTURE.md) → [API and agents](api_agents/README.md) → [orchestration](Orchestrator/README.md). For a local lab, read [operations](ops/README.md) before running a lifecycle script.
+
 > **Status**: Active Development (Shadow Mode on V2)
 > **Goal**: AI-powered Autonomous Database Administration & CMDB
 
@@ -21,7 +25,7 @@ Click on the module name to view detailed documentation and diagrams.
 | Module | Icon | Role | Description |
 |--------|:----:|------|-------------|
 | **[api_agents](./api_agents/README.md)** | 🤖 | **Backend & Agents** | Unified backend layer with FastAPI Gateway and Autonomous Workers (`scout`, `collector`, `watcher`). |
-| **[orchestrator](./orchestrator/README.md)** | 🧠 | **The Brain** | The AI Core handling LLM interactions, RAG pipelines, and decision-making logic. |
+| **[orchestrator](./Orchestrator/README.md)** | 🧠 | **The Brain** | The AI Core handling LLM interactions, RAG pipelines, and decision-making logic. |
 | **[web](./web/README.md)** | 💻 | **The Face** | The user-facing dashboard (`web/dashboard`) and legacy interfaces. |
 | **[mongo](./mongo/README.md)** | 💾 | **The Memory** | Central data store schemas, scripts, and seeds. |
 | **[ops](./ops/README.md)** | 🛠️ | **Operations** | Infrastructure tools, Docker Lab (`ops/docker-lab`), and Scripts (`ops/scripts`). |
@@ -43,14 +47,14 @@ All scripts are located in `ops/scripts/`.
 |--------|---------|-------------|
 | **🚀 START** | `.\ops\scripts\setup_v2.ps1` | Starts the full stack (Containers, API, Frontend). |
 | **🛑 STOP** | `.\ops\scripts\cleanup_v2.ps1` | Stops all containers and kills python processes. |
-| **🧹 CLEAN** | `docker system prune -f` | **Warning**: Removes all stopped containers (Use with caution). |
+| **🧹 CLEAN** | Review the project's containers individually before cleanup. | Host-wide pruning can remove resources from other projects; it is not a project cleanup command. |
 
 ---
 
 ## 🔮 Future Architecture & Data Sources
 
 ### Data Sources
-The system integrates 4 main data streams for holistic monitoring:
+The target architecture brings together four data streams. Their integration status is tracked separately in the roadmap:
 1. **CheckMK**: Infrastructure status and legacy alerts.
 2. **OEM (Oracle Enterprise Manager)**: Deep database performance metrics.
 3. **Database**: Direct SQL queries for internal state and logs.
@@ -113,3 +117,4 @@ To achieve the **Future Architecture** (3 Gateways, Redis, 4 Sources), the work 
 ---
 
 > _"From Chaos to Order" - Built for M-DN by the Advanced Agentic Coding Team_
+
