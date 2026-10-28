@@ -12,7 +12,8 @@ Checks:
 import os
 import sys
 # Fix Windows console encoding for emojis
-sys.stdout.reconfigure(encoding='utf-8')
+if sys.stdout and hasattr(sys.stdout, 'reconfigure'):
+    sys.stdout.reconfigure(encoding='utf-8')
 
 from datetime import datetime, timedelta
 from typing import Dict, List, Any
