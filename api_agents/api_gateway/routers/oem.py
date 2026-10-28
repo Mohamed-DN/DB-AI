@@ -247,7 +247,7 @@ async def trigger_oem_collection() -> Dict[str, Any]:
         mongo = SyncMongoService.get_instance()
         agent = OEMCollectorAgent(mongo_service=mongo)
         
-        result = agent.run_once()
+        result = await agent.run_once()
         
         return {
             "status": "success",
