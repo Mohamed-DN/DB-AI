@@ -13,7 +13,11 @@ Monitors:
 import os
 import sys
 # Fix Windows console encoding for emojis
-sys.stdout.reconfigure(encoding='utf-8')
+if hasattr(sys.stdout, 'reconfigure'):
+    try:
+        sys.stdout.reconfigure(encoding='utf-8')
+    except Exception:
+        pass
 
 import time
 import smtplib
@@ -22,9 +26,9 @@ from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 from typing import Dict, List, Any, Optional
 
-sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '../../')))
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '../../../')))
 
-from orchestrator.core.mongo_proxy import MongoProxy
+from Orchestrator.core.mongo_proxy import MongoProxy
 
 
 class CriticalAlertAgent:
@@ -124,7 +128,8 @@ class CriticalAlertAgent:
     def _get_all_databases(self) -> List[Dict]:
         """Get all databases from inventory."""
         try:
-            return self.mongo.execute_eval("db.inventory_databases.find().toArray()")
+            result = self.mongo.execute_eval("db.inventory_databases.find().toArray()")
+            return result if result is not None else []
         except:
             return []
     
