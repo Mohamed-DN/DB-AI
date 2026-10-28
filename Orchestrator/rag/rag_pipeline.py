@@ -10,7 +10,7 @@ import os
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '../../')))
 
 from typing import List, Dict, Any, Optional
-from Orchestrator.llm.ollama_client import OllamaClient
+from llm.client.ollama_client import OllamaClient
 from Orchestrator.vector_db.qdrant_client import QdrantClient, generate_simple_embedding
 
 
