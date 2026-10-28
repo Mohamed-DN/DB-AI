@@ -89,6 +89,17 @@ class SyncMongoService:
         )
         return result.acknowledged
     
+    def bulk_write_inventory(self, operations: List[Any]) -> bool:
+        """Execute bulk write operations on inventory_databases."""
+        if not operations:
+            return True
+        try:
+            result = self.db.inventory_databases.bulk_write(operations, ordered=False)
+            return result.acknowledged
+        except Exception as e:
+            print(f"Bulk write error: {e}")
+            return False
+
     def update_status(self, db_name: str, status: str) -> bool:
         """Update database status."""
         db_name = sanitize_identifier(db_name, "db_name")
@@ -207,6 +218,17 @@ class SyncMongoService:
         result = self.db.monitoring_alerts.insert_one(alert)
         return result.acknowledged
     
+    def bulk_write_alerts(self, operations: List[Any]) -> bool:
+        """Execute bulk write operations on monitoring_alerts."""
+        if not operations:
+            return True
+        try:
+            result = self.db.monitoring_alerts.bulk_write(operations, ordered=False)
+            return result.acknowledged
+        except Exception as e:
+            print(f"Bulk write alerts error: {e}")
+            return False
+
     def get_postgres_databases(self) -> List[Dict[str, Any]]:
         """Get PostgreSQL databases from inventory for CriticalAlert."""
         cursor = self.db.inventory_databases.find(
